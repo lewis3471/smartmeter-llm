@@ -1,0 +1,56 @@
+# Home Assistant Package: smartmeter-llm
+# Ablage: /config/packages/smartmeter.yaml
+# Voraussetzung in configuration.yaml:
+#   homeassistant:
+#     packages: !include_dir_named packages
+
+mqtt:
+  sensor:
+    - name: "Stromzähler Zählerstand"
+      unique_id: smartmeter_kwh
+      state_topic: "smartmeter/kwh"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing   # -> Energie-Dashboard "Netzbezug"
+      icon: mdi:counter
+
+    - name: "Stromzähler Leistung"
+      unique_id: smartmeter_w
+      state_topic: "smartmeter/w"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      icon: mdi:transmission-tower
+
+    - name: "Smartmeter Status"
+      unique_id: smartmeter_status
+      state_topic: "smartmeter/status"
+      icon: mdi:eye-check
+
+    - name: "Inverter Limit"
+      unique_id: smartmeter_limit_w
+      state_topic: "smartmeter/limit_w"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      icon: mdi:speedometer
+
+automation:
+  - alias: "Smartmeter: Warnung bei Ausfall"
+    id: smartmeter_stale_warning
+    trigger:
+      - platform: state
+        entity_id: sensor.smartmeter_status
+        to: "failsafe"
+      - platform: state
+        entity_id: sensor.stromzahler_leistung
+        to: ~
+        for: "00:10:00"   # 10 min kein neuer Wert
+    action:
+      - service: notify.persistent_notification
+        data:
+          title: "Nulleinspeisung"
+          message: >
+            Smartmeter-Lesung gestört (Status:
+            {{ states('sensor.smartmeter_status') }}) —
+            Inverter läuft auf Failsafe-Limit.

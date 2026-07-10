@@ -1,0 +1,8 @@
+# Credentials & Laufzeit-State — niemals committen
+.env
+state.json
+meter_reader.log
+snapshots/
+.venv/
+__pycache__/
+*.pyc

@@ -1,0 +1,8 @@
+services:
+  meter-reader:
+    build: .
+    container_name: smartmeter-llm
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./state.json:/app/state.json
