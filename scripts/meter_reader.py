@@ -79,6 +79,7 @@ async def _capture_esphome() -> bytes:
     einpendeln lassen, Frame holen, LED aus."""
     client = APIClient(ESPHOME_HOST, 6053, password=None, noise_psk=ESPHOME_API_KEY)
     await client.connect(login=True)
+    light_key = None
     try:
         entities, _ = await client.list_entities_services()
         light_key = next(
@@ -103,13 +104,17 @@ async def _capture_esphome() -> bytes:
                 await asyncio.sleep(0.2)
                 if len(frames) > n:
                     break
-        if light_key is not None:
-            client.light_command(key=light_key, state=False)
-            await asyncio.sleep(0.3)
         if not frames:
             raise RuntimeError("Kamera hat keinen Frame geliefert")
         return frames[-1]
     finally:
+        # LED IMMER ausschalten (Hitze!), auch wenn die Aufnahme fehlschlaegt
+        try:
+            if light_key is not None:
+                client.light_command(key=light_key, state=False)
+                await asyncio.sleep(0.5)
+        except Exception as e:
+            print(f"WARNUNG: LED-Aus fehlgeschlagen: {e}", file=sys.stderr)
         try:
             await client.disconnect()
         except Exception:
@@ -203,28 +208,28 @@ def publish(reading: dict | None, status: str, limit: int | None):
         print(f"MQTT-Fehler: {e}", file=sys.stderr)
 
 
-def control(grid_w: int, state: dict) -> int | None:
-    """Nulleinspeisungs-Regler: neues Inverter-Limit berechnen und setzen."""
+def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
+    """Nulleinspeisungs-Regler: neues Limit berechnen/setzen. -> (limit, pv_w)"""
     if not INVERTER_SERIAL or INVERTER_SERIAL == "CHANGE_ME":
-        return None
+        return None, None
     try:
         pv_w = get_inverter_power()
     except Exception as e:
         print(f"OpenDTU nicht erreichbar: {e}", file=sys.stderr)
-        return None
+        return None, None
     # grid_w > 0 = Bezug, < 0 = Einspeisung. Ziel: leichter Bezug.
     target = pv_w + grid_w - TARGET_GRID_W
     current = state.get("limit_w", int(pv_w))
     step = max(-MAX_STEP_W, min(MAX_STEP_W, int(target) - current))
     new_limit = max(MIN_LIMIT_W, min(MAX_LIMIT_W, current + step))
     if abs(new_limit - current) < HYSTERESIS_W and "limit_w" in state:
-        return current
+        return current, pv_w
     try:
         set_limit(new_limit)
-        return new_limit
+        return new_limit, pv_w
     except Exception as e:
         print(f"Limit setzen fehlgeschlagen: {e}", file=sys.stderr)
-        return None
+        return None, pv_w
 
 
 def main(once: bool = False):
@@ -238,11 +243,12 @@ def main(once: bool = False):
                 raise ValueError(f"verworfen: {reason}")
             state.update(reading)
             state["failures"] = 0
-            limit = control(reading["w"], state)
+            limit, pv_w = control(reading["w"], state)
             if limit is not None:
                 state["limit_w"] = limit
             publish(reading, "ok", limit)
-            print(f"kwh={reading['kwh']} w={reading['w']:+d} limit={limit}")
+            pv = f"{pv_w:.0f}" if pv_w is not None else "?"
+            print(f"kwh={reading['kwh']} w={reading['w']:+d} pv={pv} limit={limit}")
         except Exception as e:
             state["failures"] = state.get("failures", 0) + 1
             print(f"Fehler ({state['failures']}x): {e}", file=sys.stderr)
