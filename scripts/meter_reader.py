@@ -194,7 +194,15 @@ def read_meter(cycle: int = 0) -> tuple[dict, str]:
                 raise err
             return local, f"local c={conf:.2f} (unter Schwelle)"
         # hybrid: Gemini fragen (Kreuz-Check / niedrige Confidence / Fehler)
-        gem = gemini_read(img)
+        try:
+            gem = gemini_read(img)
+        except Exception as e:
+            if local is not None and conf >= OCR_MIN_CONF:
+                # Kreuz-Check gescheitert -> lokale Lesung reicht
+                print(f"Gemini-Ausfall ({e}) -> nutze lokale Lesung",
+                      file=sys.stderr)
+                return local, f"local c={conf:.2f} (Gemini-Ausfall)"
+            raise
         if local is not None and local != gem:
             d = Path(SAVE_SAMPLES_DIR or "samples") / "disagreements"
             d.mkdir(parents=True, exist_ok=True)
@@ -254,6 +262,10 @@ def gemini_read(img: bytes) -> dict:
     if not match:
         raise ValueError(f"kein JSON in Gemini-Antwort: {text[:100]!r}")
     data = json.loads(match.group(0))
+    if not isinstance(data.get("kwh"), (int, float)) or not isinstance(
+        data.get("w"), (int, float)
+    ):
+        raise ValueError(f"Gemini-Antwort unvollstaendig: {data}")
     reading = {"kwh": int(data["kwh"]), "w": int(data["w"])}
     if SAVE_SAMPLES_DIR:
         d = Path(SAVE_SAMPLES_DIR) / time.strftime("%Y%m%d")
