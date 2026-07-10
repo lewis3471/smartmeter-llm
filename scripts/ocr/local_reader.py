@@ -47,6 +47,9 @@ class LocalReader:
         labels, conf = self._predict(kwh_cells + w_cells)
         kwh_s = "".join(labels[:6])
         w_s = "".join(labels[6:])
+        digits = (kwh_s + w_s).replace("_", "")
+        if len(digits) >= 8 and set(digits) <= {"8", "0"} and digits.count("8") >= 6:
+            raise ValueError("LCD-Segmenttest (alles 8er)")
         if "_" in kwh_s or "-" in kwh_s:
             raise ValueError(f"kWh-Zeile unlesbar: {kwh_s!r}")
         w_clean = w_s.replace("_", "")

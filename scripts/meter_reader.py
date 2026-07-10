@@ -183,6 +183,8 @@ def read_meter(cycle: int = 0) -> tuple[dict, str]:
         try:
             local, conf = _local_reader.read(img)
         except ValueError as e:
+            if "Segmenttest" in str(e):
+                raise  # eindeutig, Gemini braucht's nicht zu bestaetigen
             err = e
         cross_check = READER_MODE == "hybrid" and cycle % CROSS_CHECK_EVERY == 0
         if local is not None and conf >= OCR_MIN_CONF and not cross_check:
