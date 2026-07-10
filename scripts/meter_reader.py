@@ -60,6 +60,8 @@ _combo_day = time.strftime("%Y-%m-%d")
 ESPHOME_HOST = os.environ.get("ESPHOME_HOST", "")
 ESPHOME_API_KEY = os.environ.get("ESPHOME_API_KEY", "")
 CAM_WARMUP_S = float(os.environ.get("CAM_WARMUP_S", "3.5"))
+CAM_FRAMES = int(os.environ.get("CAM_FRAMES", "5"))       # Warm-up-Frames
+LED_BRIGHTNESS = float(os.environ.get("LED_BRIGHTNESS", "1.0"))
 # Snapshots + Gemini-Label als Trainingsdaten fuer lokales OCR ablegen
 SAVE_SAMPLES_DIR = os.environ.get("SAVE_SAMPLES_DIR", "")
 
@@ -137,11 +139,13 @@ async def _capture_esphome() -> bytes:
 
         client.subscribe_states(on_state)
         if light_key is not None:
-            client.light_command(key=light_key, state=True, brightness=1.0)
+            client.light_command(key=light_key, state=True,
+                                 brightness=LED_BRIGHTNESS)
         await asyncio.sleep(CAM_WARMUP_S)
         # Belichtung passt sich nur waehrend laufender Aufnahmen an:
-        # mehrere Frames anfordern, erst der 4./5. ist korrekt belichtet
-        for _ in range(5):
+        # mehrere Frames anfordern, erst der 4./5. ist korrekt belichtet.
+        # Bei fester Belichtung (aec_mode: manual) reicht CAM_FRAMES=1.
+        for _ in range(CAM_FRAMES):
             n = len(frames)
             client.request_single_image()
             for _ in range(75):

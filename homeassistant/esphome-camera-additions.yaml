@@ -1,0 +1,27 @@
+# MORGEN EINSPIELEN: Ergänzungen für esp32-cam-electricity-meter.yaml
+# (ESPHome Builder -> Bearbeiten -> einfügen -> Installieren)
+#
+# Feste Belichtung: erster Frame ist korrekt belichtet, kein Warm-up mehr
+# -> danach in .env: CAM_FRAMES=1, CAM_WARMUP_S=1, INTERVAL_S=5, MAX_STEP_W=100
+# Der aec_value wird danach zur Laufzeit ueber das Number-Entity kalibriert
+# (Claude macht das automatisch — einfach Bescheid geben, wenn geflasht).
+
+esp32_camera:
+  # ...bestehende Kamera-Config unveraendert lassen, nur ergaenzen:
+  id: espcam
+  aec_mode: manual
+  aec_value: 300        # Startwert, wird per Number-Entity kalibriert
+
+number:
+  - platform: template
+    name: "AEC Value"
+    min_value: 0
+    max_value: 1200
+    step: 10
+    initial_value: 300
+    optimistic: true
+    restore_value: true
+    set_action:
+      - lambda: |-
+          id(espcam).set_aec_value((int) x);
+          id(espcam).update_camera_parameters();

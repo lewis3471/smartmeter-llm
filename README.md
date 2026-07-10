@@ -117,8 +117,8 @@ Läuft direkt auf dem NUC in HA — mit Auto-Start, Watchdog und Logs in der UI:
 
 1. Add-on-Ordner auf den NUC kopieren (z.B. per Samba-Add-on oder SSH):
    `homeassistant/addon/smartmeter-llm/` → `/addons/smartmeter_llm/`
-   **plus** `scripts/meter_reader.py` in denselben Ordner (Add-ons müssen
-   self-contained sein)
+   **plus** `scripts/meter_reader.py` und den Ordner `scripts/ocr/` (inkl.
+   `model.npz`) in denselben Ordner (Add-ons müssen self-contained sein)
 2. HA: Einstellungen → Add-ons → Add-on Store → ⋮ → „Nach Updates suchen",
    dann erscheint „Smartmeter LLM Nulleinspeisung" unter *Lokale Add-ons*
 3. Installieren → Konfiguration ausfüllen (Gemini-Key, ESPHome-Key,

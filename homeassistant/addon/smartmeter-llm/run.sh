@@ -1,7 +1,13 @@
 #!/usr/bin/with-contenv bashio
 # Add-on-Optionen -> Environment-Variablen fuer meter_reader.py
-export GEMINI_API_KEY=$(bashio::config 'gemini_api_key')
-export GEMINI_MODEL=$(bashio::config 'gemini_model')
+export GEMINI_API_KEYS=$(bashio::config 'gemini_api_keys')
+export GEMINI_MODELS=$(bashio::config 'gemini_models')
+export READER_MODE=$(bashio::config 'reader_mode')
+export OCR_MIN_CONF=$(bashio::config 'ocr_min_conf')
+export CROSS_CHECK_EVERY=$(bashio::config 'cross_check_every')
+export LED_BRIGHTNESS=$(bashio::config 'led_brightness')
+export CAM_FRAMES=$(bashio::config 'cam_frames')
+export SAVE_SAMPLES_DIR=/data/samples
 export ESPHOME_HOST=$(bashio::config 'esphome_host')
 export ESPHOME_API_KEY=$(bashio::config 'esphome_api_key')
 export OPENDTU_URL=$(bashio::config 'opendtu_url')

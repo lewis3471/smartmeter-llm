@@ -29,8 +29,12 @@ def load_samples(root: Path) -> list[tuple[Path, dict]]:
     out = []
     for jf in sorted(root.glob("*/*.json")):
         img = jf.with_suffix(".jpg")
-        if img.exists():
-            out.append((img, json.loads(jf.read_text())))
+        if not img.exists():
+            continue
+        data = json.loads(jf.read_text())
+        if "kwh" not in data:  # z.B. disagreements/ hat anderes Format
+            continue
+        out.append((img, data))
     return out
 
 
