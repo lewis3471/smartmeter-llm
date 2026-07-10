@@ -1,0 +1,47 @@
+name: Smartmeter LLM Nulleinspeisung
+version: "1.0.0"
+slug: smartmeter_llm
+description: ESP32-Cam -> Gemini liest Stromzaehler -> OpenDTU-Limit-Regelung
+arch:
+  - amd64
+  - aarch64
+init: false
+startup: application
+boot: auto
+services:
+  - mqtt:want
+watchdog: ""
+options:
+  gemini_api_key: ""
+  gemini_model: gemini-3.1-flash-lite
+  esphome_host: 192.168.178.58
+  esphome_api_key: ""
+  opendtu_url: http://192.168.178.42
+  opendtu_user: admin
+  opendtu_pass: ""
+  inverter_serial: 1164a00ab8d4
+  interval_s: 30
+  target_grid_w: -100
+  max_step_w: 1000
+  hysteresis_w: 25
+  min_limit_w: 50
+  max_limit_w: 2000
+  failsafe_limit_w: 1999
+  max_jump_w: 5000
+schema:
+  gemini_api_key: str
+  gemini_model: str
+  esphome_host: str
+  esphome_api_key: str
+  opendtu_url: str
+  opendtu_user: str
+  opendtu_pass: password
+  inverter_serial: str
+  interval_s: int(10,3600)
+  target_grid_w: int(-800,1000)
+  max_step_w: int(25,2000)
+  hysteresis_w: int(0,500)
+  min_limit_w: int(0,2000)
+  max_limit_w: int(50,2000)
+  failsafe_limit_w: int(0,2000)
+  max_jump_w: int(500,20000)

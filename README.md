@@ -111,7 +111,22 @@ curl -u "admin:PASSWORT" http://192.168.178.42/api/limit/config \
 - Energie-Dashboard: `sensor.stromzahler_zahlerstand` als Netzbezug eintragen
 - Enthält eine Automation, die bei Failsafe/Ausfall eine Benachrichtigung schickt
 
-### 4. Reader/Controller starten (Docker auf dem NUC)
+### 4a. Als Home-Assistant-Add-on (empfohlen auf HAOS)
+
+Läuft direkt auf dem NUC in HA — mit Auto-Start, Watchdog und Logs in der UI:
+
+1. Add-on-Ordner auf den NUC kopieren (z.B. per Samba-Add-on oder SSH):
+   `homeassistant/addon/smartmeter-llm/` → `/addons/smartmeter_llm/`
+   **plus** `scripts/meter_reader.py` in denselben Ordner (Add-ons müssen
+   self-contained sein)
+2. HA: Einstellungen → Add-ons → Add-on Store → ⋮ → „Nach Updates suchen",
+   dann erscheint „Smartmeter LLM Nulleinspeisung" unter *Lokale Add-ons*
+3. Installieren → Konfiguration ausfüllen (Gemini-Key, ESPHome-Key,
+   OpenDTU-Passwort — Rest ist vorbelegt) → Starten
+4. MQTT-Zugang holt sich das Add-on automatisch vom Mosquitto-Add-on,
+   sobald eins installiert ist — keine manuelle Konfiguration nötig
+
+### 4b. Alternativ: Docker auf beliebigem Host
 
 ```bash
 cp .env.example .env   # Werte eintragen (bzw. vorhandene .env nutzen)

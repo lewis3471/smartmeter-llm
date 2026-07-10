@@ -67,7 +67,9 @@ MAX_LIMIT_W = int(os.environ.get("MAX_LIMIT_W", "1500"))
 FAILSAFE_LIMIT_W = int(os.environ.get("FAILSAFE_LIMIT_W", "200"))
 MAX_JUMP_W = int(os.environ.get("MAX_JUMP_W", "5000"))
 
-STATE_FILE = Path(__file__).resolve().parent.parent / "state.json"
+STATE_FILE = Path(
+    os.environ.get("STATE_FILE", Path(__file__).resolve().parent.parent / "state.json")
+)
 
 GEMINI_URL = (
     f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
