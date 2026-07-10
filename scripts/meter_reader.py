@@ -38,11 +38,28 @@ def load_env():
 
 load_env()
 
-GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
+# Komma-Listen; bei 429/503 rotiert erst der Key (eigene Quota je Account),
+# dann das Modell
+GEMINI_API_KEYS = [
+    k.strip()
+    for k in os.environ.get(
+        "GEMINI_API_KEYS", os.environ.get("GEMINI_API_KEY", "")
+    ).split(",")
+    if k.strip()
+]
+GEMINI_MODELS = [
+    m.strip()
+    for m in os.environ.get(
+        "GEMINI_MODELS",
+        os.environ.get("GEMINI_MODEL", "gemini-3.1-flash-lite"),
+    ).split(",")
+    if m.strip()
+]
+_combo_idx = 0  # Index in (Modell x Key)-Kombinationen
+_combo_day = time.strftime("%Y-%m-%d")
 ESPHOME_HOST = os.environ.get("ESPHOME_HOST", "")
 ESPHOME_API_KEY = os.environ.get("ESPHOME_API_KEY", "")
 CAM_WARMUP_S = float(os.environ.get("CAM_WARMUP_S", "3.5"))
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
 GEMINI_PROMPT = os.environ.get("GEMINI_PROMPT", 'Lies das LCD. Antworte nur: {"kwh":int,"w":int}')
 CAM_SNAPSHOT_URL = os.environ["CAM_SNAPSHOT_URL"]
 OPENDTU_URL = os.environ["OPENDTU_URL"].rstrip("/")
@@ -71,9 +88,12 @@ STATE_FILE = Path(
     os.environ.get("STATE_FILE", Path(__file__).resolve().parent.parent / "state.json")
 )
 
-GEMINI_URL = (
-    f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-)
+def gemini_combo(idx: int) -> tuple[str, str]:
+    """(model, key) fuer Kombination idx: erst alle Keys je Modell durchgehen."""
+    n_keys = len(GEMINI_API_KEYS)
+    model = GEMINI_MODELS[(idx // n_keys) % len(GEMINI_MODELS)]
+    key = GEMINI_API_KEYS[idx % n_keys]
+    return model, key
 
 
 async def _capture_esphome() -> bytes:
@@ -142,14 +162,36 @@ def read_meter() -> dict:
         }],
         "generationConfig": {"temperature": 0, "thinkingConfig": {"thinkingBudget": 0}},
     }
-    r = requests.post(
-        GEMINI_URL,
-        headers={"Content-Type": "application/json", "X-goog-api-key": GEMINI_API_KEY},
-        json=body,
-        timeout=30,
-    )
+    global _combo_idx, _combo_day
+    today = time.strftime("%Y-%m-%d")
+    if today != _combo_day:  # Quota-Reset -> wieder mit bestem Modell/Key starten
+        _combo_idx, _combo_day = 0, today
+    n_combos = len(GEMINI_MODELS) * len(GEMINI_API_KEYS)
+    r = None
+    for _ in range(n_combos):
+        model, key = gemini_combo(_combo_idx)
+        r = requests.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+            headers={"Content-Type": "application/json", "X-goog-api-key": key},
+            json=body,
+            timeout=30,
+        )
+        if r.status_code in (429, 503):
+            _combo_idx += 1
+            nm, nk = gemini_combo(_combo_idx)
+            print(
+                f"{model}/Key…{key[-4:]}: HTTP {r.status_code}"
+                f" -> rotiere zu {nm}/Key…{nk[-4:]}",
+                file=sys.stderr,
+            )
+            continue
+        break
     r.raise_for_status()
-    text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+    # Antwort-Part suchen: Thinking-Modelle liefern zusaetzlich "thought"-Parts
+    parts = r.json()["candidates"][0]["content"]["parts"]
+    text = next(
+        (p["text"] for p in parts if "text" in p and not p.get("thought")), ""
+    )
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if not match:
         raise ValueError(f"kein JSON in Gemini-Antwort: {text[:100]!r}")
