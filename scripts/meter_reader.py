@@ -60,6 +60,8 @@ _combo_day = time.strftime("%Y-%m-%d")
 ESPHOME_HOST = os.environ.get("ESPHOME_HOST", "")
 ESPHOME_API_KEY = os.environ.get("ESPHOME_API_KEY", "")
 CAM_WARMUP_S = float(os.environ.get("CAM_WARMUP_S", "3.5"))
+# Snapshots + Gemini-Label als Trainingsdaten fuer lokales OCR ablegen
+SAVE_SAMPLES_DIR = os.environ.get("SAVE_SAMPLES_DIR", "")
 GEMINI_PROMPT = os.environ.get("GEMINI_PROMPT", 'Lies das LCD. Antworte nur: {"kwh":int,"w":int}')
 CAM_SNAPSHOT_URL = os.environ["CAM_SNAPSHOT_URL"]
 OPENDTU_URL = os.environ["OPENDTU_URL"].rstrip("/")
@@ -196,7 +198,14 @@ def read_meter() -> dict:
     if not match:
         raise ValueError(f"kein JSON in Gemini-Antwort: {text[:100]!r}")
     data = json.loads(match.group(0))
-    return {"kwh": int(data["kwh"]), "w": int(data["w"])}
+    reading = {"kwh": int(data["kwh"]), "w": int(data["w"])}
+    if SAVE_SAMPLES_DIR:
+        d = Path(SAVE_SAMPLES_DIR) / time.strftime("%Y%m%d")
+        d.mkdir(parents=True, exist_ok=True)
+        stem = time.strftime("%H%M%S")
+        (d / f"{stem}.jpg").write_bytes(img)
+        (d / f"{stem}.json").write_text(json.dumps(reading))
+    return reading
 
 
 def plausible(reading: dict, state: dict) -> str | None:
@@ -252,6 +261,44 @@ def publish(reading: dict | None, status: str, limit: int | None):
         print(f"MQTT-Fehler: {e}", file=sys.stderr)
 
 
+def publish_discovery():
+    """HA-MQTT-Discovery: Sensoren melden sich selbst an (retained configs)."""
+    if not MQTT_HOST or mqtt_publish is None:
+        return
+    device = {
+        "identifiers": ["smartmeter_llm"],
+        "name": "Smartmeter LLM",
+        "manufacturer": "smartmeter-llm",
+        "model": "ESP32-Cam + Gemini",
+    }
+    sensors = {
+        "kwh": {"name": "Zählerstand", "unit_of_measurement": "kWh",
+                "device_class": "energy", "state_class": "total_increasing",
+                "icon": "mdi:counter"},
+        "w": {"name": "Netzleistung", "unit_of_measurement": "W",
+              "device_class": "power", "state_class": "measurement",
+              "icon": "mdi:transmission-tower"},
+        "limit_w": {"name": "Inverter Limit", "unit_of_measurement": "W",
+                    "device_class": "power", "state_class": "measurement",
+                    "icon": "mdi:speedometer"},
+        "status": {"name": "Status", "icon": "mdi:eye-check"},
+    }
+    msgs = []
+    for key, cfg in sensors.items():
+        cfg.update({
+            "unique_id": f"smartmeter_llm_{key}",
+            "state_topic": f"{TOPIC}/{key}",
+            "device": device,
+        })
+        msgs.append((f"homeassistant/sensor/smartmeter_llm/{key}/config",
+                     json.dumps(cfg), 0, True))
+    try:
+        mqtt_publish.multiple(msgs, hostname=MQTT_HOST, port=MQTT_PORT, auth=MQTT_AUTH)
+        print("MQTT-Discovery veröffentlicht (4 Sensoren)")
+    except Exception as e:
+        print(f"MQTT-Discovery fehlgeschlagen: {e}", file=sys.stderr)
+
+
 def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     """Nulleinspeisungs-Regler: neues Limit berechnen/setzen. -> (limit, pv_w)"""
     if not INVERTER_SERIAL or INVERTER_SERIAL == "CHANGE_ME":
@@ -278,6 +325,7 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
 
 def main(once: bool = False):
     state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
+    publish_discovery()
     while True:
         limit = None
         try:
