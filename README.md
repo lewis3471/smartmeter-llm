@@ -139,6 +139,42 @@ Erst ohne `INVERTER_SERIAL` laufen lassen → nur Lesen + MQTT-Logging, keine
 Regelung. Wenn die Werte ein paar Tage stimmen, Serial eintragen und die
 Nulleinspeisung scharf schalten.
 
+## Lokales OCR (READER_MODE)
+
+Ab Branch `feature/ocr` kann das LCD **lokal** gelesen werden — ohne Cloud-Call,
+beliebig schnelles Intervall, keine Rate-Limits:
+
+- `READER_MODE=hybrid` (empfohlen): lokales OCR liest; bei Confidence
+  < `OCR_MIN_CONF`, Lesefehler oder jedem `CROSS_CHECK_EVERY`-ten Zyklus wird
+  Gemini gefragt. Abweichungen landen in `samples/disagreements/` als neue
+  Trainingsfälle.
+- `READER_MODE=local`: nur OCR, kein Gemini (kein API-Key nötig)
+- `READER_MODE=gemini`: nur Cloud (Ausgangszustand)
+
+Funktionsweise: feste Kameraposition → Ziffern liegen an bekannten
+Pixelpositionen ([scripts/ocr/extractor.py](scripts/ocr/extractor.py), Grid in
+`config.json` überschreibbar). Ein Anker-Patch (kWh-Label) kompensiert
+Kameradrift per Template-Matching. Jede Ziffernzelle wird per
+kNN (Kosinus, k=3) gegen die gesammelten, Gemini-gelabelten Samples
+klassifiziert. Klassen: `0-9`, `-`, leer.
+
+**Training/Retraining** (nach neuen Samples, besonders Disagreements):
+
+```bash
+.venv/bin/python scripts/ocr/train.py   # -> scripts/ocr/model.npz + Report
+```
+
+Der Report zeigt Zellen-Accuracy, End-to-End-Quote und legt Fehlbilder in
+`scripts/ocr/train_fails/` ab. Falsch gelabelte Samples (Gemini-Fehler)
+werden per kWh-Median-Check automatisch aussortiert.
+
+**Weg zu 5-s-Intervall**: Lokal ist das Lesen in <10 ms erledigt — der
+Flaschenhals ist die Kamera-Belichtung (~5,5 s LED + Warm-up-Frames, weil die
+Auto-Exposure nur bei laufender Aufnahme adaptiert). Dafür im ESPHome-YAML
+feste Belichtung setzen (`aec_mode: manual` + kalibrierter `aec_value`), dann
+reicht 1 Frame und die LED ist nur ~1 s an. Danach `INTERVAL_S=5` setzen und
+`MAX_STEP_W` entsprechend verkleinern (Regelung wird 30× schneller!).
+
 ## MQTT-Topics
 
 | Topic | Inhalt |

@@ -7,3 +7,4 @@ snapshots/
 __pycache__/
 *.pyc
 samples/
+scripts/ocr/train_fails/

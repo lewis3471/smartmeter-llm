@@ -62,6 +62,26 @@ ESPHOME_API_KEY = os.environ.get("ESPHOME_API_KEY", "")
 CAM_WARMUP_S = float(os.environ.get("CAM_WARMUP_S", "3.5"))
 # Snapshots + Gemini-Label als Trainingsdaten fuer lokales OCR ablegen
 SAVE_SAMPLES_DIR = os.environ.get("SAVE_SAMPLES_DIR", "")
+
+# --- Lokales OCR ---
+# gemini: nur Cloud | local: nur lokales kNN-OCR | hybrid: lokal lesen,
+# Gemini bei niedriger Confidence/Fehler und als Kreuz-Check alle N Zyklen
+READER_MODE = os.environ.get("READER_MODE", "gemini")
+OCR_MIN_CONF = float(os.environ.get("OCR_MIN_CONF", "0.85"))
+CROSS_CHECK_EVERY = int(os.environ.get("CROSS_CHECK_EVERY", "20"))
+
+_local_reader = None
+if READER_MODE in ("local", "hybrid"):
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent / "ocr"))
+        from local_reader import LocalReader
+        _local_reader = LocalReader()
+    except Exception as e:
+        print(f"Lokales OCR nicht verfuegbar ({e})"
+              f"{' -> Gemini-only' if READER_MODE == 'hybrid' else ''}",
+              file=sys.stderr)
+        if READER_MODE == "local":
+            raise
 GEMINI_PROMPT = os.environ.get("GEMINI_PROMPT", 'Lies das LCD. Antworte nur: {"kwh":int,"w":int}')
 CAM_SNAPSHOT_URL = os.environ["CAM_SNAPSHOT_URL"]
 OPENDTU_URL = os.environ["OPENDTU_URL"].rstrip("/")
@@ -151,9 +171,39 @@ def get_snapshot() -> bytes:
     return requests.get(CAM_SNAPSHOT_URL, timeout=15).content
 
 
-def read_meter() -> dict:
-    """Snapshot holen und von Gemini lesen lassen. Wirft Exception bei Fehler."""
+def read_meter(cycle: int = 0) -> tuple[dict, str]:
+    """Snapshot holen und lesen. -> (Lesung, Quelle 'local c=0.97'/'gemini')."""
     img = get_snapshot()
+    if _local_reader is not None:
+        local, conf, err = None, 0.0, None
+        try:
+            local, conf = _local_reader.read(img)
+        except ValueError as e:
+            err = e
+        cross_check = READER_MODE == "hybrid" and cycle % CROSS_CHECK_EVERY == 0
+        if local is not None and conf >= OCR_MIN_CONF and not cross_check:
+            return local, f"local c={conf:.2f}"
+        if READER_MODE == "local":
+            if local is None:
+                raise err
+            return local, f"local c={conf:.2f} (unter Schwelle)"
+        # hybrid: Gemini fragen (Kreuz-Check / niedrige Confidence / Fehler)
+        gem = gemini_read(img)
+        if local is not None and local != gem:
+            d = Path(SAVE_SAMPLES_DIR or "samples") / "disagreements"
+            d.mkdir(parents=True, exist_ok=True)
+            stem = time.strftime("%Y%m%d_%H%M%S")
+            (d / f"{stem}.jpg").write_bytes(img)
+            (d / f"{stem}.json").write_text(json.dumps(
+                {"local": local, "conf": conf, "gemini": gem}))
+            print(f"OCR-Abweichung: local={local} (c={conf:.2f})"
+                  f" vs gemini={gem} -> gespeichert", file=sys.stderr)
+        return gem, "gemini" + (" (cross-check)" if cross_check else "")
+    return gemini_read(img), "gemini"
+
+
+def gemini_read(img: bytes) -> dict:
+    """Bild von Gemini lesen lassen. Wirft Exception bei Fehler."""
     body = {
         "contents": [{
             "parts": [
@@ -329,7 +379,8 @@ def main(once: bool = False):
     while True:
         limit = None
         try:
-            reading = read_meter()
+            state["cycle"] = state.get("cycle", 0) + 1
+            reading, source = read_meter(state["cycle"])
             reason = plausible(reading, state)
             if reason:
                 raise ValueError(f"verworfen: {reason}")
@@ -340,7 +391,8 @@ def main(once: bool = False):
                 state["limit_w"] = limit
             publish(reading, "ok", limit)
             pv = f"{pv_w:.0f}" if pv_w is not None else "?"
-            print(f"kwh={reading['kwh']} w={reading['w']:+d} pv={pv} limit={limit}")
+            print(f"kwh={reading['kwh']} w={reading['w']:+d} pv={pv}"
+                  f" limit={limit} [{source}]")
         except Exception as e:
             state["failures"] = state.get("failures", 0) + 1
             print(f"Fehler ({state['failures']}x): {e}", file=sys.stderr)
