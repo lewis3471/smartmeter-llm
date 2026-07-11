@@ -115,8 +115,18 @@ TOPIC = os.environ.get("MQTT_TOPIC_PREFIX", "smartmeter")
 
 INTERVAL_S = int(os.environ.get("INTERVAL_S", "90"))
 TARGET_GRID_W = int(os.environ.get("TARGET_GRID_W", "50"))
-MAX_STEP_W = int(os.environ.get("MAX_STEP_W", "200"))
-HYSTERESIS_W = int(os.environ.get("HYSTERESIS_W", "25"))
+MAX_STEP_W = int(os.environ.get("MAX_STEP_W", "200"))  # Slew-Limit pro Regeltick
+# --- PI-Regler (Velocity-Form) ---
+PI_KP = float(os.environ.get("PI_KP", "0.4"))
+PI_KI = float(os.environ.get("PI_KI", "0.05"))          # 1/s
+PI_DEADBAND_W = int(os.environ.get("PI_DEADBAND_W", "5"))
+# Regelkreis-Totzeit Limit->Wirkung (gemessen ~6s; enthaelt OpenDTU-Funk,
+# Inverter-MPPT-Hochregeln, LCD, Median-3 — spaeter praeziser bestimmen!)
+LATENCY_S = float(os.environ.get("LATENCY_S", "6"))
+INFLIGHT_MIN_W = int(os.environ.get("INFLIGHT_MIN_W", "50"))
+# Anti-Windup: Limit max. so weit ueber aktueller PV — wenn die Sonne die
+# Grenze ist (nicht das Limit), darf der Integrator nicht davonlaufen
+PI_HEADROOM_W = int(os.environ.get("PI_HEADROOM_W", "150"))
 MIN_LIMIT_W = int(os.environ.get("MIN_LIMIT_W", "50"))
 MAX_LIMIT_W = int(os.environ.get("MAX_LIMIT_W", "1500"))
 FAILSAFE_LIMIT_W = int(os.environ.get("FAILSAFE_LIMIT_W", "200"))
@@ -569,7 +579,12 @@ def publish_discovery():
 
 
 def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
-    """Nulleinspeisungs-Regler: neues Limit berechnen/setzen. -> (limit, pv_w)"""
+    """PI-Regler (Velocity-Form) mit In-Flight-Guard und Slew-Limit.
+
+    grid_w > 0 = Bezug. Fehler e = grid_w - TARGET_GRID_W; Limit-Inkrement
+    dL = Kp*(e - e_prev) + Ki*dt*e. Velocity-Form = natuerliches Anti-Windup
+    an MIN/MAX; der Kp-Term wirkt als Lastsprung-Feedforward.
+    Jede gesendete Aenderung wird geloggt (Latenz-Messbasis, docs/regler-v2)."""
     if not INVERTER_SERIAL or INVERTER_SERIAL == "CHANGE_ME":
         return None, None
     try:
@@ -577,15 +592,43 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     except Exception as e:
         print(f"OpenDTU nicht erreichbar: {e}", file=sys.stderr)
         return None, None
-    # grid_w > 0 = Bezug, < 0 = Einspeisung. Ziel: leichter Bezug.
-    target = pv_w + grid_w - TARGET_GRID_W
-    current = state.get("limit_w", int(pv_w))
-    step = max(-MAX_STEP_W, min(MAX_STEP_W, int(target) - current))
-    new_limit = max(MIN_LIMIT_W, min(MAX_LIMIT_W, current + step))
-    if abs(new_limit - current) < HYSTERESIS_W and "limit_w" in state:
+    now = time.time()
+    error = grid_w - TARGET_GRID_W
+    current = state.get("limit_w")
+    if current is None:  # Erstinitialisierung: grob passend starten
+        current = int(max(MIN_LIMIT_W, min(MAX_LIMIT_W, pv_w + error)))
+        try:
+            set_limit(current)
+            state.update(limit_sent_ts=now, e_prev=error, ctrl_ts=now)
+            print(f"PI: Init-Limit {current} (e={error:+d}, pv={pv_w:.0f})")
+            return current, pv_w
+        except Exception as e:
+            print(f"Limit setzen fehlgeschlagen: {e}", file=sys.stderr)
+            return None, pv_w
+    # In-Flight-Guard: groessere Korrektur erst wirken lassen (Totzeit),
+    # sonst Doppel-Korrektur in die Latenz hinein -> Ueberschwingen
+    if state.get("inflight") and now - state.get("limit_sent_ts", 0) < LATENCY_S:
         return current, pv_w
+    state["inflight"] = False
+    dt = min(30.0, max(1.0, now - state.get("ctrl_ts", now)))
+    e_prev = state.get("e_prev", error)
+    delta = PI_KP * (error - e_prev) + PI_KI * dt * error + state.get("carry", 0.0)
+    delta = max(-MAX_STEP_W, min(MAX_STEP_W, delta))
+    # Obergrenze: Inverter kann nie mehr als PV liefern — Limit nur mit
+    # Headroom darueber, sonst laeuft der Integrator ins Leere (Windup)
+    upper = min(MAX_LIMIT_W, max(MIN_LIMIT_W, int(pv_w) + PI_HEADROOM_W))
+    new_limit = int(round(max(MIN_LIMIT_W, min(upper, current + delta))))
+    state.update(e_prev=error, ctrl_ts=now)
+    if abs(new_limit - current) < PI_DEADBAND_W:
+        # Mini-Inkremente sammeln statt verlieren — aber nicht an den Grenzen
+        state["carry"] = delta if MIN_LIMIT_W < current < upper else 0.0
+        return current, pv_w
+    state["carry"] = 0.0
     try:
         set_limit(new_limit)
+        state["limit_sent_ts"] = now
+        state["inflight"] = abs(new_limit - current) >= INFLIGHT_MIN_W
+        print(f"PI: Limit {current}->{new_limit} (e={error:+d}, pv={pv_w:.0f})")
         return new_limit, pv_w
     except Exception as e:
         print(f"Limit setzen fehlgeschlagen: {e}", file=sys.stderr)
