@@ -7,12 +7,20 @@ Läuft als Endlosschleife im INTERVAL_S-Takt (Free Tier: 1000 req/Tag).
 
 import asyncio
 import base64
+import builtins
 import json
 import os
 import re
+import socket
 import sys
 import time
 from pathlib import Path
+
+socket.setdefaulttimeout(20)  # MQTT & Co. duerfen nie ewig haengen
+
+
+def print(*args, **kwargs):  # noqa: A001 — Log immer mit Zeitstempel
+    builtins.print(time.strftime("[%m-%d %H:%M:%S]"), *args, **kwargs)
 
 import requests
 
@@ -169,9 +177,14 @@ async def _capture_esphome() -> bytes:
             pass  # Cam schliesst den Socket teils selbst -> egal
 
 
+async def _capture_with_timeout() -> bytes:
+    # Harter Deckel: haengender WLAN-Connect darf den Zyklus nicht blockieren
+    return await asyncio.wait_for(_capture_esphome(), timeout=90)
+
+
 def get_snapshot() -> bytes:
     if ESPHOME_API_KEY and ESPHOME_API_KEY != "CHANGE_ME" and APIClient:
-        return asyncio.run(_capture_esphome())
+        return asyncio.run(_capture_with_timeout())
     return requests.get(CAM_SNAPSHOT_URL, timeout=15).content
 
 
@@ -290,9 +303,36 @@ def plausible(reading: dict, state: dict) -> str | None:
     if state.get("kwh") is not None:
         if kwh < state["kwh"]:
             return f"kWh rückläufig ({state['kwh']} -> {kwh})"
-        if kwh > state["kwh"] + 10:
+        if kwh > state["kwh"] + 2:
             return f"kWh-Sprung ({state['kwh']} -> {kwh})"
     return None
+
+
+def rebaseline(reading: dict, state: dict) -> bool:
+    """Kommt dieselbe 'unplausible' kWh-Lesung mehrfach in Folge, wird sie
+    per Gemini verifiziert und bei Bestaetigung als neuer Stand akzeptiert.
+    Verhindert, dass eine einmal akzeptierte Fehl-Lesung alles blockiert."""
+    kwh = reading["kwh"]
+    if abs(kwh - state.get("rb_kwh", -9999)) <= 1:
+        state["rb_count"] = state.get("rb_count", 0) + 1
+    else:
+        state["rb_kwh"], state["rb_count"] = kwh, 1
+    if state["rb_count"] < 4:
+        return False
+    state["rb_count"] = 0
+    for attempt in (1, 2):
+        try:
+            gem = gemini_read(get_snapshot())
+            if abs(gem["kwh"] - kwh) <= 2:
+                print(f"Re-Baseline: Gemini bestätigt kWh={gem['kwh']} "
+                      f"(alter Stand {state.get('kwh')}) -> akzeptiert")
+                return True
+            print(f"Re-Baseline abgelehnt: Gemini liest {gem['kwh']}, "
+                  f"nicht {kwh}", file=sys.stderr)
+            return False
+        except Exception as e:
+            print(f"Re-Baseline Versuch {attempt}: {e}", file=sys.stderr)
+    return False
 
 
 def get_inverter_power() -> float:
@@ -400,6 +440,10 @@ def main(once: bool = False):
             state["cycle"] = state.get("cycle", 0) + 1
             reading, source = read_meter(state["cycle"])
             reason = plausible(reading, state)
+            if reason and ("rückläufig" in reason or "Sprung" in reason):
+                if rebaseline(reading, state):
+                    reason = None
+                    source += " (re-baseline)"
             if reason:
                 raise ValueError(f"verworfen: {reason}")
             state.update(reading)

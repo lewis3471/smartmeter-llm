@@ -14,8 +14,8 @@ CONFIG_FILE = Path(__file__).with_name("config.json")
 
 DEFAULT_CONFIG = {
     # Ziffernraster (Pixel im Originalbild)
-    "kwh": {"x0": 489, "y0": 299, "h": 57, "pitch": 36.4, "w": 35, "n": 6},
-    "watt": {"xend": 707, "y0": 357, "h": 61, "pitch": 36.4, "w": 35, "n": 5},
+    "kwh": {"x0": 489, "y0": 292, "h": 64, "pitch": 36.4, "w": 35, "n": 6},
+    "watt": {"xend": 707, "y0": 350, "h": 68, "pitch": 36.4, "w": 35, "n": 5},
     # Anker fuer Drift-Korrektur: Region um das "kWh"-Label
     "anchor": {"x": 700, "y": 295, "w": 90, "h": 65, "search": 25},
     # Normalisierte Zellgroesse fuer den Klassifikator
