@@ -3,20 +3,28 @@
 **Branch:** `feature/regler-v2` (Build dort, nicht auf feature/ocr)
 **Stand:** 2026-07-11, Analyse aus 987 Zyklen Sekundentakt-Log
 
-## Diagnose (belegt)
+## Diagnose (korrigiert 2026-07-11 ~07:40)
 
-Das Sägezahn-Muster im Netzbezug (langsamer Anstieg, scharfer Abriss,
-Amplitude ~40–60 W) ist ein **Limit-Cycle des eigenen Reglers**:
+**Erste Hypothese (Regler-Limit-Cycle) war falsch** — vom User widerlegt:
+Der Inverter lief ungedrosselt (PV ≪ Limit), Limit-Befehle konnten den
+Output gar nicht beeinflussen. Die Limit↔Abriss-Korrelation (8/10) war
+umgekehrte Kausalität — der Regler folgt dem W-Anstieg.
 
-- 8/10 scharfe W-Abrisse folgen 0–15 s auf eine eigene Limit-Erhöhung
-- Sägezahn-Periode median 66 s = Korrektur-Rhythmus des Reglers
-- Regelkreis-Latenz (Limit-Befehl → Wirkung am Zähler): **median 6 s**
-  (OpenDTU-Funk + Inverter-Rampe + LCD-Update + Median-3-Filter)
+**Belegte Diagnose** (Sekundentakt-Telemetrie, PV pro Zyklus):
 
-Ursache: „Warte bis Fehler > Hysterese (15 W), dann voller Ausgleichsschritt"
-+ 6 s Totzeit = Drift → Großkorrektur → Drift. Wolken-Prädiktion ist NICHT
-nötig: wenn PV unter dem Limit liegt, regelt ohnehin niemand — der Sägezahn
-existiert nur im limitierten Betrieb.
+- PV konstant 94–96 W (σ=0,6 W) durch alle W-Abrisse hindurch,
+  Korrelation dW/dPV = 0,04 → Inverter unbeteiligt
+- Der Sägezahn (Rampe +40–60 W über ~50–66 s, scharfer Reset) ist eine
+  **echte periodische Haushaltslast**. Kandidaten: Inverter-Kompressor
+  (Kühl-/Gefrierschrank), geregelte Umwälzpumpe. Identifikation: Geräte
+  einzeln trennen und 1-s-Graph in HA beobachten.
+- Regelkreis-Latenz Limit→Zähler bleibt als Messwert nützlich: **~6 s**
+
+Konsequenz: Der Regler muss diese wandernde Last **verfolgen** (und darf
+dabei selbst keinen Limit-Cycle produzieren, sobald das Limit greift).
+Rechnung: Rampe ~1 W/s × Schleifenverzögerung ~8 s → Folgefehler ±8 W mit
+sauberem PI. Die Prädiktion (Phase 3) ist damit aufgewertet: Der Sägezahn
+ist deterministisch und phasen-trackbar → Feedforward drückt den Rest.
 
 ## Phase 1 — Telemetrie (bereits aktiv auf feature/ocr)
 
