@@ -93,7 +93,7 @@ This gives the NUC and every checked-out deployment the same retrained
 
 ### Home Assistant OS add-on (no SSH / sudo on the NUC)
 
-Version 1.4.2 can run the same worker inside the add-on. Add a **write-enabled
+Version 1.4.4 can run the same worker inside the add-on. Add a **write-enabled
 repository deploy key** in GitHub, then paste the private key only in the
 add-on's YAML configuration under `git_deploy_key`. It is written with mode
 `0600` below `/data` and is never logged or committed. Set:
@@ -103,16 +103,18 @@ save_samples: true
 git_sync_enabled: true
 git_repository: git@github.com:lewis3471/smartmeter-llm.git
 git_branch: main
-git_deploy_key: |-
-  -----BEGIN OPENSSH PRIVATE KEY-----
-  paste-the-private-key-here
-  -----END OPENSSH PRIVATE KEY-----
+git_deploy_key_base64: paste-one-line-base64-key-here
 git_sync_interval_s: 30
 ```
 
 On first start the add-on clones the repository into its persistent `/data`,
 then uploads evidence and retrained models itself. No HA host shell access is
 needed.
+
+Create the one-line Base64 value on a trusted Mac with
+`base64 < ~/.ssh/smartmeter_ha_deploy | tr -d '\n' | pbcopy`, then paste it
+into `git_deploy_key_base64`. This avoids Home Assistant configuration fields
+altering the OpenSSH key's required line breaks.
 
 ## Leseweg: lokales OCR zuerst, Gemini als Berater
 

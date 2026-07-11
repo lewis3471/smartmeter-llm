@@ -48,15 +48,25 @@ fi
 if bashio::config.true 'git_sync_enabled'; then
     GIT_REPO=$(bashio::config 'git_repository')
     GIT_KEY=$(bashio::config 'git_deploy_key')
+    GIT_KEY_B64=$(bashio::config 'git_deploy_key_base64')
     GIT_BRANCH=$(bashio::config 'git_branch')
-    if [ -z "$GIT_REPO" ] || [ -z "$GIT_KEY" ] || [ -z "$SAVE_SAMPLES_DIR" ]; then
+    if [ -z "$GIT_REPO" ] || { [ -z "$GIT_KEY" ] && [ -z "$GIT_KEY_B64" ]; } || [ -z "$SAVE_SAMPLES_DIR" ]; then
         bashio::log.error "Git-Sync braucht Repository, Deploy-Key und save_samples=true"
     else
         mkdir -p /data/git
         umask 077
-        printf '%s\n' "$GIT_KEY" > /data/git/deploy_key
+        if [ -n "$GIT_KEY_B64" ]; then
+            printf '%s' "$GIT_KEY_B64" | base64 -d > /data/git/deploy_key || \
+                bashio::log.error "Base64 Deploy-Key konnte nicht dekodiert werden"
+        else
+            printf '%s\n' "$GIT_KEY" > /data/git/deploy_key
+        fi
         chmod 600 /data/git/deploy_key
-        export GIT_SSH_COMMAND='ssh -i /data/git/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new'
+        if ! ssh-keygen -y -f /data/git/deploy_key >/dev/null 2>&1; then
+            bashio::log.error "Deploy-Key ist ungültig. Bitte git_deploy_key_base64 verwenden."
+            rm -f /data/git/deploy_key
+        else
+            export GIT_SSH_COMMAND='ssh -i /data/git/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new'
         FEEDBACK_REPO=/data/feedback-repo
         if [ ! -d "$FEEDBACK_REPO/.git" ]; then
             git clone --branch "$GIT_BRANCH" "$GIT_REPO" "$FEEDBACK_REPO" || \
@@ -75,6 +85,7 @@ if bashio::config.true 'git_sync_enabled'; then
                 done
             ) &
             bashio::log.info "Feedback Git-Sync aktiv (alle ${GIT_SYNC_INTERVAL}s)"
+        fi
         fi
     fi
 fi

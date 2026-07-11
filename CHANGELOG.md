@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.4 — 2026-07-11
+
+- Add Base64 deploy-key configuration for HAOS and validate the decoded key
+  before Git clone, preventing multiline key format corruption.
+
 ## 1.4.3 — 2026-07-11
 
 - Add 30 manually verified live frames labelled `35711` for the six kWh LCD
