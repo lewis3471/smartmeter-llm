@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.6
+
+- Sync-Intervall default 300s (Commit-Hygiene: keine Mini-Commits alle 30s)
+
 ## 1.4.5
 
 - OCR: Shift-Augmentierung — Ziffern generalisieren über alle LCD-Positionen
