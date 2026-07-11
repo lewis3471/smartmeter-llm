@@ -612,22 +612,33 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     state["inflight"] = False
     dt = min(30.0, max(1.0, now - state.get("ctrl_ts", now)))
     e_prev = state.get("e_prev", error)
-    delta = PI_KP * (error - e_prev) + PI_KI * dt * error + state.get("carry", 0.0)
+    kick = PI_KP * (error - e_prev)
+    if state.pop("post_inflight", False):
+        kick = 0.0  # Fehleraenderung stammt von eigener Aktion -> kein Doppel-Kick
+    delta = kick + PI_KI * dt * error + state.get("carry", 0.0)
     delta = max(-MAX_STEP_W, min(MAX_STEP_W, delta))
-    # Obergrenze: Inverter kann nie mehr als PV liefern — Limit nur mit
-    # Headroom darueber, sonst laeuft der Integrator ins Leere (Windup)
-    upper = min(MAX_LIMIT_W, max(MIN_LIMIT_W, int(pv_w) + PI_HEADROOM_W))
-    new_limit = int(round(max(MIN_LIMIT_W, min(upper, current + delta))))
+    new_limit = int(round(max(MIN_LIMIT_W, min(MAX_LIMIT_W, current + delta))))
+    # Windup-Leck statt harter PV-Klemme: Aufwaerts NIE blockieren (Wolke
+    # weg -> sofort Vollgas). Erst wenn PV >45s weit unterm Limit haengt,
+    # Limit auf pv+Headroom absenken, damit der Integrator nicht parkt.
+    if pv_w < current - 2 * PI_HEADROOM_W:
+        if state.get("pv_low_since") is None:
+            state["pv_low_since"] = now
+        elif now - state["pv_low_since"] > 45:
+            new_limit = min(new_limit, int(pv_w) + PI_HEADROOM_W)
+    else:
+        state["pv_low_since"] = None
     state.update(e_prev=error, ctrl_ts=now)
     if abs(new_limit - current) < PI_DEADBAND_W:
         # Mini-Inkremente sammeln statt verlieren — aber nicht an den Grenzen
-        state["carry"] = delta if MIN_LIMIT_W < current < upper else 0.0
+        state["carry"] = delta if MIN_LIMIT_W < current < MAX_LIMIT_W else 0.0
         return current, pv_w
     state["carry"] = 0.0
     try:
         set_limit(new_limit)
         state["limit_sent_ts"] = now
         state["inflight"] = abs(new_limit - current) >= INFLIGHT_MIN_W
+        state["post_inflight"] = state["inflight"]
         print(f"PI: Limit {current}->{new_limit} (e={error:+d}, pv={pv_w:.0f})")
         return new_limit, pv_w
     except Exception as e:
