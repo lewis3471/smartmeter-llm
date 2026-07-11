@@ -19,7 +19,7 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent))
-from extractor import Extractor, labels_for, prep_cell  # noqa: E402
+from extractor import Extractor, labels_for, prep_cell, shifted_variants  # noqa: E402
 
 MODEL_FILE = Path(__file__).with_name("model.npz")
 FAILS_DIR = Path(__file__).with_name("train_fails")
@@ -63,6 +63,27 @@ def collect(ex, subset):
     return X, np.array(y), np.array(slots)
 
 
+def augment(X, y, slots):
+    """Shift-Varianten (+-1/2px) fuer Ziffern-Zellen in die kNN-Basis:
+    dieselbe Ziffer sitzt je Box leicht versetzt — so generalisiert sie
+    ueber alle Positionen (der Slot-Fallback matcht dann sauber)."""
+    ax, ay, aslot = [X], [y], [slots]
+    add_x, add_y, add_s = [], [], []
+    for vec, lab, sl in zip(X, y, slots):
+        if lab == "_":
+            continue
+        for v in shifted_variants(vec):
+            n = np.linalg.norm(v) + 1e-9
+            add_x.append(v / n)
+            add_y.append(lab)
+            add_s.append(sl)
+    if add_x:
+        ax.append(np.array(add_x, np.float32))
+        ay.append(np.array(add_y))
+        aslot.append(np.array(add_s))
+    return np.concatenate(ax), np.concatenate(ay), np.concatenate(aslot)
+
+
 def main():
     root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("samples")
     samples, dropped = clean(load_samples(root))
@@ -78,7 +99,9 @@ def main():
     cut = int(len(samples) * 0.75)
     Xtr, ytr, str_ = collect(ex, samples[:cut])
     Xte, yte, ste = collect(ex, samples[cut:])
-    print(f"Digit-Zellen: {len(ytr)} Training, {len(yte)} Test")
+    Xtr, ytr, str_ = augment(Xtr, ytr, str_)
+    print(f"Digit-Zellen: {len(ytr)} Training (mit Shift-Augmentierung), "
+          f"{len(yte)} Test")
     print("Klassen:", dict(sorted(Counter(ytr).items())))
 
     def predict(X, slots, k=3):
@@ -117,12 +140,13 @@ def main():
     else:
         print("End-to-End: übersprungen (kWh-only Labels im Holdout)")
 
-    # Finales Modell: ALLE Daten (Training+Holdout) als kNN-Basis
-    Xall = np.concatenate([Xtr, Xte])
-    yall = np.concatenate([ytr, yte])
-    sall = np.concatenate([str_, ste])
-    np.savez_compressed(MODEL_FILE, X=Xall, y=yall, slots=sall,
-                        anchor=ex._anchor_ref)
+    # Finales Modell: ALLE Daten (Training+Holdout, augmentiert) als kNN-Basis
+    Xte_a, yte_a, ste_a = augment(Xte, yte, ste)
+    Xall = np.concatenate([Xtr, Xte_a])
+    yall = np.concatenate([ytr, yte_a])
+    sall = np.concatenate([str_, ste_a])
+    np.savez_compressed(MODEL_FILE, X=Xall.astype(np.float16), y=yall,
+                        slots=sall, anchor=ex._anchor_ref)
     print(f"Modell ({len(yall)} Zellen) -> {MODEL_FILE}")
 
 

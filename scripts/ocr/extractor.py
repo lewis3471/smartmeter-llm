@@ -106,6 +106,23 @@ def prep_cell(cell: np.ndarray) -> np.ndarray:
     return c.ravel()
 
 
+def shifted_variants(vec: np.ndarray, cell_w: int = 20,
+                     shifts=(-1, 1)) -> list[np.ndarray]:
+    """Horizontal verschobene Kopien eines Zellen-Vektors (nur fuers Training):
+    dieselbe Ziffer sitzt je nach Box-Position leicht versetzt — mit den
+    Varianten in der kNN-Basis generalisiert sie ueber alle Positionen."""
+    img = vec.reshape(-1, cell_w)
+    out = []
+    for s in shifts:
+        v = np.roll(img, s, axis=1)
+        if s > 0:
+            v[:, :s] = 0.0
+        else:
+            v[:, s:] = 0.0
+        out.append(v.ravel())
+    return out
+
+
 def labels_for(reading: dict) -> tuple[list[str], list[str]] | None:
     """Zellen-Labels aus einer Gesamt-Lesung ableiten (None = nicht abbildbar)."""
     kwh = reading["kwh"]

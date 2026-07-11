@@ -47,20 +47,15 @@ fi
 # modifies the read-only add-on source, and keeps the deploy key in /data/git.
 if bashio::config.true 'git_sync_enabled'; then
     GIT_REPO=$(bashio::config 'git_repository')
-    GIT_KEY=$(bashio::config 'git_deploy_key')
     GIT_KEY_B64=$(bashio::config 'git_deploy_key_base64')
     GIT_BRANCH=$(bashio::config 'git_branch')
-    if [ -z "$GIT_REPO" ] || { [ -z "$GIT_KEY" ] && [ -z "$GIT_KEY_B64" ]; } || [ -z "$SAVE_SAMPLES_DIR" ]; then
+    if [ -z "$GIT_REPO" ] || [ -z "$GIT_KEY_B64" ] || [ -z "$SAVE_SAMPLES_DIR" ]; then
         bashio::log.error "Git-Sync braucht Repository, Deploy-Key und save_samples=true"
     else
         mkdir -p /data/git
         umask 077
-        if [ -n "$GIT_KEY_B64" ]; then
-            printf '%s' "$GIT_KEY_B64" | base64 -d > /data/git/deploy_key || \
-                bashio::log.error "Base64 Deploy-Key konnte nicht dekodiert werden"
-        else
-            printf '%s\n' "$GIT_KEY" > /data/git/deploy_key
-        fi
+        printf '%s' "$GIT_KEY_B64" | base64 -d > /data/git/deploy_key || \
+            bashio::log.error "Base64 Deploy-Key konnte nicht dekodiert werden"
         chmod 600 /data/git/deploy_key
         if ! ssh-keygen -y -f /data/git/deploy_key >/dev/null 2>&1; then
             bashio::log.error "Deploy-Key ist ungültig. Bitte git_deploy_key_base64 verwenden."

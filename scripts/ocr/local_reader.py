@@ -22,7 +22,7 @@ MODEL_FILE = Path(__file__).with_name("model.npz")
 class LocalReader:
     def __init__(self, model_file: Path = MODEL_FILE, k: int = 3):
         m = np.load(model_file, allow_pickle=False)
-        self.X = m["X"]
+        self.X = m["X"].astype(np.float32)  # ggf. float16-komprimiert gespeichert
         self.y = m["y"]
         self.slots = m["slots"] if "slots" in m.files else None
         self.k = k

@@ -1,0 +1,44 @@
+# Changelog
+
+## 1.4.5
+
+- OCR: Shift-Augmentierung — Ziffern generalisieren über alle LCD-Positionen
+  (behebt 1→7-Fehllesungen nach Zähler-Rollover, z.B. 35710→35770)
+- Feedback-Sync: nur Disagreements/Events + jedes 20. Routine-Sample werden
+  committet; lokale Dateien werden erst nach erfolgreichem Push gelöscht
+- Deploy-Key: nur noch `git_deploy_key_base64` (Mehrzeilen-Keys brechen im
+  HA-Options-UI)
+- Sync-Logs mit Zeitstempeln
+- Modell als float16 (8,7 MB statt 15,7 MB)
+
+## 1.4.4
+
+- Deploy-Key als Base64-Feld für HAOS
+
+## 1.4.2
+
+- HAOS-nativer Feedback-Worker: Evidence → Git, Retraining, Modell-Push
+
+## 1.4.1
+
+- Positions-bewusstes OCR (Slot-Präferenz mit Fallback), Event-Outbox
+
+## 1.4.0
+
+- `interval_s` als Kommazahl (0,5-s-Takt), `state_write_s`-Schreibdrossel
+
+## 1.3.0
+
+- `log_level` (all/error/none), Samples & Retraining im Add-on default aus
+
+## 1.2.1
+
+- Add-on im Store unsichtbar: ungültiges watchdog-Feld entfernt, build.yaml
+
+## 1.2.0
+
+- Nächtliches Auto-Retraining mit Hot-Reload des Modells
+
+## 1.1.0
+
+- Erstes Add-on-Release: lokales OCR, Hybrid-Modus, Regler v3, MQTT-Discovery
