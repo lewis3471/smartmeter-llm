@@ -7,5 +7,4 @@ snapshots/
 __pycache__/
 *.pyc
 samples/
-training-data/
 scripts/ocr/train_fails/

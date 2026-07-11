@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.7
+
+- KRITISCH: training-data/ stand in .gitignore — Evidence wurde nie
+  committet ("Push ok" ohne Commit), aber lokal geprunt. Gitignore
+  bereinigt; Prune läuft jetzt nur noch, wenn training-data nachweislich
+  vollständig committet ist. Unkommittete Evidence im /data-Checkout wird
+  vom nächsten Sync-Lauf automatisch nachcommittet.
+
 ## 1.4.6
 
 - Sync-Intervall default 300s (Commit-Hygiene: keine Mini-Commits alle 30s)

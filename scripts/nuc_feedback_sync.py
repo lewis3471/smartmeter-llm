@@ -176,6 +176,12 @@ def main():
                 f"{r.stdout.strip()[-200:]}", err=True)
             return
         log("Push ok")
+        if changed(repo, "training-data"):
+            # Sicherheitsgurt: Evidence NICHT vollstaendig committet (z.B.
+            # gitignore-Panne) -> niemals lokale Originale loeschen
+            log("training-data nicht vollstaendig committet — "
+                "Prune uebersprungen", err=True)
+            return
         prune(samples, copied)
 
 
