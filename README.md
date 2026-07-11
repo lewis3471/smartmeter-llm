@@ -53,6 +53,44 @@ Jeder Zyklus (~0,4–0,5 s, `INTERVAL_S=0`):
 
 **Alle Credentials liegen in `.env`** (gitignored, Vorlage: [`.env.example`](.env.example)).
 
+## NUC feedback loop: Fehlerbilder → Git → retrained model
+
+The reader now writes an evidence event (JSON error record and the exact JPEG)
+for every rejected reading, including LCD segment tests and the recurring
+`35770` misread. Gemini-confirmed local/Gemini differences remain in
+`samples/disagreements/` and are the labelled data used for training. Thus the
+same digit classifier learns each position of the LCD grid; it is not trying to
+learn the full meter value as one image.
+
+Run the feedback worker on a normal, writable clone on the NUC (not inside the
+Home Assistant add-on container). It copies new evidence into the ignored local
+`training-data/` directory, retrains after 10 or more labelled disagreements,
+commits the evidence and both model copies, and pushes. The meter loop only
+writes files, so a slow or offline Git remote can never delay control.
+
+```bash
+git clone git@github.com:lewis3471/smartmeter-llm.git /opt/smartmeter-llm
+cd /opt/smartmeter-llm
+cp .env.example .env  # set SAVE_SAMPLES_DIR=/opt/smartmeter-llm/samples
+sudo cp scripts/nuc-feedback-sync.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now nuc-feedback-sync.timer
+```
+
+Use a repository-scoped SSH deploy key with write access, installed for the
+NUC account (for example `~/.ssh/id_ed25519`); do **not** put a Git token in
+`.env`, add-on configuration, logs, or this repository. The timer runs every
+30 seconds. For a manual run:
+
+```bash
+python3 scripts/nuc_feedback_sync.py --samples /opt/smartmeter-llm/samples --push
+```
+
+`training-data/` is deliberately gitignored: it may contain meter images. The
+worker stages it explicitly, so it is versioned only by its dedicated commits.
+This gives the NUC and every checked-out deployment the same retrained
+`model.npz` without accidentally committing arbitrary local sample folders.
+
 ## Leseweg: lokales OCR zuerst, Gemini als Berater
 
 Primärleser ist das **lokale kNN-OCR** (siehe unten) — kostenlos, <10 ms,

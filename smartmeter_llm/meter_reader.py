@@ -28,6 +28,7 @@ def print(*args, **kwargs):  # noqa: A001 — Zeitstempel + LOG_LEVEL-Filter
     builtins.print(time.strftime("[%m-%d %H:%M:%S]"), *args, **kwargs)
 
 import requests
+from feedback import save_event
 
 try:
     import paho.mqtt.client as mqtt_client
@@ -292,17 +293,21 @@ class ContinuousCam:
 
 
 _cam: "ContinuousCam | None" = None
+_last_snapshot: bytes | None = None
 
 
 def get_snapshot() -> bytes:
-    global _cam
+    global _cam, _last_snapshot
     if ESPHOME_API_KEY and ESPHOME_API_KEY != "CHANGE_ME" and APIClient:
         if CAM_MODE == "continuous":
             if _cam is None:
                 _cam = ContinuousCam()
-            return _cam.snapshot()
-        return asyncio.run(_capture_with_timeout())
-    return requests.get(CAM_SNAPSHOT_URL, timeout=15).content
+            _last_snapshot = _cam.snapshot()
+        else:
+            _last_snapshot = asyncio.run(_capture_with_timeout())
+    else:
+        _last_snapshot = requests.get(CAM_SNAPSHOT_URL, timeout=15).content
+    return _last_snapshot
 
 
 GEMINI_COOLDOWN_S = int(os.environ.get("GEMINI_COOLDOWN_S", "30"))
@@ -399,7 +404,7 @@ def gemini_read(img: bytes) -> dict:
             json=body,
             timeout=30,
         )
-        if r.status_code in (429, 503):
+        if r.status_code in (404, 429, 503):
             _combo_idx += 1
             nm, nk = gemini_combo(_combo_idx)
             print(
@@ -737,6 +742,9 @@ def main(once: bool = False):
                   f" limit={limit} [{source}]")
         except Exception as e:
             state["failures"] = state.get("failures", 0) + 1
+            save_event(SAVE_SAMPLES_DIR, _last_snapshot, "rejected_reading",
+                       error=str(e), failures=state["failures"],
+                       accepted_kwh=state.get("kwh"))
             print(f"Fehler ({state['failures']}x): {e}", file=sys.stderr)
             if state["failures"] >= FAILSAFE_AFTER:
                 # Failsafe: Inverter drosseln statt blind weiter einspeisen

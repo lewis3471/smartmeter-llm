@@ -48,18 +48,19 @@ def clean(samples):
 
 
 def collect(ex, subset):
-    X, y = [], []
+    X, y, slots = [], [], []
     for img_path, reading in subset:
         lbl = labels_for(reading)
         if lbl is None:
             continue
         kwh_cells, w_cells = ex.cells(cv2.imread(str(img_path)))
-        for cell, label in zip(kwh_cells + w_cells, lbl[0] + lbl[1]):
+        for slot, (cell, label) in enumerate(zip(kwh_cells + w_cells, lbl[0] + lbl[1])):
             X.append(prep_cell(cell))
             y.append(label)
+            slots.append(slot)
     X = np.array(X, np.float32)
     X /= np.linalg.norm(X, axis=1, keepdims=True) + 1e-9
-    return X, np.array(y)
+    return X, np.array(y), np.array(slots)
 
 
 def main():
@@ -75,22 +76,29 @@ def main():
 
     # Zeitlicher Split: letzte 25% als Holdout
     cut = int(len(samples) * 0.75)
-    Xtr, ytr = collect(ex, samples[:cut])
-    Xte, yte = collect(ex, samples[cut:])
+    Xtr, ytr, str_ = collect(ex, samples[:cut])
+    Xte, yte, ste = collect(ex, samples[cut:])
     print(f"Digit-Zellen: {len(ytr)} Training, {len(yte)} Test")
     print("Klassen:", dict(sorted(Counter(ytr).items())))
 
-    def predict(X, k=3):
-        sim = X @ Xtr.T
-        top = np.argpartition(-sim, k, axis=1)[:, :k]
+    def predict(X, slots, k=3):
         pred, conf = [], []
-        for row, srow in zip(top, sim):
-            vals, cnt = np.unique(ytr[row], return_counts=True)
+        for feature, slot in zip(X, slots):
+            # Prefer examples from the same red LCD box. Classes never seen
+            # there fall back to examples from the other boxes, so a new digit
+            # can still be recognised while its position-specific set grows.
+            present = set(ytr[str_ == slot])
+            mask = (str_ == slot) | ~np.isin(ytr, list(present))
+            scores = feature @ Xtr[mask].T
+            kk = min(k, len(scores))
+            row = np.argpartition(-scores, kk - 1)[:kk]
+            labels, values = ytr[mask][row], scores[row]
+            vals, cnt = np.unique(labels, return_counts=True)
             pred.append(vals[cnt.argmax()])
-            conf.append(float(srow[row].mean()))
+            conf.append(float(values.mean()))
         return np.array(pred), np.array(conf)
 
-    pred, conf = predict(Xte)
+    pred, conf = predict(Xte, ste)
     acc = (pred == yte).mean()
     print(f"\nZellen-Accuracy (Holdout): {acc:.4f}  "
           f"(Conf min/median: {conf.min():.2f}/{np.median(conf):.2f})")
@@ -109,7 +117,9 @@ def main():
     # Finales Modell: ALLE Daten (Training+Holdout) als kNN-Basis
     Xall = np.concatenate([Xtr, Xte])
     yall = np.concatenate([ytr, yte])
-    np.savez_compressed(MODEL_FILE, X=Xall, y=yall, anchor=ex._anchor_ref)
+    sall = np.concatenate([str_, ste])
+    np.savez_compressed(MODEL_FILE, X=Xall, y=yall, slots=sall,
+                        anchor=ex._anchor_ref)
     print(f"Modell ({len(yall)} Zellen) -> {MODEL_FILE}")
 
 

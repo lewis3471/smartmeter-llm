@@ -24,6 +24,7 @@ class LocalReader:
         m = np.load(model_file, allow_pickle=False)
         self.X = m["X"]
         self.y = m["y"]
+        self.slots = m["slots"] if "slots" in m.files else None
         self.k = k
         self.ex = Extractor()
         self.ex._anchor_ref = m["anchor"]
@@ -31,13 +32,20 @@ class LocalReader:
     def _predict(self, cells) -> tuple[list[str], float]:
         F = np.array([prep_cell(c) for c in cells], np.float32)
         F /= np.linalg.norm(F, axis=1, keepdims=True) + 1e-9
-        sim = F @ self.X.T
-        top = np.argpartition(-sim, self.k, axis=1)[:, : self.k]
         pred, confs = [], []
-        for row, srow in zip(top, sim):
-            vals, cnt = np.unique(self.y[row], return_counts=True)
+        for slot, feature in enumerate(F):
+            if self.slots is None:  # backwards-compatible with shipped model
+                mask = np.ones(len(self.y), dtype=bool)
+            else:
+                present = set(self.y[self.slots == slot])
+                mask = (self.slots == slot) | ~np.isin(self.y, list(present))
+            scores = feature @ self.X[mask].T
+            k = min(self.k, len(scores))
+            row = np.argpartition(-scores, k - 1)[:k]
+            labels, values = self.y[mask][row], scores[row]
+            vals, cnt = np.unique(labels, return_counts=True)
             pred.append(str(vals[cnt.argmax()]))
-            confs.append(float(srow[row].mean()))
+            confs.append(float(values.mean()))
         return pred, float(min(confs))
 
     def read(self, img) -> tuple[dict, float]:
