@@ -27,6 +27,7 @@ export FAILSAFE_AFTER=$(bashio::config 'failsafe_after')
 export MAX_JUMP_W=$(bashio::config 'max_jump_w')
 export RETRAIN_HOUR=$(bashio::config 'retrain_hour')
 export LOG_LEVEL=$(bashio::config 'log_level')
+export STATE_WRITE_S=$(bashio::config 'state_write_s')
 # MQTT automatisch vom HA-Broker-Service (Mosquitto-Add-on)
 if bashio::services.available "mqtt"; then
     export MQTT_HOST=$(bashio::services "mqtt" "host")
