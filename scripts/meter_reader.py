@@ -455,6 +455,12 @@ def rebaseline(reading: dict, state: dict) -> bool:
     if state["rb_count"] < 4:
         return False
     state["rb_count"] = 0
+    # Gemini-Cooldown gilt auch hier — sonst hammert die Verifikation
+    # bei schnellen Zyklen die Quota weg
+    global _last_gemini_call
+    if time.time() - _last_gemini_call < GEMINI_COOLDOWN_S:
+        return False
+    _last_gemini_call = time.time()
     for attempt in (1, 2):
         try:
             gem = gemini_read(get_snapshot())
