@@ -263,6 +263,15 @@ class ContinuousCam:
             asyncio.wait_for(self._snap(), timeout=60), self.loop)
         return fut.result(timeout=70)
 
+    def reassert(self):
+        """Verbindung neu aufbauen (inkl. LED an + Belichtungs-Warm-up) —
+        z.B. wenn jemand die LED von aussen ausgeschaltet hat."""
+        try:
+            asyncio.run_coroutine_threadsafe(
+                self._teardown(light_off=False), self.loop).result(timeout=15)
+        except Exception:
+            pass
+
     def shutdown(self):
         try:
             asyncio.run_coroutine_threadsafe(
@@ -285,9 +294,30 @@ def get_snapshot() -> bytes:
     return requests.get(CAM_SNAPSHOT_URL, timeout=15).content
 
 
+GEMINI_COOLDOWN_S = int(os.environ.get("GEMINI_COOLDOWN_S", "30"))
+_last_gemini_call = 0.0
+
+
+def image_brightness(img: bytes) -> float:
+    try:
+        import cv2
+        import numpy as np
+        g = cv2.imdecode(np.frombuffer(img, np.uint8), cv2.IMREAD_GRAYSCALE)
+        return float(g.mean()) if g is not None else 0.0
+    except ImportError:
+        return 255.0  # ohne OpenCV keine Pruefung
+
+
 def read_meter(cycle: int = 0) -> tuple[dict, str]:
     """Snapshot holen und lesen. -> (Lesung, Quelle 'local c=0.97'/'gemini')."""
+    global _last_gemini_call
     img = get_snapshot()
+    # Schwarzes Bild = LED aus (externe Automation?) -> LED neu setzen,
+    # keinesfalls an Gemini schicken
+    if image_brightness(img) < 12:
+        if _cam is not None:
+            _cam.reassert()
+        raise ValueError("Bild dunkel — LED-Reassert ausgeloest")
     if _local_reader is not None:
         local, conf, err = None, 0.0, None
         try:
@@ -304,6 +334,12 @@ def read_meter(cycle: int = 0) -> tuple[dict, str]:
                 raise err
             return local, f"local c={conf:.2f} (unter Schwelle)"
         # hybrid: Gemini fragen (Kreuz-Check / niedrige Confidence / Fehler)
+        # Cooldown: bei Dauerfehlern im Sekundentakt nicht die Quota verbrennen
+        if not cross_check and time.time() - _last_gemini_call < GEMINI_COOLDOWN_S:
+            if local is not None:
+                return local, f"local c={conf:.2f} (Gemini-Cooldown)"
+            raise err if err else ValueError("unlesbar (Gemini-Cooldown)")
+        _last_gemini_call = time.time()
         try:
             gem = gemini_read(img)
         except Exception as e:
