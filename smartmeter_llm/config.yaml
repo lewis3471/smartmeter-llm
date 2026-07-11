@@ -1,5 +1,5 @@
 name: Smartmeter LLM Nulleinspeisung
-version: "1.2.1"
+version: "1.3.0"
 slug: smartmeter_llm
 description: >-
   ESP32-Cam liest den Stromzähler (lokales OCR + Gemini-Fallback),
@@ -39,7 +39,9 @@ options:
   failsafe_limit_w: 1999
   failsafe_after: 8
   max_jump_w: 5000
-  retrain_hour: 3
+  retrain_hour: -1
+  log_level: error
+  save_samples: false
 schema:
   gemini_api_keys: str
   gemini_models: str
@@ -67,3 +69,5 @@ schema:
   failsafe_after: int(1,100)
   max_jump_w: int(500,20000)
   retrain_hour: int(-1,23)
+  log_level: list(all|error|none)
+  save_samples: bool

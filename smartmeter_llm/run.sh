@@ -26,6 +26,7 @@ export FAILSAFE_LIMIT_W=$(bashio::config 'failsafe_limit_w')
 export FAILSAFE_AFTER=$(bashio::config 'failsafe_after')
 export MAX_JUMP_W=$(bashio::config 'max_jump_w')
 export RETRAIN_HOUR=$(bashio::config 'retrain_hour')
+export LOG_LEVEL=$(bashio::config 'log_level')
 # MQTT automatisch vom HA-Broker-Service (Mosquitto-Add-on)
 if bashio::services.available "mqtt"; then
     export MQTT_HOST=$(bashio::services "mqtt" "host")
@@ -35,7 +36,11 @@ if bashio::services.available "mqtt"; then
 fi
 export CAM_SNAPSHOT_URL=unused
 export STATE_FILE=/data/state.json
-export SAVE_SAMPLES_DIR=/data/samples
+if bashio::config.true 'save_samples'; then
+    export SAVE_SAMPLES_DIR=/data/samples
+else
+    export SAVE_SAMPLES_DIR=""
+fi
 
 bashio::log.info "Starte meter_reader (Modus $(bashio::config 'reader_mode'), Ziel $(bashio::config 'target_grid_w')W)"
 exec python3 -u /app/scripts/meter_reader.py

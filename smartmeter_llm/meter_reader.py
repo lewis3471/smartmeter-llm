@@ -19,7 +19,12 @@ from pathlib import Path
 socket.setdefaulttimeout(20)  # MQTT & Co. duerfen nie ewig haengen
 
 
-def print(*args, **kwargs):  # noqa: A001 — Log immer mit Zeitstempel
+def print(*args, **kwargs):  # noqa: A001 — Zeitstempel + LOG_LEVEL-Filter
+    level = os.environ.get("LOG_LEVEL", "all")  # all | error | none
+    if level == "none":
+        return
+    if level == "error" and kwargs.get("file") is not sys.stderr:
+        return
     builtins.print(time.strftime("[%m-%d %H:%M:%S]"), *args, **kwargs)
 
 import requests
@@ -351,8 +356,8 @@ def read_meter(cycle: int = 0) -> tuple[dict, str]:
                       file=sys.stderr)
                 return local, f"local c={conf:.2f} (Gemini-Ausfall)"
             raise
-        if local is not None and local != gem:
-            d = Path(SAVE_SAMPLES_DIR or "samples") / "disagreements"
+        if local is not None and local != gem and SAVE_SAMPLES_DIR:
+            d = Path(SAVE_SAMPLES_DIR) / "disagreements"
             d.mkdir(parents=True, exist_ok=True)
             stem = time.strftime("%Y%m%d_%H%M%S")
             (d / f"{stem}.jpg").write_bytes(img)
@@ -631,8 +636,8 @@ def maybe_retrain(state: dict):
     Trainingsdaten, Modell wird neu gebaut und im laufenden Betrieb geladen.
     Kein manueller Eingriff mehr noetig (Zaehler-Rollover, Lichtwechsel...)."""
     global _local_reader
-    if RETRAIN_HOUR < 0 or _local_reader is None:
-        return
+    if RETRAIN_HOUR < 0 or _local_reader is None or not SAVE_SAMPLES_DIR:
+        return  # ohne Sample-Sammlung gibt es nichts zu trainieren
     today = time.strftime("%Y-%m-%d")
     if state.get("retrain_day") == today or int(time.strftime("%H")) != RETRAIN_HOUR:
         return
