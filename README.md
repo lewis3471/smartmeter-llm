@@ -113,18 +113,20 @@ curl -u "admin:PASSWORT" http://192.168.178.42/api/limit/config \
 
 ### 4a. Als Home-Assistant-Add-on (empfohlen auf HAOS)
 
-Läuft direkt auf dem NUC in HA — mit Auto-Start, Watchdog und Logs in der UI:
+Dieses Repo ist ein **HA-Add-on-Repository** (`repository.yaml` +
+[`smartmeter_llm/`](smartmeter_llm/config.yaml)). Installation:
 
-1. Add-on-Ordner auf den NUC kopieren (z.B. per Samba-Add-on oder SSH):
-   `homeassistant/addon/smartmeter-llm/` → `/addons/smartmeter_llm/`
-   **plus** `scripts/meter_reader.py` und den Ordner `scripts/ocr/` (inkl.
-   `model.npz`) in denselben Ordner (Add-ons müssen self-contained sein)
-2. HA: Einstellungen → Add-ons → Add-on Store → ⋮ → „Nach Updates suchen",
-   dann erscheint „Smartmeter LLM Nulleinspeisung" unter *Lokale Add-ons*
-3. Installieren → Konfiguration ausfüllen (Gemini-Key, ESPHome-Key,
-   OpenDTU-Passwort — Rest ist vorbelegt) → Starten
-4. MQTT-Zugang holt sich das Add-on automatisch vom Mosquitto-Add-on,
-   sobald eins installiert ist — keine manuelle Konfiguration nötig
+1. HA: Einstellungen → Add-ons → Add-on Store → ⋮ → **Repositories** →
+   `https://github.com/lewis3471/smartmeter-llm` hinzufügen
+2. „Smartmeter LLM Nulleinspeisung" erscheint im Store → Installieren
+3. Konfiguration ausfüllen (ESPHome-API-Key, OpenDTU-Passwort, Gemini-Keys —
+   Rest ist vorbelegt) → Starten. MQTT kommt automatisch vom Mosquitto-Add-on
+4. **Updates**: Code ändern → `scripts/sync_addon.sh` → `version` in
+   `smartmeter_llm/config.yaml` erhöhen → committen/pushen. HA zeigt dann
+   einen Update-Knopf am Add-on
+
+Hinweis: Das OCR-Modell (`model.npz`) wird mitverteilt; nach einem
+Retraining ebenfalls sync + Versions-Bump.
 
 ### 4b. Alternativ: Docker auf beliebigem Host
 
