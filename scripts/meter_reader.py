@@ -627,7 +627,11 @@ def main(once: bool = False):
             if state["cycle"] % CONTROL_EVERY == 0:
                 limit, pv_w = control(w_ctrl, state)
             else:
-                limit, pv_w = state.get("limit_w"), None
+                limit = state.get("limit_w")
+                try:  # PV jede Sekunde loggen (Telemetrie fuer Regler v2)
+                    pv_w = get_inverter_power()
+                except Exception:
+                    pv_w = None
             if limit is not None:
                 state["limit_w"] = limit
             publish(reading, "ok", limit)
