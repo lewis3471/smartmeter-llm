@@ -1,88 +1,119 @@
 # smartmeter-llm
 
-Nulleinspeisung & Stromverbrauchs-Logging: Eine ESP32-Cam fotografiert alle 90 s das
-LCD des Stromzählers, **Gemini Flash** liest den Zählerstand und die aktuelle Leistung
-per Vision-API aus, ein Plausibilitätsfilter verwirft Ausreißer, Home Assistant loggt
-die Werte und **OpenDTU** regelt den Hoymiles-Inverter so nach, dass ~0 W (genauer:
-+50 W Bezug) am Netzanschluss anliegen.
+Nulleinspeisung & Stromverbrauchs-Logging im **Sekundentakt**: Eine ESP32-Cam
+(Dauerverbindung, LED gedimmt an) fotografiert das LCD des Stromzählers alle
+~0,5 s, ein **lokales kNN-OCR** liest Zählerstand und Leistung in <10 ms
+(Gemini nur noch als Kreuz-Check/Fallback), ein Plausibilitätsfilter verwirft
+Ausreißer, Home Assistant loggt per MQTT-Discovery, und ein asymmetrischer
+Regler steuert den Hoymiles-Inverter über **OpenDTU**: bei Netzbezug sofort
+und ungebremst hochregeln, bei Über-Einspeisung sanft senken — Ziel −50 W
+(leichte Einspeisung), kein Cent Netzbezug, wenn die Sonne liefern kann.
 
 ## Architektur
 
 ```
-┌──────────────┐  Snapshot   ┌──────────────────┐  JSON {"kwh","w"}
-│  ESP32-Cam   │────────────▶│  meter_reader.py │◀──────────────────┐
-│ am Zähler-LCD│   (JPEG)    │   (Docker, NUC)  │    Gemini Flash   │
-└──────────────┘             └────────┬─────────┘   (Free Tier)     │
-                                      │ ▲                           │
-                     MQTT             │ │ Plausibilitätsfilter      │
-              smartmeter/kwh,w,status │ │ + Regler (±200 W/Zyklus)  │
-                                      ▼ │                           │
-┌──────────────┐             ┌──────────────────┐    HTTP API   ┌───┴────────┐
+┌──────────────┐ ESPHome API ┌──────────────────┐  Kreuz-Check ~5min
+│  ESP32-Cam   │────────────▶│  meter_reader.py │◀ ─ ─ ─ ─ ─ ─ ─ ─ ─┐
+│ am Zähler-LCD│ (~0,5s/Frame│  lokales kNN-OCR │    Gemini Flash    │
+│ LED dauerhaft│  LED-Steuer)│  (<10ms, c≥0.85) │    (Fallback)      │
+└──────────────┘             └────────┬─────────┘                    │
+                                      │ ▲ Plausibilitätsfilter,      │
+                     MQTT             │ │ Median-3, Re-Baseline,     │
+              smartmeter/kwh,w,status │ │ asym. Regler (v3)          │
+                                      ▼ │                            │
+┌──────────────┐             ┌──────────────────┐    HTTP API   ┌────┴───────┐
 │Home Assistant│◀────────────│   MQTT Broker    │   /api/limit  │  OpenDTU   │
-│ Energie-Dash │             └──────────────────┘──────────────▶│ + Hoymiles │
+│ Energie-Dash │  Discovery  └──────────────────┘──────────────▶│ + Hoymiles │
 └──────────────┘                                                └────────────┘
 ```
 
-Alle 90 Sekunden (Zyklus):
+Jeder Zyklus (~0,4–0,5 s, `INTERVAL_S=0`):
 
-1. **Snapshot** von der ESP32-Cam holen
-2. **Gemini** liest das LCD — Prompt: `Lies das LCD. Antworte nur: {"kwh":int,"w":int}`
-3. **Plausibilitätsfilter** (s.u.) — bei Verwurf: letzten Wert halten
-4. Werte per **MQTT** an Home Assistant (Logging, Energie-Dashboard)
-5. **Regler**: neues Inverter-Limit = PV-Leistung + Netz-Leistung − 50 W Ziel-Bezug,
-   gedeckelt auf ±200 W pro Zyklus, non-persistent an OpenDTU
+1. **Frame** über die persistente ESPHome-Verbindung (Belichtung bleibt
+   eingependelt, kein Warm-up)
+2. **Lokales OCR** liest `{"kwh","w"}`; bei Confidence < `OCR_MIN_CONF`,
+   Lesefehler oder als Kreuz-Check (alle `CROSS_CHECK_EVERY` Zyklen) fragt
+   der Hybrid-Modus **Gemini** — Abweichungen werden Trainingsdaten
+3. **Plausibilitätsfilter** + Median-3 — bei Verwurf: letzten Wert halten;
+   hartnäckig konsistente „unplausible" Werte heilt die **Re-Baseline**
+   (Gemini-Verifikation)
+4. **MQTT** an Home Assistant (Auto-Discovery, 4 Sensoren)
+5. **Regler v3** (asymmetrisch, absolut): `Limit = PV + Netz − Ziel` —
+   hoch sofort in einem Befehl, runter nur bei echter Über-Einspeisung
+   mit Totzeit-Guard
 
 ## Komponenten
 
 | Komponente | Adresse | Zugang |
 |---|---|---|
-| ESP32-Cam (ESPHome) | `192.168.178.58` — Device `esp32-cam-electricity-meter` | Snapshot: `http://192.168.178.58:8080/snapshot` |
+| ESP32-Cam (ESPHome) | `192.168.178.58` — Device `esp32-cam-electricity-meter` | Native API Port 6053, Key in `.env` |
 | OpenDTU | `http://192.168.178.42` | siehe `.env` (`OPENDTU_USER`/`OPENDTU_PASS`) |
-| Home Assistant | NUC | MQTT-Broker (Mosquitto-Add-on) |
-| Gemini API | `generativelanguage.googleapis.com` | API-Key in `.env`, Modell `gemini-3.1-flash-lite` |
+| Home Assistant | NUC (`192.168.178.64`) | MQTT-Broker (Mosquitto-Add-on), Zugang via `.env` bzw. automatisch im Add-on |
+| Gemini API (nur Fallback) | `generativelanguage.googleapis.com` | Keys in `.env`, Rotation über Modelle+Keys |
 
 **Alle Credentials liegen in `.env`** (gitignored, Vorlage: [`.env.example`](.env.example)).
 
-## Gemini Free Tier
+## Leseweg: lokales OCR zuerst, Gemini als Berater
 
-- 1.000 Requests/Tag gratis → 90 s-Takt = ~960 Calls/Tag ✅ (**Kosten: 0 €**)
-- Trade-off: Google darf Free-Tier-Inhalte zur Produktverbesserung nutzen
-- Temperature 0, Thinking aus (`thinkingBudget: 0`) — Denk-Tokens kosten und bringen
-  beim LCD-Ablesen nichts
-- Prompt minimal halten (eine Zeile), Antwort ist reines JSON
+Primärleser ist das **lokale kNN-OCR** (siehe unten) — kostenlos, <10 ms,
+keine Rate-Limits, dadurch der Sekundentakt. Gemini (`-latest`-Aliasse mit
+Fallback-Rotation über Modelle und mehrere API-Keys bei 429/503) dient nur
+noch als:
 
-## Plausibilitätsfilter (Pflicht bei probabilistischem Sensor)
+- **Kreuz-Check** alle `CROSS_CHECK_EVERY` Zyklen (~5 min)
+- **Fallback** bei niedriger OCR-Confidence (gedrosselt via
+  `GEMINI_COOLDOWN_S`, dunkle Bilder werden gar nicht erst gesendet)
+- **Label-Quelle**: Jede bestätigte Lesung und jede Abweichung wird
+  Trainingsmaterial — das OCR verbessert sich selbst
+
+Free-Tier-Budget: ~300–500 Calls/Tag, weit unter den Limits. Kosten: 0 €.
+
+## Plausibilitätsfilter & Selbstheilung
 
 Implementiert in [`scripts/meter_reader.py`](scripts/meter_reader.py):
 
-- `|W| > 20 kW` → verwerfen
-- `|ΔW|` gegenüber letzter Lesung `> 5 kW` (`MAX_JUMP_W`) → verwerfen
-- Zählerstand muss **monoton steigen**; Rückwärtssprung oder `> +10 kWh` → verwerfen
-- Kaputtes JSON / Timeout → letzten Wert halten
-- **3 Fehler in Folge → Failsafe**: Inverter auf 200 W (`FAILSAFE_LIMIT_W`) statt Vollgas
-- Quervergleich PV-Leistung (aus OpenDTU-Livedata) vs. Zählersaldo steckt implizit im
-  Regler — das Limit folgt nie schneller als ±200 W/Zyklus
+- `|W| > 20 kW`, `|ΔW| > MAX_JUMP_W`, LCD-Segmenttest (888888, lokal
+  erkannt), `kwh ≤ 0` → verwerfen
+- Zählerstand **monoton steigend**, max. +2 kWh Sprung
+- **Median-3** als Regler-Eingang: einzelne Übergangs-Frames regeln nicht
+- **Re-Baseline**: dieselbe „unplausible" kWh 4× in Folge → Gemini
+  verifiziert (2 Versuche, mit Cooldown) → bei Bestätigung neuer Stand.
+  Heilt vergiftete Zustände, statt dauerhaft zu blockieren
+- **Dunkelbild-Erkennung**: LED aus (z.B. fremde Automation) → Reassert
+  in ~4 s, kein Gemini-Call für schwarze Bilder
+- `FAILSAFE_AFTER` Fehler in Folge → `FAILSAFE_LIMIT_W`
 
-## Regelung
+## Regelung (v3: asymmetrisch, absolut)
 
-Bewusst träge ausgelegt (bei 90 s-Takt pendelt sonst nichts ein):
+Design-Prinzip: Die Messung ist vertrauenswürdig (OCR sekündlich, PV
+sekündlich) und die Kosten sind asymmetrisch — Netzbezug kostet Geld,
+Einspeisung nicht. Details: [docs/regler-v2-plan.md](docs/regler-v2-plan.md)
 
-- Zielwert **+50 W Netzbezug**, nicht exakt 0 W (`TARGET_GRID_W`)
-- Limit-Änderung max. **±200 W pro Zyklus** (`MAX_STEP_W`)
-- Hysterese 25 W — kleinere Korrekturen werden nicht gesendet (`HYSTERESIS_W`)
-- Limit wird **non-persistent** gesetzt (`limit_type: 0`) — schont den Flash von
-  DTU und Inverter
-- Grenzen: `MIN_LIMIT_W` (50 W) bis `MAX_LIMIT_W` (1500 W, an HMS-Modell anpassen)
+- `wanted = PV + Netzleistung − TARGET_GRID_W` — das physikalisch korrekte
+  Limit direkt aus der Messung, kein Herantasten
+- **Hoch: sofort, ungebremst, ein Befehl** — auch bei Wolken bleibt das
+  Limit auf Bedarfsniveau vorpositioniert (Sonnenrückkehr deckt ohne Anlauf)
+- **Runter: nur bei echter Über-Einspeisung** (unter `TARGET − DEADBAND_W`),
+  mit Totzeit-Guard `LATENCY_S` (~8 s: OpenDTU-Funk + MPPT + LCD + Median)
+- Limit non-persistent (`limit_type: 0`) — schont den Flash von DTU/Inverter
+- Grenzen: `MIN_LIMIT_W` bis `MAX_LIMIT_W` (2000 W beim HMS-2000-4T)
+- Gemessene Reaktionskette: Erkennung ≤1 s + Funk/MPPT 2–6 s
 
 ## Setup
 
 ### 1. ESP32-Cam (ESPHome)
 
-Das Script holt das Bild über die **ESPHome Native API** (Port 6053, verschlüsselt):
+Das Script holt Bilder über die **ESPHome Native API** (Port 6053, verschlüsselt):
 `ESPHOME_HOST` + `ESPHOME_API_KEY` (Base64-Key aus dem ESPHome Builder) in `.env`.
-Ablauf pro Zyklus: Blitz-LED an → Belichtung einpendeln lassen (5 Warm-up-Frames,
-die Auto-Exposure passt sich nur während laufender Aufnahmen an!) → letzten Frame
-nutzen → LED aus. Test: `.venv/bin/python scripts/fetch_snapshot_esphome.py test.jpg`
+
+- `CAM_MODE=continuous` (Standard): persistente Verbindung, LED dauerhaft
+  gedimmt an (`LED_BRIGHTNESS`, 45 %), Belichtung bleibt eingependelt →
+  ~0,5 s pro Frame, Sekundentakt möglich. Chip-Temperatur dabei ~62 °C (ok);
+  Sensor via `homeassistant/esphome-camera-additions.yaml`
+- `CAM_MODE=flash`: LED pro Zyklus an/aus mit Warm-up-Frames — für lange
+  Intervalle (die Auto-Exposure adaptiert nur während laufender Aufnahmen!)
+
+Test: `.venv/bin/python scripts/fetch_snapshot_esphome.py test.jpg`
 
 Fallback: `esp32_camera_web_server` (Port 8080, mode snapshot) im ESPHome-YAML
 aktivieren und `CAM_SNAPSHOT_URL` nutzen — dann entfällt aber die LED-Steuerung.
@@ -113,18 +144,20 @@ curl -u "admin:PASSWORT" http://192.168.178.42/api/limit/config \
 
 ### 4a. Als Home-Assistant-Add-on (empfohlen auf HAOS)
 
-Läuft direkt auf dem NUC in HA — mit Auto-Start, Watchdog und Logs in der UI:
+Dieses Repo ist ein **HA-Add-on-Repository** (`repository.yaml` +
+[`smartmeter_llm/`](smartmeter_llm/config.yaml)). Installation:
 
-1. Add-on-Ordner auf den NUC kopieren (z.B. per Samba-Add-on oder SSH):
-   `homeassistant/addon/smartmeter-llm/` → `/addons/smartmeter_llm/`
-   **plus** `scripts/meter_reader.py` und den Ordner `scripts/ocr/` (inkl.
-   `model.npz`) in denselben Ordner (Add-ons müssen self-contained sein)
-2. HA: Einstellungen → Add-ons → Add-on Store → ⋮ → „Nach Updates suchen",
-   dann erscheint „Smartmeter LLM Nulleinspeisung" unter *Lokale Add-ons*
-3. Installieren → Konfiguration ausfüllen (Gemini-Key, ESPHome-Key,
-   OpenDTU-Passwort — Rest ist vorbelegt) → Starten
-4. MQTT-Zugang holt sich das Add-on automatisch vom Mosquitto-Add-on,
-   sobald eins installiert ist — keine manuelle Konfiguration nötig
+1. HA: Einstellungen → Add-ons → Add-on Store → ⋮ → **Repositories** →
+   `https://github.com/lewis3471/smartmeter-llm` hinzufügen
+2. „Smartmeter LLM Nulleinspeisung" erscheint im Store → Installieren
+3. Konfiguration ausfüllen (ESPHome-API-Key, OpenDTU-Passwort, Gemini-Keys —
+   Rest ist vorbelegt) → Starten. MQTT kommt automatisch vom Mosquitto-Add-on
+4. **Updates**: Code ändern → `scripts/sync_addon.sh` → `version` in
+   `smartmeter_llm/config.yaml` erhöhen → committen/pushen. HA zeigt dann
+   einen Update-Knopf am Add-on
+
+Hinweis: Das OCR-Modell (`model.npz`) wird mitverteilt; nach einem
+Retraining ebenfalls sync + Versions-Bump.
 
 ### 4b. Alternativ: Docker auf beliebigem Host
 
@@ -132,7 +165,7 @@ Läuft direkt auf dem NUC in HA — mit Auto-Start, Watchdog und Logs in der UI:
 cp .env.example .env   # Werte eintragen (bzw. vorhandene .env nutzen)
 touch state.json
 docker compose up -d --build
-docker compose logs -f   # kwh=35698 w=-1151 limit=1100 ...
+docker compose logs -f   # kwh=35708 w=-52 pv=1456 limit=1503 [local c=0.97]
 ```
 
 Erst ohne `INVERTER_SERIAL` laufen lassen → nur Lesen + MQTT-Logging, keine

@@ -1,57 +1,68 @@
 name: Smartmeter LLM Nulleinspeisung
-version: "1.0.0"
+version: "1.1.0"
 slug: smartmeter_llm
-description: ESP32-Cam -> Gemini liest Stromzaehler -> OpenDTU-Limit-Regelung
+description: >-
+  ESP32-Cam liest den Stromzähler (lokales OCR + Gemini-Fallback),
+  regelt den Hoymiles-Inverter via OpenDTU auf Nulleinspeisung
+url: https://github.com/lewis3471/smartmeter-llm
 arch:
   - amd64
   - aarch64
 init: false
 startup: application
 boot: auto
+watchdog: ""
 services:
   - mqtt:want
-watchdog: ""
 options:
   gemini_api_keys: ""
   gemini_models: gemini-flash-lite-latest,gemini-flash-latest,gemini-2.5-flash-lite,gemini-2.5-flash
   reader_mode: hybrid
   ocr_min_conf: 0.85
-  cross_check_every: 20
-  led_brightness: 0.45
-  cam_frames: 6
+  cross_check_every: 300
+  gemini_cooldown_s: 30
   esphome_host: 192.168.178.58
   esphome_api_key: ""
+  cam_mode: continuous
+  led_brightness: 0.45
+  cam_frames: 6
   opendtu_url: http://192.168.178.42
   opendtu_user: admin
   opendtu_pass: ""
   inverter_serial: 1164a00ab8d4
-  interval_s: 30
-  target_grid_w: -100
-  max_step_w: 1000
-  hysteresis_w: 25
+  interval_s: 0
+  target_grid_w: -50
+  deadband_w: 15
+  latency_s: 8
+  control_every: 1
   min_limit_w: 50
   max_limit_w: 2000
   failsafe_limit_w: 1999
+  failsafe_after: 8
   max_jump_w: 5000
 schema:
   gemini_api_keys: str
   gemini_models: str
   reader_mode: list(gemini|local|hybrid)
   ocr_min_conf: float(0,1)
-  cross_check_every: int(1,1000)
-  led_brightness: float(0.05,1)
-  cam_frames: int(1,10)
+  cross_check_every: int(1,100000)
+  gemini_cooldown_s: int(0,3600)
   esphome_host: str
   esphome_api_key: str
+  cam_mode: list(flash|continuous)
+  led_brightness: float(0.05,1)
+  cam_frames: int(1,10)
   opendtu_url: str
   opendtu_user: str
   opendtu_pass: password
   inverter_serial: str
-  interval_s: int(10,3600)
+  interval_s: int(0,3600)
   target_grid_w: int(-800,1000)
-  max_step_w: int(25,2000)
-  hysteresis_w: int(0,500)
+  deadband_w: int(0,500)
+  latency_s: float(0,60)
+  control_every: int(1,1000)
   min_limit_w: int(0,2000)
   max_limit_w: int(50,2000)
   failsafe_limit_w: int(0,2000)
+  failsafe_after: int(1,100)
   max_jump_w: int(500,20000)
