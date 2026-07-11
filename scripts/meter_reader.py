@@ -25,9 +25,9 @@ def print(*args, **kwargs):  # noqa: A001 — Log immer mit Zeitstempel
 import requests
 
 try:
-    import paho.mqtt.publish as mqtt_publish
+    import paho.mqtt.client as mqtt_client
 except ImportError:
-    mqtt_publish = None
+    mqtt_client = None
 
 try:
     from aioesphomeapi import APIClient
@@ -487,24 +487,46 @@ def set_limit(watts: int):
     r.raise_for_status()
 
 
+_mqtt = None
+
+
+def _get_mqtt():
+    """Persistente MQTT-Verbindung mit Auto-Reconnect (statt Connect-Flut
+    im Sekundentakt, die den Broker irgendwann wegwuergt)."""
+    global _mqtt
+    if _mqtt is None and MQTT_HOST and mqtt_client is not None:
+        c = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION2,
+                               client_id="smartmeter-llm")
+        if MQTT_AUTH:
+            c.username_pw_set(MQTT_AUTH["username"], MQTT_AUTH["password"])
+        c.reconnect_delay_set(min_delay=1, max_delay=30)
+        c.connect_async(MQTT_HOST, MQTT_PORT, keepalive=30)
+        c.loop_start()
+        _mqtt = c
+    return _mqtt
+
+
 def publish(reading: dict | None, status: str, limit: int | None):
-    if not MQTT_HOST or mqtt_publish is None:
+    c = _get_mqtt()
+    if c is None:
         return
-    msgs = [(f"{TOPIC}/status", status, 0, True)]
+    msgs = [(f"{TOPIC}/status", status)]
     if reading:
-        msgs += [(f"{TOPIC}/kwh", str(reading["kwh"]), 0, True),
-                 (f"{TOPIC}/w", str(reading["w"]), 0, True)]
+        msgs += [(f"{TOPIC}/kwh", str(reading["kwh"])),
+                 (f"{TOPIC}/w", str(reading["w"]))]
     if limit is not None:
-        msgs.append((f"{TOPIC}/limit_w", str(limit), 0, True))
+        msgs.append((f"{TOPIC}/limit_w", str(limit)))
     try:
-        mqtt_publish.multiple(msgs, hostname=MQTT_HOST, port=MQTT_PORT, auth=MQTT_AUTH)
+        for topic, payload in msgs:
+            c.publish(topic, payload, retain=True)
     except Exception as e:
         print(f"MQTT-Fehler: {e}", file=sys.stderr)
 
 
 def publish_discovery():
     """HA-MQTT-Discovery: Sensoren melden sich selbst an (retained configs)."""
-    if not MQTT_HOST or mqtt_publish is None:
+    c = _get_mqtt()
+    if c is None:
         return
     device = {
         "identifiers": ["smartmeter_llm"],
@@ -534,7 +556,13 @@ def publish_discovery():
         msgs.append((f"homeassistant/sensor/smartmeter_llm/{key}/config",
                      json.dumps(cfg), 0, True))
     try:
-        mqtt_publish.multiple(msgs, hostname=MQTT_HOST, port=MQTT_PORT, auth=MQTT_AUTH)
+        import time as _t
+        for _ in range(50):  # auf Async-Connect warten
+            if c.is_connected():
+                break
+            _t.sleep(0.1)
+        for topic, payload, qos, retain in msgs:
+            c.publish(topic, payload, qos=qos, retain=retain)
         print("MQTT-Discovery veröffentlicht (4 Sensoren)")
     except Exception as e:
         print(f"MQTT-Discovery fehlgeschlagen: {e}", file=sys.stderr)
