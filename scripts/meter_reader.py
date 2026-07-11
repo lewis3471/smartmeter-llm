@@ -578,6 +578,7 @@ def main(once: bool = False):
 
     state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
     publish_discovery()
+    w_hist: list[int] = []  # Median-3: einzelner Ausreisser-Frame regelt nicht
     while True:
         limit = None
         try:
@@ -592,8 +593,11 @@ def main(once: bool = False):
                 raise ValueError(f"verworfen: {reason}")
             state.update(reading)
             state["failures"] = 0
+            w_hist.append(reading["w"])
+            del w_hist[:-3]
+            w_ctrl = sorted(w_hist)[len(w_hist) // 2]
             if state["cycle"] % CONTROL_EVERY == 0:
-                limit, pv_w = control(reading["w"], state)
+                limit, pv_w = control(w_ctrl, state)
             else:
                 limit, pv_w = state.get("limit_w"), None
             if limit is not None:
