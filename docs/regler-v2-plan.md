@@ -49,12 +49,32 @@ Prinzip: **viele kleine Schritte statt seltener großer.**
 Erwartung: Amplitude von ±50 W auf ±10–15 W, dann `TARGET_GRID_W` von
 −50 schrittweise Richtung −10…0 W.
 
-## Phase 3 — Prädiktion (nur falls Phase 2 nicht reicht)
+## Phase 3 — Wellenpaket-Feedforward (konkretisiert 2026-07-11)
 
-- Periodische Lasten (Kühlschrank-Zyklen) per Autokorrelation über mehrere
-  Tage lernen und vorhalten. Erwarteter Zusatznutzen klein (±15 → ±8 W) —
-  erst angehen, wenn PI ausgereizt und der Bedarf belegt ist.
-- Explizit NICHT geplant: Wolken-/PV-Prognose (siehe Diagnose).
+Befund verfeinert: Die Störlast ist eine **Wellenpaketsteuerung mit festem
+~10-s-Raster** (Tal-Abstände 9/10/19/21/30/31 s = Vielfache von 10;
+Paketleistung ~40–60 W, Duty-Cycle langsam moduliert). Ein festes Raster
+ist prädizierbar — Design:
+
+1. **Raster-Sync (Software-PLL):** Schaltflanken im 1-s-W-Signal erkennen
+   (|ΔW| 30–80 W binnen 1–2 s), daraus die Phase des 10-s-Gitters gleitend
+   schätzen. Flanken kommen nur auf dem Gitter → Phase rastet schnell ein.
+2. **Amplituden-Schätzer:** Pakethöhe als EMA über die letzten Flanken
+   (hier ist EMA das richtige Werkzeug: Schätzung, nicht Regelung).
+3. **Duty-Vorhersage:** An/Aus-Muster der letzten N Fenster; Vorhersage =
+   Persistenz (nächstes Fenster wie das letzte) — bei langsamer
+   Duty-Modulation fast immer richtig.
+4. **Vorhalt:** Limit-Korrektur ~6 s (gemessene Kreis-Latenz) VOR der
+   erwarteten Flanke senden, damit die Inverter-Reaktion mit der Flanke
+   zusammenfällt. Ohne Raster-Sync unmoeglich, mit trivial.
+5. **Aktivierung nur wenn das Limit bindet** (sonst wirkungslos) und die
+   PLL eingerastet ist (Konfidenz-Gate); sonst reiner PI-Betrieb.
+
+Realistisches Ziel: Sägezahn-Restamplitude halbieren (±25 → ±10–12 W);
+die 6-s-Latenz mit Jitter setzt die Untergrenze.
+
+Explizit NICHT geplant: Wolken-/PV-Prognose (PV war während der Analyse
+konstant; im ungedrosselten Betrieb regelt ohnehin niemand).
 
 ## Messkriterien
 
