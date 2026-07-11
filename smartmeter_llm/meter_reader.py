@@ -623,6 +623,61 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     return current, pv_w
 
 
+RETRAIN_HOUR = int(os.environ.get("RETRAIN_HOUR", "3"))  # -1 = aus
+
+
+def maybe_retrain(state: dict):
+    """Naechtliches Auto-Retraining: Gemini-bestaetigte Disagreements werden
+    Trainingsdaten, Modell wird neu gebaut und im laufenden Betrieb geladen.
+    Kein manueller Eingriff mehr noetig (Zaehler-Rollover, Lichtwechsel...)."""
+    global _local_reader
+    if RETRAIN_HOUR < 0 or _local_reader is None:
+        return
+    today = time.strftime("%Y-%m-%d")
+    if state.get("retrain_day") == today or int(time.strftime("%H")) != RETRAIN_HOUR:
+        return
+    state["retrain_day"] = today
+    try:
+        root = Path(SAVE_SAMPLES_DIR or "samples")
+        dst = root / "auto"
+        dst.mkdir(parents=True, exist_ok=True)
+        ref_kwh = state.get("kwh", 0)
+        n = 0
+        for jf in sorted((root / "disagreements").glob("*.json")):
+            if (dst / f"{jf.stem}.json").exists():
+                continue
+            d = json.loads(jf.read_text())
+            gem = d.get("gemini")
+            if not gem or not isinstance(gem.get("kwh"), int):
+                continue
+            if abs(gem["kwh"] - ref_kwh) > 50 or abs(gem.get("w", 0)) > 20000:
+                continue
+            if 888888 in (gem["kwh"], gem.get("w")):
+                continue
+            (dst / f"{jf.stem}.jpg").write_bytes(
+                jf.with_suffix(".jpg").read_bytes())
+            (dst / f"{jf.stem}.json").write_text(json.dumps(gem))
+            n += 1
+        import subprocess
+        r = subprocess.run(
+            [sys.executable, str(Path(__file__).parent / "ocr" / "train.py"),
+             str(root)],
+            capture_output=True, text=True, timeout=1800,
+        )
+        summary = [ln for ln in r.stdout.splitlines()
+                   if "Accuracy" in ln or "End-to-End" in ln]
+        if r.returncode == 0:
+            from local_reader import LocalReader
+            _local_reader = LocalReader()  # neues model.npz laden
+            print(f"Auto-Retraining ok (+{n} Disagreements): "
+                  f"{' | '.join(summary)}")
+        else:
+            print(f"Auto-Retraining fehlgeschlagen: {r.stderr[-200:]}",
+                  file=sys.stderr)
+    except Exception as e:
+        print(f"Auto-Retraining Fehler: {e}", file=sys.stderr)
+
+
 def main(once: bool = False):
     import atexit
     import signal
@@ -686,6 +741,7 @@ def main(once: bool = False):
                 # normal — erst anhaltende Fehler als "retry" melden
                 publish(None, "retry", None)
         STATE_FILE.write_text(json.dumps(state))
+        maybe_retrain(state)
         if once:
             break
         time.sleep(INTERVAL_S)
