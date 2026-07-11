@@ -43,7 +43,7 @@ def clean(samples):
     kwhs = sorted(s[1]["kwh"] for s in samples)
     med = kwhs[len(kwhs) // 2]
     good = [s for s in samples
-            if abs(s[1]["kwh"] - med) <= 50 and abs(s[1]["w"]) <= 20000]
+            if abs(s[1]["kwh"] - med) <= 50 and abs(s[1].get("w", 0)) <= 20000]
     return good, len(samples) - len(good)
 
 
@@ -103,16 +103,19 @@ def main():
     print(f"\nZellen-Accuracy (Holdout): {acc:.4f}  "
           f"(Conf min/median: {conf.min():.2f}/{np.median(conf):.2f})")
 
-    n_img = len(yte) // 11
-    pv, tv = pred.reshape(n_img, 11), yte.reshape(n_img, 11)
-    ok = int((pv == tv).all(axis=1).sum())
     FAILS_DIR.mkdir(exist_ok=True)
-    for i, (img_path, _) in enumerate(samples[cut:cut + n_img]):
-        if not (pv[i] == tv[i]).all():
-            cv2.imwrite(str(FAILS_DIR / img_path.name), cv2.imread(str(img_path)))
-            print(f"  FAIL {img_path.name}: {''.join(pv[i][:6])}|{''.join(pv[i][6:])}"
-                  f" vs {''.join(tv[i][:6])}|{''.join(tv[i][6:])}")
-    print(f"End-to-End (beide Zeilen exakt): {ok}/{n_img}")
+    if len(yte) % 11 == 0:  # kWh-only manual labels have six cells
+        n_img = len(yte) // 11
+        pv, tv = pred.reshape(n_img, 11), yte.reshape(n_img, 11)
+        ok = int((pv == tv).all(axis=1).sum())
+        for i, (img_path, _) in enumerate(samples[cut:cut + n_img]):
+            if not (pv[i] == tv[i]).all():
+                cv2.imwrite(str(FAILS_DIR / img_path.name), cv2.imread(str(img_path)))
+                print(f"  FAIL {img_path.name}: {''.join(pv[i][:6])}|{''.join(pv[i][6:])}"
+                      f" vs {''.join(tv[i][:6])}|{''.join(tv[i][6:])}")
+        print(f"End-to-End (beide Zeilen exakt): {ok}/{n_img}")
+    else:
+        print("End-to-End: übersprungen (kWh-only Labels im Holdout)")
 
     # Finales Modell: ALLE Daten (Training+Holdout) als kNN-Basis
     Xall = np.concatenate([Xtr, Xte])

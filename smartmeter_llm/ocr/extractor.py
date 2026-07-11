@@ -108,11 +108,15 @@ def prep_cell(cell: np.ndarray) -> np.ndarray:
 
 def labels_for(reading: dict) -> tuple[list[str], list[str]] | None:
     """Zellen-Labels aus einer Gesamt-Lesung ableiten (None = nicht abbildbar)."""
-    kwh, w = reading["kwh"], reading["w"]
+    kwh = reading["kwh"]
     if not (0 <= kwh <= 999999):
         return None
     kwh_lbl = list(f"{kwh:06d}")
-    w_str = str(w)
+    # Manually verified recovery samples may label only the kWh row.  This is
+    # safer than manufacturing a watt label when repairing a kWh OCR error.
+    if "w" not in reading:
+        return kwh_lbl, []
+    w_str = str(reading["w"])
     if len(w_str) > 5:
         return None
     w_lbl = ["_"] * (5 - len(w_str)) + list(w_str)
