@@ -650,7 +650,9 @@ def main(once: bool = False):
                 except Exception as e2:
                     print(f"Failsafe fehlgeschlagen: {e2}", file=sys.stderr)
                     publish(None, "error", None)
-            else:
+            elif state["failures"] >= 3:
+                # Einzelne verworfene Frames (Segmenttest-Rotation) sind
+                # normal — erst anhaltende Fehler als "retry" melden
                 publish(None, "retry", None)
         STATE_FILE.write_text(json.dumps(state))
         if once:
