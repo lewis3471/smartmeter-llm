@@ -115,18 +115,10 @@ TOPIC = os.environ.get("MQTT_TOPIC_PREFIX", "smartmeter")
 
 INTERVAL_S = int(os.environ.get("INTERVAL_S", "90"))
 TARGET_GRID_W = int(os.environ.get("TARGET_GRID_W", "50"))
-MAX_STEP_W = int(os.environ.get("MAX_STEP_W", "200"))  # Slew-Limit pro Regeltick
-# --- PI-Regler (Velocity-Form) ---
-PI_KP = float(os.environ.get("PI_KP", "0.4"))
-PI_KI = float(os.environ.get("PI_KI", "0.05"))          # 1/s
-PI_DEADBAND_W = int(os.environ.get("PI_DEADBAND_W", "5"))
-# Regelkreis-Totzeit Limit->Wirkung (gemessen ~6s; enthaelt OpenDTU-Funk,
-# Inverter-MPPT-Hochregeln, LCD, Median-3 — spaeter praeziser bestimmen!)
-LATENCY_S = float(os.environ.get("LATENCY_S", "6"))
-INFLIGHT_MIN_W = int(os.environ.get("INFLIGHT_MIN_W", "50"))
-# Anti-Windup: Limit max. so weit ueber aktueller PV — wenn die Sonne die
-# Grenze ist (nicht das Limit), darf der Integrator nicht davonlaufen
-PI_HEADROOM_W = int(os.environ.get("PI_HEADROOM_W", "150"))
+DEADBAND_W = int(os.environ.get("DEADBAND_W", "15"))
+# Regelkreis-Totzeit Limit->Wirkung (gemessen ~6-8s inkl. MPPT/LCD/Median);
+# gilt nur fuer Abwaerts-Korrekturen — hoch geht immer sofort
+LATENCY_S = float(os.environ.get("LATENCY_S", "8"))
 MIN_LIMIT_W = int(os.environ.get("MIN_LIMIT_W", "50"))
 MAX_LIMIT_W = int(os.environ.get("MAX_LIMIT_W", "1500"))
 FAILSAFE_LIMIT_W = int(os.environ.get("FAILSAFE_LIMIT_W", "200"))
@@ -579,12 +571,18 @@ def publish_discovery():
 
 
 def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
-    """PI-Regler (Velocity-Form) mit In-Flight-Guard und Slew-Limit.
+    """Asymmetrischer Absolut-Regler ("GIB IHM"-Politik):
 
-    grid_w > 0 = Bezug. Fehler e = grid_w - TARGET_GRID_W; Limit-Inkrement
-    dL = Kp*(e - e_prev) + Ki*dt*e. Velocity-Form = natuerliches Anti-Windup
-    an MIN/MAX; der Kp-Term wirkt als Lastsprung-Feedforward.
-    Jede gesendete Aenderung wird geloggt (Latenz-Messbasis, docs/regler-v2)."""
+    wanted = PV + Netzleistung - Ziel  — das physikalisch korrekte Limit,
+    direkt aus der Messung (OCR sekuendlich, PV sekuendlich).
+    - HOCH (Bezug ueber Ziel): SOFORT und ungebremst auf wanted. Kein Guard,
+      kein Slew — kein Cent Netzbezug, wenn die Sonne liefern koennte.
+    - Bei Wolken wird NICHT gesenkt: wanted haelt das Limit auf Bedarfsniveau,
+      Sonnenrueckkehr deckt die Last ohne Anlauf.
+    - RUNTER nur bei echter Ueber-Einspeisung (w < Ziel - Deadband), und nur
+      mit Totzeit-Guard (LATENCY_S), damit stale Messwerte keine
+      Abwaertsspirale treten.
+    """
     if not INVERTER_SERIAL or INVERTER_SERIAL == "CHANGE_ME":
         return None, None
     try:
@@ -593,57 +591,30 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
         print(f"OpenDTU nicht erreichbar: {e}", file=sys.stderr)
         return None, None
     now = time.time()
-    error = grid_w - TARGET_GRID_W
+    error = grid_w - TARGET_GRID_W  # >0: zu viel Bezug
+    wanted = int(round(max(MIN_LIMIT_W, min(MAX_LIMIT_W, pv_w + error))))
     current = state.get("limit_w")
-    if current is None:  # Erstinitialisierung: grob passend starten
-        current = int(max(MIN_LIMIT_W, min(MAX_LIMIT_W, pv_w + error)))
+
+    def send(value: int, tag: str):
         try:
-            set_limit(current)
-            state.update(limit_sent_ts=now, e_prev=error, ctrl_ts=now)
-            print(f"PI: Init-Limit {current} (e={error:+d}, pv={pv_w:.0f})")
-            return current, pv_w
+            set_limit(value)
+            state["limit_sent_ts"] = now
+            print(f"Regler: Limit {current}->{value} [{tag}] "
+                  f"(e={error:+d}, pv={pv_w:.0f})")
+            return value
         except Exception as e:
             print(f"Limit setzen fehlgeschlagen: {e}", file=sys.stderr)
-            return None, pv_w
-    # In-Flight-Guard: groessere Korrektur erst wirken lassen (Totzeit),
-    # sonst Doppel-Korrektur in die Latenz hinein -> Ueberschwingen
-    if state.get("inflight") and now - state.get("limit_sent_ts", 0) < LATENCY_S:
-        return current, pv_w
-    state["inflight"] = False
-    dt = min(30.0, max(1.0, now - state.get("ctrl_ts", now)))
-    e_prev = state.get("e_prev", error)
-    kick = PI_KP * (error - e_prev)
-    if state.pop("post_inflight", False):
-        kick = 0.0  # Fehleraenderung stammt von eigener Aktion -> kein Doppel-Kick
-    delta = kick + PI_KI * dt * error + state.get("carry", 0.0)
-    delta = max(-MAX_STEP_W, min(MAX_STEP_W, delta))
-    new_limit = int(round(max(MIN_LIMIT_W, min(MAX_LIMIT_W, current + delta))))
-    # Windup-Leck statt harter PV-Klemme: Aufwaerts NIE blockieren (Wolke
-    # weg -> sofort Vollgas). Erst wenn PV >45s weit unterm Limit haengt,
-    # Limit auf pv+Headroom absenken, damit der Integrator nicht parkt.
-    if pv_w < current - 2 * PI_HEADROOM_W:
-        if state.get("pv_low_since") is None:
-            state["pv_low_since"] = now
-        elif now - state["pv_low_since"] > 45:
-            new_limit = min(new_limit, int(pv_w) + PI_HEADROOM_W)
-    else:
-        state["pv_low_since"] = None
-    state.update(e_prev=error, ctrl_ts=now)
-    if abs(new_limit - current) < PI_DEADBAND_W:
-        # Mini-Inkremente sammeln statt verlieren — aber nicht an den Grenzen
-        state["carry"] = delta if MIN_LIMIT_W < current < MAX_LIMIT_W else 0.0
-        return current, pv_w
-    state["carry"] = 0.0
-    try:
-        set_limit(new_limit)
-        state["limit_sent_ts"] = now
-        state["inflight"] = abs(new_limit - current) >= INFLIGHT_MIN_W
-        state["post_inflight"] = state["inflight"]
-        print(f"PI: Limit {current}->{new_limit} (e={error:+d}, pv={pv_w:.0f})")
-        return new_limit, pv_w
-    except Exception as e:
-        print(f"Limit setzen fehlgeschlagen: {e}", file=sys.stderr)
-        return None, pv_w
+            return None
+
+    if current is None:
+        return send(wanted, "init"), pv_w
+    if error > DEADBAND_W and wanted > current:
+        return send(wanted, "hoch") or current, pv_w
+    if error < -DEADBAND_W and wanted < current:
+        if now - state.get("limit_sent_ts", 0) < LATENCY_S:
+            return current, pv_w  # letzte Korrektur erst wirken lassen
+        return send(wanted, "runter") or current, pv_w
+    return current, pv_w
 
 
 def main(once: bool = False):
