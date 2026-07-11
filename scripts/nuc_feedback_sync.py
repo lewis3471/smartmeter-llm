@@ -159,11 +159,10 @@ def main():
             log("Training fehlgeschlagen — Evidence bleibt lokal erhalten, "
                 "kein Commit", err=True)
             return
-        run(["scripts/sync_addon.sh"], repo)
 
     paths = ["training-data"]
     if needs_training:
-        paths += ["scripts/ocr/model.npz", "smartmeter_llm/ocr/model.npz"]
+        paths += ["scripts/ocr/model.npz"]  # Add-on-Kopie erst beim Release
     if any(changed(repo, p) for p in paths):
         run(["git", "add", "-f", *paths], repo)
         run(["git", "commit", "-m", "ocr: sync evidence"

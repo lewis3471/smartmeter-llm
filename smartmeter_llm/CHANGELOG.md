@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.8
+
+- NUC-Clone als Blobless-Clone (`--filter=blob:none`): lokale Groesse bleibt
+  ~konstant, History-Blobs liegen nur auf GitHub (bestehenden Clone einmal
+  loeschen: Add-on stoppen, `/data/feedback-repo` entfernen, starten)
+- Retrain-Commits enthalten nur noch EIN Modell (halbierte History-Rate);
+  die Add-on-Kopie wird beim Release gebaut
+
 ## 1.4.7
 
 - KRITISCH: training-data/ stand in .gitignore — Evidence wurde nie

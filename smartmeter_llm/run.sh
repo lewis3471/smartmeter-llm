@@ -64,7 +64,7 @@ if bashio::config.true 'git_sync_enabled'; then
             export GIT_SSH_COMMAND='ssh -i /data/git/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new'
         FEEDBACK_REPO=/data/feedback-repo
         if [ ! -d "$FEEDBACK_REPO/.git" ]; then
-            git clone --branch "$GIT_BRANCH" "$GIT_REPO" "$FEEDBACK_REPO" || \
+            git clone --filter=blob:none --branch "$GIT_BRANCH" "$GIT_REPO" "$FEEDBACK_REPO" || \
                 bashio::log.error "Git-Clone fuer Feedback fehlgeschlagen"
         fi
         if [ -d "$FEEDBACK_REPO/.git" ]; then
