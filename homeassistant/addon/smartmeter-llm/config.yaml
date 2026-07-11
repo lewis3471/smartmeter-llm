@@ -12,8 +12,13 @@ services:
   - mqtt:want
 watchdog: ""
 options:
-  gemini_api_key: ""
-  gemini_model: gemini-3.1-flash-lite
+  gemini_api_keys: ""
+  gemini_models: gemini-flash-lite-latest,gemini-flash-latest,gemini-2.5-flash-lite,gemini-2.5-flash
+  reader_mode: hybrid
+  ocr_min_conf: 0.85
+  cross_check_every: 20
+  led_brightness: 0.45
+  cam_frames: 6
   esphome_host: 192.168.178.58
   esphome_api_key: ""
   opendtu_url: http://192.168.178.42
@@ -29,8 +34,13 @@ options:
   failsafe_limit_w: 1999
   max_jump_w: 5000
 schema:
-  gemini_api_key: str
-  gemini_model: str
+  gemini_api_keys: str
+  gemini_models: str
+  reader_mode: list(gemini|local|hybrid)
+  ocr_min_conf: float(0,1)
+  cross_check_every: int(1,1000)
+  led_brightness: float(0.05,1)
+  cam_frames: int(1,10)
   esphome_host: str
   esphome_api_key: str
   opendtu_url: str

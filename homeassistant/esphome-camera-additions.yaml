@@ -1,0 +1,33 @@
+# Optionale Ergänzungen für esp32-cam-electricity-meter.yaml
+# (ESPHome Builder -> Bearbeiten -> einfügen -> Installieren)
+
+# --- Chip-Temperatur (Wärme-Überwachung bei Dauer-LED im continuous-Modus) ---
+# Misst den ESP32-Die, nicht die LED — auf dem kleinen Board aber ein
+# brauchbarer Proxy. Taucht als Sensor in HA auf (Alert-Automation lohnt:
+# z.B. Warnung > 75 °C).
+sensor:
+  - platform: internal_temperature
+    name: "Chip Temperatur"
+    update_interval: 60s
+
+# --- OBSOLET seit CAM_MODE=continuous (nur noch als Referenz) ---
+# Feste Belichtung war fuer den Blitz-Betrieb gedacht; im continuous-Modus
+# bleibt die LED an und die Auto-Belichtung dauerhaft eingependelt.
+#
+# esp32_camera:
+#   id: espcam
+#   aec_mode: manual
+#   aec_value: 300
+# number:
+#   - platform: template
+#     name: "AEC Value"
+#     min_value: 0
+#     max_value: 1200
+#     step: 10
+#     initial_value: 300
+#     optimistic: true
+#     restore_value: true
+#     set_action:
+#       - lambda: |-
+#           id(espcam).set_aec_value((int) x);
+#           id(espcam).update_camera_parameters();
