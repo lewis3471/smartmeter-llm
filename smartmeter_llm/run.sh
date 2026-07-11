@@ -43,5 +43,41 @@ else
     export SAVE_SAMPLES_DIR=""
 fi
 
+# Optional HAOS-native feedback worker.  It owns a clone under /data, never
+# modifies the read-only add-on source, and keeps the deploy key in /data/git.
+if bashio::config.true 'git_sync_enabled'; then
+    GIT_REPO=$(bashio::config 'git_repository')
+    GIT_KEY=$(bashio::config 'git_deploy_key')
+    GIT_BRANCH=$(bashio::config 'git_branch')
+    if [ -z "$GIT_REPO" ] || [ -z "$GIT_KEY" ] || [ -z "$SAVE_SAMPLES_DIR" ]; then
+        bashio::log.error "Git-Sync braucht Repository, Deploy-Key und save_samples=true"
+    else
+        mkdir -p /data/git
+        umask 077
+        printf '%s\n' "$GIT_KEY" > /data/git/deploy_key
+        chmod 600 /data/git/deploy_key
+        export GIT_SSH_COMMAND='ssh -i /data/git/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new'
+        FEEDBACK_REPO=/data/feedback-repo
+        if [ ! -d "$FEEDBACK_REPO/.git" ]; then
+            git clone --branch "$GIT_BRANCH" "$GIT_REPO" "$FEEDBACK_REPO" || \
+                bashio::log.error "Git-Clone fuer Feedback fehlgeschlagen"
+        fi
+        if [ -d "$FEEDBACK_REPO/.git" ]; then
+            git -C "$FEEDBACK_REPO" config user.name smartmeter-ha
+            git -C "$FEEDBACK_REPO" config user.email smartmeter-ha@local
+            GIT_SYNC_INTERVAL=$(bashio::config 'git_sync_interval_s')
+            (
+                while true; do
+                    python3 /app/scripts/nuc_feedback_sync.py --repo "$FEEDBACK_REPO" \
+                        --samples "$SAVE_SAMPLES_DIR" --push || \
+                        bashio::log.error "Feedback Git-Sync fehlgeschlagen; erneuter Versuch folgt"
+                    sleep "$GIT_SYNC_INTERVAL"
+                done
+            ) &
+            bashio::log.info "Feedback Git-Sync aktiv (alle ${GIT_SYNC_INTERVAL}s)"
+        fi
+    fi
+fi
+
 bashio::log.info "Starte meter_reader (Modus $(bashio::config 'reader_mode'), Ziel $(bashio::config 'target_grid_w')W)"
 exec python3 -u /app/scripts/meter_reader.py

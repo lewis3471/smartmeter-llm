@@ -1,5 +1,5 @@
 name: Smartmeter LLM Nulleinspeisung
-version: "1.4.1"
+version: "1.4.2"
 slug: smartmeter_llm
 description: >-
   ESP32-Cam liest den Stromzähler (lokales OCR + Gemini-Fallback),
@@ -42,6 +42,11 @@ options:
   retrain_hour: -1
   log_level: error
   save_samples: true
+  git_sync_enabled: false
+  git_repository: ""
+  git_branch: main
+  git_deploy_key: ""
+  git_sync_interval_s: 30
   state_write_s: 60
 schema:
   gemini_api_keys: str
@@ -72,4 +77,9 @@ schema:
   retrain_hour: int(-1,23)
   log_level: list(all|error|none)
   save_samples: bool
+  git_sync_enabled: bool
+  git_repository: str
+  git_branch: str
+  git_deploy_key: password
+  git_sync_interval_s: int(10,3600)
   state_write_s: float(-1,86400)

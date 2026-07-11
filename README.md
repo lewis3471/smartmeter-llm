@@ -91,6 +91,29 @@ worker stages it explicitly, so it is versioned only by its dedicated commits.
 This gives the NUC and every checked-out deployment the same retrained
 `model.npz` without accidentally committing arbitrary local sample folders.
 
+### Home Assistant OS add-on (no SSH / sudo on the NUC)
+
+Version 1.4.2 can run the same worker inside the add-on. Add a **write-enabled
+repository deploy key** in GitHub, then paste the private key only in the
+add-on's YAML configuration under `git_deploy_key`. It is written with mode
+`0600` below `/data` and is never logged or committed. Set:
+
+```yaml
+save_samples: true
+git_sync_enabled: true
+git_repository: git@github.com:lewis3471/smartmeter-llm.git
+git_branch: main
+git_deploy_key: |-
+  -----BEGIN OPENSSH PRIVATE KEY-----
+  paste-the-private-key-here
+  -----END OPENSSH PRIVATE KEY-----
+git_sync_interval_s: 30
+```
+
+On first start the add-on clones the repository into its persistent `/data`,
+then uploads evidence and retrained models itself. No HA host shell access is
+needed.
+
 ## Leseweg: lokales OCR zuerst, Gemini als Berater
 
 Primärleser ist das **lokale kNN-OCR** (siehe unten) — kostenlos, <10 ms,

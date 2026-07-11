@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.2 — 2026-07-11
+
+- Add HAOS add-on Git feedback sync configuration: repository URL, branch,
+  protected deploy key, and sync interval.
+- The add-on now clones into persistent `/data`, retrains there, and pushes
+  evidence/models without requiring NUC shell or `sudo` access.
+
 ## 1.4.1 — 2026-07-11
 
 - Train the LCD OCR per physical digit box: six kWh and five watt cells now
