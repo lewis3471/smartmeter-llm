@@ -70,6 +70,12 @@ ESPHOME_API_KEY = os.environ.get("ESPHOME_API_KEY", "")
 CAM_WARMUP_S = float(os.environ.get("CAM_WARMUP_S", "3.5"))
 CAM_FRAMES = int(os.environ.get("CAM_FRAMES", "5"))       # Warm-up-Frames
 LED_BRIGHTNESS = float(os.environ.get("LED_BRIGHTNESS", "1.0"))
+# flash: LED pro Zyklus an/aus (Standard) | continuous: LED dauerhaft an,
+# Verbindung offen -> Belichtung bleibt eingependelt, 1 Frame pro Zyklus,
+# ermoeglicht Intervalle bis 1s
+CAM_MODE = os.environ.get("CAM_MODE", "flash")
+CONTROL_EVERY = int(os.environ.get("CONTROL_EVERY", "1"))  # Regeln alle N Zyklen
+FAILSAFE_AFTER = int(os.environ.get("FAILSAFE_AFTER", "3"))
 # Snapshots + Gemini-Label als Trainingsdaten fuer lokales OCR ablegen
 SAVE_SAMPLES_DIR = os.environ.get("SAVE_SAMPLES_DIR", "")
 
@@ -182,8 +188,99 @@ async def _capture_with_timeout() -> bytes:
     return await asyncio.wait_for(_capture_esphome(), timeout=90)
 
 
+class ContinuousCam:
+    """Persistente Cam-Verbindung: LED bleibt an, Belichtung eingependelt,
+    ein Frame pro Abruf. Reconnect bei Verbindungsabriss."""
+
+    def __init__(self):
+        import threading
+
+        self.loop = asyncio.new_event_loop()
+        threading.Thread(target=self.loop.run_forever, daemon=True).start()
+        self.client = None
+        self.light_key = None
+        self.frames: list[bytes] = []
+
+    async def _ensure(self):
+        if self.client is not None:
+            return
+        client = APIClient(ESPHOME_HOST, 6053, password=None,
+                           noise_psk=ESPHOME_API_KEY)
+        await client.connect(login=True)
+        entities, _ = await client.list_entities_services()
+        self.light_key = next(
+            (e.key for e in entities if type(e).__name__ == "LightInfo"), None
+        )
+        client.subscribe_states(
+            lambda s: self.frames.append(bytes(s.data))
+            if getattr(s, "data", None) else None
+        )
+        if self.light_key is not None:
+            client.light_command(key=self.light_key, state=True,
+                                 brightness=LED_BRIGHTNESS)
+        self.client = client
+        # Belichtung einpendeln lassen (nur nach (Re-)Connect noetig)
+        await asyncio.sleep(1.5)
+        for _ in range(CAM_FRAMES):
+            n = len(self.frames)
+            client.request_single_image()
+            for _ in range(40):
+                await asyncio.sleep(0.1)
+                if len(self.frames) > n:
+                    break
+        print("Cam verbunden, LED an, Belichtung eingependelt")
+
+    async def _snap(self) -> bytes:
+        try:
+            await self._ensure()
+            n = len(self.frames)
+            self.client.request_single_image()
+            for _ in range(60):
+                await asyncio.sleep(0.1)
+                if len(self.frames) > n:
+                    frame = self.frames[-1]
+                    del self.frames[:-1]  # Speicher begrenzen
+                    return frame
+            raise RuntimeError("kein Frame innerhalb 6s")
+        except Exception:
+            await self._teardown(light_off=False)
+            raise
+
+    async def _teardown(self, light_off: bool):
+        client, self.client = self.client, None
+        if client is None:
+            return
+        try:
+            if light_off and self.light_key is not None:
+                client.light_command(key=self.light_key, state=False)
+                await asyncio.sleep(0.3)
+            await client.disconnect()
+        except Exception:
+            pass
+
+    def snapshot(self) -> bytes:
+        fut = asyncio.run_coroutine_threadsafe(
+            asyncio.wait_for(self._snap(), timeout=60), self.loop)
+        return fut.result(timeout=70)
+
+    def shutdown(self):
+        try:
+            asyncio.run_coroutine_threadsafe(
+                self._teardown(light_off=True), self.loop).result(timeout=10)
+        except Exception:
+            pass
+
+
+_cam: "ContinuousCam | None" = None
+
+
 def get_snapshot() -> bytes:
+    global _cam
     if ESPHOME_API_KEY and ESPHOME_API_KEY != "CHANGE_ME" and APIClient:
+        if CAM_MODE == "continuous":
+            if _cam is None:
+                _cam = ContinuousCam()
+            return _cam.snapshot()
         return asyncio.run(_capture_with_timeout())
     return requests.get(CAM_SNAPSHOT_URL, timeout=15).content
 
@@ -432,6 +529,17 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
 
 
 def main(once: bool = False):
+    import atexit
+    import signal
+
+    def _bye(*_):  # LED nicht brennen lassen (continuous-Modus)
+        if _cam is not None:
+            _cam.shutdown()
+        raise SystemExit(0)
+
+    signal.signal(signal.SIGTERM, _bye)
+    atexit.register(lambda: _cam is not None and _cam.shutdown())
+
     state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
     publish_discovery()
     while True:
@@ -448,7 +556,10 @@ def main(once: bool = False):
                 raise ValueError(f"verworfen: {reason}")
             state.update(reading)
             state["failures"] = 0
-            limit, pv_w = control(reading["w"], state)
+            if state["cycle"] % CONTROL_EVERY == 0:
+                limit, pv_w = control(reading["w"], state)
+            else:
+                limit, pv_w = state.get("limit_w"), None
             if limit is not None:
                 state["limit_w"] = limit
             publish(reading, "ok", limit)
@@ -458,7 +569,7 @@ def main(once: bool = False):
         except Exception as e:
             state["failures"] = state.get("failures", 0) + 1
             print(f"Fehler ({state['failures']}x): {e}", file=sys.stderr)
-            if state["failures"] >= 3:
+            if state["failures"] >= FAILSAFE_AFTER:
                 # Failsafe: Inverter drosseln statt blind weiter einspeisen
                 try:
                     set_limit(FAILSAFE_LIMIT_W)
