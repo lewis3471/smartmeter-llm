@@ -49,6 +49,12 @@ Prinzip: **viele kleine Schritte statt seltener großer.**
 Erwartung: Amplitude von ±50 W auf ±10–15 W, dann `TARGET_GRID_W` von
 −50 schrittweise Richtung −10…0 W.
 
+> **Update 2026-07-11 ~08:15 — Quelle identifiziert: Eight Sleep Pod**
+> (eight-pod.fritz.box, .99). Nach dem Ausschalten: W-Signal glatt
+> (σ=3,6 W statt ±25-W-Sägezahn). Phase 3 wird damit **konditional**:
+> nur bauen, wenn der Pod während PV-Stunden läuft und der Sägezahn im
+> gedrosselten Betrieb tatsächlich stört. Das Design unten bleibt gültig.
+
 ## Phase 3 — Wellenpaket-Feedforward (konkretisiert 2026-07-11)
 
 Befund verfeinert: Die Störlast ist eine **Wellenpaketsteuerung mit festem
