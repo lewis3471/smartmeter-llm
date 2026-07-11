@@ -1,5 +1,5 @@
 name: Smartmeter LLM Nulleinspeisung
-version: "1.2.0"
+version: "1.2.1"
 slug: smartmeter_llm
 description: >-
   ESP32-Cam liest den Stromzähler (lokales OCR + Gemini-Fallback),
@@ -11,7 +11,6 @@ arch:
 init: false
 startup: application
 boot: auto
-watchdog: ""
 services:
   - mqtt:want
 options:
