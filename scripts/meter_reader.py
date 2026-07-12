@@ -479,12 +479,12 @@ def rebaseline(reading: dict, state: dict) -> bool:
         state["rb_kwh"], state["rb_count"] = kwh, 1
     if state["rb_count"] < 4:
         return False
-    state["rb_count"] = 0
-    # Gemini-Cooldown gilt auch hier — sonst hammert die Verifikation
-    # bei schnellen Zyklen die Quota weg
+    # Gemini-Cooldown gilt auch hier — aber der Zaehler bleibt stehen,
+    # damit der naechste freie Slot sofort verifiziert
     global _last_gemini_call
     if time.time() - _last_gemini_call < GEMINI_COOLDOWN_S:
         return False
+    state["rb_count"] = 0
     _last_gemini_call = time.time()
     for attempt in (1, 2):
         try:
@@ -739,11 +739,15 @@ def main(once: bool = False):
     signal.signal(signal.SIGTERM, _bye)
     atexit.register(lambda: _cam is not None and _cam.shutdown())
 
-    state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
+    state = {}
+    if STATE_FILE.exists():
+        try:
+            state = {"kwh": json.loads(STATE_FILE.read_text()).get("kwh")}
+        except (ValueError, OSError):
+            state = {}
     publish_discovery()
     w_hist: list[int] = []  # Median-3: einzelner Ausreisser-Frame regelt nicht
     last_written_kwh = state.get("kwh")
-    last_state_write = 0.0
     while True:
         limit = None
         try:
@@ -794,13 +798,11 @@ def main(once: bool = False):
                 # Einzelne verworfene Frames (Segmenttest-Rotation) sind
                 # normal — erst anhaltende Fehler als "retry" melden
                 publish(None, "retry", None)
-        if STATE_WRITE_S >= 0 and (
-            state.get("kwh") != last_written_kwh
-            or time.time() - last_state_write >= STATE_WRITE_S
-        ):
-            STATE_FILE.write_text(json.dumps(state))
+        if STATE_WRITE_S >= 0 and state.get("kwh") != last_written_kwh:
+            # Nur das kWh-Feld persistieren (einziger Wert, der einen
+            # Neustart ueberleben muss) — wenige Winz-Writes pro Tag
+            STATE_FILE.write_text(json.dumps({"kwh": state.get("kwh")}))
             last_written_kwh = state.get("kwh")
-            last_state_write = time.time()
         maybe_retrain(state)
         if state["cycle"] % 100 == 0:  # ~alle 1-2min nach neuem Modell schauen
             maybe_reload_model()

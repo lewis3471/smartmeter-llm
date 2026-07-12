@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.14
+
+- state.json persistiert nur noch das kWh-Feld und nur bei Aenderung
+  (wenige Winz-Writes/Tag, nie wieder stale Zusatz-Felder)
+- Re-Baseline: Gemini-Cooldown resettet den Bestaetigungs-Zaehler nicht
+  mehr — Heilung eines veralteten kWh-Stands greift im ersten freien Slot
+
 ## 1.4.13
 
 - Retraining-Schwelle zaehlt jetzt den RUECKSTAND seit dem letzten
