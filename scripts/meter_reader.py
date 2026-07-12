@@ -454,7 +454,7 @@ def plausible(reading: dict, state: dict) -> str | None:
     # konsistenten Lesungen akzeptieren (echter Nulldurchgang bleibt moeglich).
     w_prev = state.get("w")
     if (w_prev is not None and abs(w) > 100
-            and abs(w + w_prev) <= max(20, abs(w) // 10)):
+            and abs(w + w_prev) <= max(40, abs(w) // 5)):
         state["signflip"] = state.get("signflip", 0) + 1
         if state["signflip"] < 4:
             return f"Vorzeichen-Flip verdächtig ({w_prev:+d} -> {w:+d})"

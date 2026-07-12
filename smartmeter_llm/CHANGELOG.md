@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.11
+
+- Vorzeichen-Flip-Guard: Toleranz auf +-20% (min. 40 W) — faengt auch
+  +350/-360-Flips mit Messrauschen dazwischen
+
 ## 1.4.10
 
 - Vorzeichen-Flip-Guard: w-Lesungen mit gleichem Betrag und umgekehrtem
