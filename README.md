@@ -91,6 +91,18 @@ worker stages it explicitly, so it is versioned only by its dedicated commits.
 This gives the NUC and every checked-out deployment the same retrained
 `model.npz` without accidentally committing arbitrary local sample folders.
 
+### CI validation (read-only, no commit-back)
+
+A GitHub Actions workflow ([`.github/workflows/ocr-validate.yml`](.github/workflows/ocr-validate.yml))
+runs on every `ocr: sync evidence*` commit to `main`. It retrains the model on
+the evidence already in the commit and publishes the holdout accuracy as a run
+summary + commit annotation, failing the check below the configured floor
+(default `0.95`). It is **validation only**: it has `permissions: contents:
+read` and never commits or pushes `model.npz`, so the NUC worker stays the
+single writer of the model. This surfaces bad labels and training regressions
+without racing the local trainer. Trigger it manually from the Actions tab to
+set a custom `min_cell_acc` floor.
+
 ### Home Assistant OS add-on (no SSH / sudo on the NUC)
 
 Version 1.4.4 can run the same worker inside the add-on. Add a **write-enabled

@@ -1,0 +1,127 @@
+name: OCR validate
+
+# Validation-only CI: retrain on the evidence already in the commit and
+# report holdout accuracy. Does NOT commit or push model.npz — the
+# threshold-gated local trainer (scripts/nuc_feedback_sync.py) stays the
+# single writer of the model. This only catches bad labels / training
+# regressions and surfaces the numbers for review.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'training-data/**'
+  workflow_dispatch:
+    inputs:
+      min_cell_acc:
+        description: 'Minimum Zellen-Accuracy floor (fail below)'
+        required: false
+        default: '0.95'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocr-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: "github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'ocr: sync evidence')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: '.github/workflows/ocr-validate.yml'
+
+      - name: Install deps
+        run: pip install --no-input opencv-python-headless numpy
+
+      - name: Train on current evidence (validation only)
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/ocr/train.py training-data 2>&1 | tee train.log
+
+      - name: Parse accuracy and gate
+        shell: bash
+        env:
+          MIN_CELL_ACC: ${{ inputs.min_cell_acc || '0.95' }}
+        run: |
+          python - <<'PY'
+          import os, re, sys
+
+          log = open("train.log", encoding="utf-8").read()
+          min_acc = float(os.environ["MIN_CELL_ACC"])
+
+          def grab(pat, default=None, cast=float):
+              m = re.search(pat, log)
+              return cast(m.group(1)) if m else default
+
+          samples   = grab(r"(\d+) Samples",            cast=int)
+          dropped   = grab(r"(\d+) als Fehl-Label",     cast=int)
+          n_train   = grab(r"(\d+) Training \(mit",     cast=int)
+          n_test    = grab(r", (\d+) Test",             cast=int)
+          cell_acc  = grab(r"Zellen-Accuracy \(Holdout\):\s*([0-9.]+)")
+          conf_min  = grab(r"Conf min/median:\s*([0-9.]+)/")
+          conf_med  = grab(r"Conf min/median:\s*[0-9.]+/([0-9.]+)")
+
+          e2e = None
+          if m := re.search(r"End-to-End \(beide Zeilen exakt\):\s*(\d+)/(\d+)", log):
+              e2e = (int(m.group(1)), int(m.group(2)))
+          e2e_skipped = "End-to-End: übersprungen" in log
+
+          lines = ["## OCR validation", ""]
+          lines.append("| Metric | Value |")
+          lines.append("|---|---|")
+          lines.append(f"| Samples | {samples} ({dropped or 0} dropped) |")
+          lines.append(f"| Digit cells | {n_train} train / {n_test} test |")
+          lines.append(f"| Zellen-Accuracy (Holdout) | {cell_acc:.4f}" if cell_acc is not None else "| Zellen-Accuracy | (not reported) |")
+          lines.append(f"| Confidence min/median | {conf_min:.2f}/{conf_med:.2f}" if conf_min is not None else "| Confidence | (not reported) |")
+          if e2e is not None:
+              lines.append(f"| End-to-End (both rows exact) | {e2e[0]}/{e2e[1]} |")
+          elif e2e_skipped:
+              lines.append("| End-to-End | skipped (kWh-only labels in holdout) |")
+          else:
+              lines.append("| End-to-End | (not reported) |")
+          lines.append("")
+          lines.append(f"Threshold: **{min_acc:.2f}** — fails below.")
+
+          summary = "\n".join(lines) + "\n"
+          open("summary.md", "w", encoding="utf-8").write(summary)
+          gss = os.environ.get("GITHUB_STEP_SUMMARY")
+          if gss:
+              with open(gss, "a", encoding="utf-8") as f:
+                  f.write(summary)
+
+          if cell_acc is None:
+              print("::error::Zellen-Accuracy not found in train.py output — training did not complete?")
+              sys.exit(1)
+          if cell_acc < min_acc:
+              print(f"::error::Zellen-Accuracy {cell_acc:.4f} below floor {min_acc:.2f}; likely bad label or regression in this evidence commit")
+              sys.exit(1)
+          if e2e is not None and e2e[1] > 0 and e2e[0] < e2e[1]:
+              frac = e2e[0] / e2e[1]
+              if frac < 0.5:
+                  print(f"::warning::End-to-End {e2e[0]}/{e2e[1]} ({frac:.0%}); many full-image misreads in holdout")
+          print(f"::notice::Zellen-Accuracy {cell_acc:.4f}" + (f", End-to-End {e2e[0]}/{e2e[1]}" if e2e else ""))
+          print("OK")
+          PY
+          cat summary.md
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ocr-train-log
+          path: |
+            train.log
+            summary.md
+          if-no-files-found: ignore
+          retention-days: 14
