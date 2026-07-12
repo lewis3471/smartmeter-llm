@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.10
+
+- Vorzeichen-Flip-Guard: w-Lesungen mit gleichem Betrag und umgekehrtem
+  Vorzeichen (+360/-360-Gezappel) werden verworfen; erst 4 konsistente
+  Lesungen akzeptieren einen echten Nulldurchgang
+- Feedback-Repo migriert sich selbst auf Blobless-Clone (kein manuelles
+  Loeschen von /data/feedback-repo noetig)
+
 ## 1.4.9
 
 - NUC-Runtime nutzt das git-gesyncte Modell aus dem Feedback-Checkout

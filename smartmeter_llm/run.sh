@@ -63,6 +63,12 @@ if bashio::config.true 'git_sync_enabled'; then
         else
             export GIT_SSH_COMMAND='ssh -i /data/git/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new'
         FEEDBACK_REPO=/data/feedback-repo
+        # Einmalige Migration: alte Voll-Clones auf Blobless umstellen
+        if [ -d "$FEEDBACK_REPO/.git" ] && \
+           [ -z "$(git -C "$FEEDBACK_REPO" config --get remote.origin.partialclonefilter)" ]; then
+            bashio::log.info "Migriere Feedback-Repo auf Blobless-Clone"
+            rm -rf "$FEEDBACK_REPO"
+        fi
         if [ ! -d "$FEEDBACK_REPO/.git" ]; then
             git clone --filter=blob:none --branch "$GIT_BRANCH" "$GIT_REPO" "$FEEDBACK_REPO" || \
                 bashio::log.error "Git-Clone fuer Feedback fehlgeschlagen"

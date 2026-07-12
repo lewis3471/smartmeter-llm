@@ -449,6 +449,17 @@ def plausible(reading: dict, state: dict) -> str | None:
         return f"unplausible Leistung {w} W"
     if state.get("w") is not None and abs(w - state["w"]) > MAX_JUMP_W:
         return f"Sprung {w - state['w']:+d} W > {MAX_JUMP_W} W"
+    # Vorzeichen-Flip bei ~gleichem Betrag = fast immer ein Minus-OCR-Fehler
+    # (die '-'-Zelle ist klein und selten im Training). Erst nach 4
+    # konsistenten Lesungen akzeptieren (echter Nulldurchgang bleibt moeglich).
+    w_prev = state.get("w")
+    if (w_prev is not None and abs(w) > 100
+            and abs(w + w_prev) <= max(20, abs(w) // 10)):
+        state["signflip"] = state.get("signflip", 0) + 1
+        if state["signflip"] < 4:
+            return f"Vorzeichen-Flip verdächtig ({w_prev:+d} -> {w:+d})"
+    else:
+        state["signflip"] = 0
     if state.get("kwh") is not None:
         if kwh < state["kwh"]:
             return f"kWh rückläufig ({state['kwh']} -> {kwh})"
