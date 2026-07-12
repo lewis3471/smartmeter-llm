@@ -145,9 +145,17 @@ def main():
     evidence = repo / "training-data"
     evidence.mkdir(exist_ok=True)
     copied, new_labels = collect_evidence(samples, evidence)
-    log(f"Evidence: {len(copied)} Dateien kopiert, {new_labels} neue Labels")
+    # Rueckstand seit letztem Training zaehlt (nicht nur dieser Lauf!) —
+    # der Marker wird mitcommittet und gilt damit fuer alle Maschinen
+    marker = evidence / ".trained-at"
+    total = (len(list((evidence / "auto").glob("*.json")))
+             + len(list(evidence.glob("2*/*.json"))))
+    trained_at = int(marker.read_text()) if marker.exists() else 0
+    pending = total - trained_at
+    log(f"Evidence: {len(copied)} Dateien kopiert, {new_labels} neue Labels "
+        f"({pending} seit letztem Training)")
 
-    needs_training = new_labels >= args.min_new_labels
+    needs_training = pending >= args.min_new_labels
     if needs_training:
         result = run([sys.executable, "scripts/ocr/train.py", str(evidence)],
                      repo, check=False)
@@ -159,6 +167,7 @@ def main():
             log("Training fehlgeschlagen — Evidence bleibt lokal erhalten, "
                 "kein Commit", err=True)
             return
+        marker.write_text(str(total))
 
     paths = ["training-data"]
     if needs_training:

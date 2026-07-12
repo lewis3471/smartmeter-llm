@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.13
+
+- Retraining-Schwelle zaehlt jetzt den RUECKSTAND seit dem letzten
+  Training (committeter Marker training-data/.trained-at) statt nur die
+  Labels eines Sync-Laufs — vorher konnte sich der Rueckstand unsichtbar
+  stapeln und das Modell wurde nie trainiert/gepusht. Erster Sync nach
+  diesem Update trainiert sofort (Marker fehlt -> voller Rueckstand).
+
 ## 1.4.12
 
 - Minus-Erkennung: Geometrie-Veto in eindeutigen Zonen (Masse nur im
