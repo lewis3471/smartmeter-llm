@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.9
+
+- NUC-Runtime nutzt das git-gesyncte Modell aus dem Feedback-Checkout
+  (`MODEL_FILE`) und laedt es bei Aenderung im laufenden Betrieb neu —
+  Retraining wirkt sofort, nicht erst beim naechsten Release
+
 ## 1.4.8
 
 - NUC-Clone als Blobless-Clone (`--filter=blob:none`): lokale Groesse bleibt

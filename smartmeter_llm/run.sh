@@ -80,6 +80,10 @@ if bashio::config.true 'git_sync_enabled'; then
                 done
             ) &
             bashio::log.info "Feedback Git-Sync aktiv (alle ${GIT_SYNC_INTERVAL}s)"
+            if [ -f "$FEEDBACK_REPO/scripts/ocr/model.npz" ]; then
+                export MODEL_FILE="$FEEDBACK_REPO/scripts/ocr/model.npz"
+                bashio::log.info "OCR-Modell aus Feedback-Repo (Hot-Reload bei Retraining/Pull)"
+            fi
         fi
         fi
     fi

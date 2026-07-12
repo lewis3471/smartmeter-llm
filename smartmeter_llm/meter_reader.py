@@ -638,6 +638,30 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
 
 
 RETRAIN_HOUR = int(os.environ.get("RETRAIN_HOUR", "3"))  # -1 = aus
+_model_mtime: float | None = None
+
+
+def maybe_reload_model():
+    """Hot-Reload, wenn model.npz sich geaendert hat — z.B. durch den
+    Feedback-Sync (eigenes Retraining oder git pull von anderer Maschine)."""
+    global _local_reader, _model_mtime
+    if _local_reader is None:
+        return
+    try:
+        from local_reader import MODEL_FILE, LocalReader
+        mt = MODEL_FILE.stat().st_mtime
+    except OSError:
+        return
+    if _model_mtime is None:
+        _model_mtime = mt
+        return
+    if mt != _model_mtime:
+        try:
+            _local_reader = LocalReader()
+            _model_mtime = mt
+            print(f"OCR-Modell neu geladen ({MODEL_FILE})")
+        except Exception as e:
+            print(f"Modell-Reload fehlgeschlagen: {e}", file=sys.stderr)
 
 
 def maybe_retrain(state: dict):
@@ -767,6 +791,8 @@ def main(once: bool = False):
             last_written_kwh = state.get("kwh")
             last_state_write = time.time()
         maybe_retrain(state)
+        if state["cycle"] % 100 == 0:  # ~alle 1-2min nach neuem Modell schauen
+            maybe_reload_model()
         if once:
             break
         time.sleep(INTERVAL_S)

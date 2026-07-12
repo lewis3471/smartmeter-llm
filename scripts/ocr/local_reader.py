@@ -7,6 +7,7 @@ Nutzung:
 Wirft ValueError bei unlesbarem Display (z.B. Segmenttest, Leerbild).
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -16,11 +17,15 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent))
 from extractor import Extractor, prep_cell  # noqa: E402
 
-MODEL_FILE = Path(__file__).with_name("model.npz")
+# MODEL_FILE per Env uebersteuerbar: im Add-on zeigt es auf das
+# git-gesyncte Modell im Feedback-Checkout (Hot-Reload bei Aenderung)
+MODEL_FILE = Path(os.environ.get("MODEL_FILE",
+                                 Path(__file__).with_name("model.npz")))
 
 
 class LocalReader:
-    def __init__(self, model_file: Path = MODEL_FILE, k: int = 3):
+    def __init__(self, model_file: Path | None = None, k: int = 3):
+        model_file = model_file or MODEL_FILE
         m = np.load(model_file, allow_pickle=False)
         self.X = m["X"].astype(np.float32)  # ggf. float16-komprimiert gespeichert
         self.y = m["y"]
