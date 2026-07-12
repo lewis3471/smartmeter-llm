@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.12
+
+- Minus-Erkennung: Geometrie-Veto in eindeutigen Zonen (Masse nur im
+  Mittelband = Minus, ratio>0.75 / <0.3), dazwischen kNN
+- Label-Audit beim Training: W-Zeilen, deren Gemini-Label der Minus-
+  Geometrie widerspricht (verschlucktes Vorzeichen!), fliegen aus dem
+  Training — die Flip-Fehler waren zum Teil antrainierte Label-Fehler
+- Modell auf auditiertem Datensatz neu trainiert
+
 ## 1.4.11
 
 - Vorzeichen-Flip-Guard: Toleranz auf +-20% (min. 40 W) — faengt auch

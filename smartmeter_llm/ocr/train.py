@@ -19,7 +19,7 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent))
-from extractor import Extractor, labels_for, prep_cell, shifted_variants  # noqa: E402
+from extractor import Extractor, labels_for, minus_ratio, prep_cell, shifted_variants  # noqa: E402
 
 MODEL_FILE = Path(__file__).with_name("model.npz")
 FAILS_DIR = Path(__file__).with_name("train_fails")
@@ -54,7 +54,17 @@ def collect(ex, subset):
         if lbl is None:
             continue
         kwh_cells, w_cells = ex.cells(cv2.imread(str(img_path)))
-        for slot, (cell, label) in enumerate(zip(kwh_cells + w_cells, lbl[0] + lbl[1])):
+        # Label-Audit: widerspricht die Minus-Geometrie dem (Gemini-)Label
+        # der W-Zeile, ist das Vorzeichen im Label vermutlich falsch ->
+        # W-Zeile dieses Samples nicht ins Training (kWh-Zeile bleibt)
+        w_labels = lbl[1]
+        for cell, label in zip(w_cells, w_labels):
+            r = minus_ratio(cell)
+            if (label == "_" and r > 0.75) or (label == "-" and r < 0.3):
+                w_labels = []
+                break
+        for slot, (cell, label) in enumerate(
+                zip(kwh_cells + w_cells, lbl[0] + w_labels)):
             X.append(prep_cell(cell))
             y.append(label)
             slots.append(slot)

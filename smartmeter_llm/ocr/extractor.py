@@ -123,6 +123,15 @@ def shifted_variants(vec: np.ndarray, cell_w: int = 20,
     return out
 
 
+def minus_ratio(cell: np.ndarray) -> float:
+    """Dunkle Masse Mittelband vs. aussen. Minus-Zellen: >0.75 (p5=0.57),
+    echte Blanks: <0.3 (p95=0.31). Dazwischen: unsicher."""
+    dark = np.clip(-cell, 0, None)
+    mid = float(dark[13:19].sum())
+    outer = float(dark[:11].sum() + dark[21:].sum())
+    return mid / (outer + 1.0)
+
+
 def labels_for(reading: dict) -> tuple[list[str], list[str]] | None:
     """Zellen-Labels aus einer Gesamt-Lesung ableiten (None = nicht abbildbar)."""
     kwh = reading["kwh"]

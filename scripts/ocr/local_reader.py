@@ -15,7 +15,7 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent))
-from extractor import Extractor, prep_cell  # noqa: E402
+from extractor import Extractor, minus_ratio, prep_cell  # noqa: E402
 
 # MODEL_FILE per Env uebersteuerbar: im Add-on zeigt es auf das
 # git-gesyncte Modell im Feedback-Checkout (Hot-Reload bei Aenderung)
@@ -49,7 +49,16 @@ class LocalReader:
             row = np.argpartition(-scores, k - 1)[:k]
             labels, values = self.y[mask][row], scores[row]
             vals, cnt = np.unique(labels, return_counts=True)
-            pred.append(str(vals[cnt.argmax()]))
+            p = str(vals[cnt.argmax()])
+            if slot >= 6 and p in ("-", "_"):
+                # W-Zeile: in den eindeutigen Geometrie-Zonen hat die
+                # Geometrie Veto ueber kNN (Minus = Masse nur im Mittelband)
+                r = minus_ratio(cells[slot])
+                if r > 0.75:
+                    p = "-"
+                elif r < 0.3:
+                    p = "_"
+            pred.append(p)
             confs.append(float(values.mean()))
         return pred, float(min(confs))
 
