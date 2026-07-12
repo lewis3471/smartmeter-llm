@@ -120,10 +120,6 @@ MQTT_AUTH = (
 TOPIC = os.environ.get("MQTT_TOPIC_PREFIX", "smartmeter")
 
 INTERVAL_S = float(os.environ.get("INTERVAL_S", "90"))
-# state.json nur bei kWh-Aenderung oder alle N Sekunden schreiben
-# (schont SSD/Festplatten-LED); -1 = nie schreiben (Stand geht bei
-# Neustart verloren, Re-Baseline holt ihn via Gemini zurueck)
-STATE_WRITE_S = float(os.environ.get("STATE_WRITE_S", "60"))
 TARGET_GRID_W = int(os.environ.get("TARGET_GRID_W", "50"))
 DEADBAND_W = int(os.environ.get("DEADBAND_W", "15"))
 # Regelkreis-Totzeit Limit->Wirkung (gemessen ~6-8s inkl. MPPT/LCD/Median);
@@ -798,7 +794,7 @@ def main(once: bool = False):
                 # Einzelne verworfene Frames (Segmenttest-Rotation) sind
                 # normal — erst anhaltende Fehler als "retry" melden
                 publish(None, "retry", None)
-        if STATE_WRITE_S >= 0 and state.get("kwh") != last_written_kwh:
+        if state.get("kwh") != last_written_kwh:
             # Nur das kWh-Feld persistieren (einziger Wert, der einen
             # Neustart ueberleben muss) — wenige Winz-Writes pro Tag
             STATE_FILE.write_text(json.dumps({"kwh": state.get("kwh")}))

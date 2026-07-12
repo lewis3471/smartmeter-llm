@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.15
+
+- state_write_s-Option entfernt: das kWh-Feld wird immer bei Aenderung
+  geschrieben (wenige Bytes, wenige Male am Tag) — ein Aus-Schalter
+  schuf nur stale-State-Risiko
+
 ## 1.4.14
 
 - state.json persistiert nur noch das kWh-Feld und nur bei Aenderung
