@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.0
+
+- NUC trainiert nicht mehr: der Feedback-Sync sammelt und committet nur
+  noch Evidence. Gemini-Labels sind fehlerbehaftet — trainiert wird erst
+  nach Label-Audit (scripts/ocr/relabel.py: Vorzeichen-Korrektur per
+  Geometrie, strittige W-Labels -> kWh-only)
+- Option umbenannt: retrain_hour -> auto_train_hour (Default -1 = aus;
+  alte Env-Variable RETRAIN_HOUR wird als Fallback noch gelesen)
+- Modell neu trainiert auf auditiertem Datensatz (8 Vorzeichen korrigiert,
+  26 strittige W-Labels neutralisiert)
+
 ## 1.4.15
 
 - state_write_s-Option entfernt: das kWh-Feld wird immer bei Aenderung

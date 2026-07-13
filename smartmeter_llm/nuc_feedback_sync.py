@@ -8,8 +8,11 @@ Auth über GIT_SSH_COMMAND mit Deploy-Key). Ablauf pro Lauf:
 2. Evidence einsammeln: disagreements/ + events/ komplett, Routine-Samples
    (YYYYMMDD/) nur jedes N-te (Klassen-Balance ohne Repo-Flut)
 3. Disagreements mit gueltigem Gemini-Label -> training-data/auto/
-4. Ab --min-new-labels neuen Labels: retrain + Add-on-Payload syncen
-5. commit/push; NUR nach erfolgreichem Push wird lokal geprunt
+4. commit/push; NUR nach erfolgreichem Push wird lokal geprunt
+
+Training passiert hier NICHT mehr — Gemini-Labels sind fehlerbehaftet und
+werden erst auditiert/relabelt (scripts/ocr/relabel.py). Trainiert wird
+bewusst: manuell oder via AUTO_TRAIN_HOUR im meter_reader.
 """
 
 import argparse
@@ -131,7 +134,6 @@ def main():
                         default=Path(__file__).resolve().parents[1])
     parser.add_argument("--samples", type=Path, required=True,
                         help="SAVE_SAMPLES_DIR des meter_reader")
-    parser.add_argument("--min-new-labels", type=int, default=10)
     parser.add_argument("--push", action="store_true")
     args = parser.parse_args()
     repo, samples = args.repo.resolve(), args.samples.resolve()
@@ -145,38 +147,12 @@ def main():
     evidence = repo / "training-data"
     evidence.mkdir(exist_ok=True)
     copied, new_labels = collect_evidence(samples, evidence)
-    # Rueckstand seit letztem Training zaehlt (nicht nur dieser Lauf!) —
-    # der Marker wird mitcommittet und gilt damit fuer alle Maschinen
-    marker = evidence / ".trained-at"
-    total = (len(list((evidence / "auto").glob("*.json")))
-             + len(list(evidence.glob("2*/*.json"))))
-    trained_at = int(marker.read_text()) if marker.exists() else 0
-    pending = total - trained_at
-    log(f"Evidence: {len(copied)} Dateien kopiert, {new_labels} neue Labels "
-        f"({pending} seit letztem Training)")
+    log(f"Evidence: {len(copied)} Dateien kopiert, {new_labels} neue Labels")
 
-    needs_training = pending >= args.min_new_labels
-    if needs_training:
-        result = run([sys.executable, "scripts/ocr/train.py", str(evidence)],
-                     repo, check=False)
-        for line in result.stdout.splitlines():
-            if any(k in line for k in ("Accuracy", "End-to-End", "Modell",
-                                       "Samples")):
-                log(f"train: {line}")
-        if result.returncode:
-            log("Training fehlgeschlagen — Evidence bleibt lokal erhalten, "
-                "kein Commit", err=True)
-            return
-        marker.write_text(str(total))
-
-    paths = ["training-data"]
-    if needs_training:
-        paths += ["scripts/ocr/model.npz"]  # Add-on-Kopie erst beim Release
-    if any(changed(repo, p) for p in paths):
-        run(["git", "add", "-f", *paths], repo)
-        run(["git", "commit", "-m", "ocr: sync evidence"
-             + (" + retrain model" if needs_training else "")], repo)
-        log("Commit erstellt" + (" (mit Retraining)" if needs_training else ""))
+    if changed(repo, "training-data"):
+        run(["git", "add", "-f", "training-data"], repo)
+        run(["git", "commit", "-m", "ocr: sync evidence"], repo)
+        log("Commit erstellt")
     if args.push:
         r = run(["git", "push", "origin", "HEAD"], repo, check=False)
         if r.returncode:

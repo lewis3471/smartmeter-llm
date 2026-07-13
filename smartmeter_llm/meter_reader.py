@@ -644,7 +644,10 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     return current, pv_w
 
 
-RETRAIN_HOUR = int(os.environ.get("RETRAIN_HOUR", "3"))  # -1 = aus
+# Auto-Training (Stunde 0-23, -1 = aus). Auf dem NUC aus lassen —
+# der Sync liefert nur Evidence; trainiert wird nach Label-Audit.
+AUTO_TRAIN_HOUR = int(os.environ.get(
+    "AUTO_TRAIN_HOUR", os.environ.get("RETRAIN_HOUR", "-1")))
 _model_mtime: float | None = None
 
 
@@ -676,10 +679,10 @@ def maybe_retrain(state: dict):
     Trainingsdaten, Modell wird neu gebaut und im laufenden Betrieb geladen.
     Kein manueller Eingriff mehr noetig (Zaehler-Rollover, Lichtwechsel...)."""
     global _local_reader
-    if RETRAIN_HOUR < 0 or _local_reader is None or not SAVE_SAMPLES_DIR:
+    if AUTO_TRAIN_HOUR < 0 or _local_reader is None or not SAVE_SAMPLES_DIR:
         return  # ohne Sample-Sammlung gibt es nichts zu trainieren
     today = time.strftime("%Y-%m-%d")
-    if state.get("retrain_day") == today or int(time.strftime("%H")) != RETRAIN_HOUR:
+    if state.get("retrain_day") == today or int(time.strftime("%H")) != AUTO_TRAIN_HOUR:
         return
     state["retrain_day"] = today
     try:
