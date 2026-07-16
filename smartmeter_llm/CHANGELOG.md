@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.0
+
+- Akku-Waechter: batt_strings (z.B. "1,4") schuetzt Akku-Strings vor
+  Tiefentladung — unter batt_low_v wird das Gesamtlimit adaptiv gesenkt,
+  bis die gemessene Entnahme ~0 W ist; ab batt_high_v wieder frei
+  (Hysterese). Neue HA-Sensoren: Akku-Spannung, Akku-Schutz aktiv.
+  OpenDTU-on-Battery: Dynamic Power Limiter deaktivieren!
+- Gemini-Prompt mit Kontext und bekannten Edge-Cases (6-stelliger
+  Zaehlerstand — nie trunkieren, Minuszeichen, Segmenttest, Dunkel-Frame)
+
 ## 1.5.1
 
 - Gemini-Label-Bug behoben: Gemini trunkiert kWh gelegentlich auf 4 Stellen

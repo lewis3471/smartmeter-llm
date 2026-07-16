@@ -104,7 +104,27 @@ if READER_MODE in ("local", "hybrid"):
               file=sys.stderr)
         if READER_MODE == "local":
             raise
-GEMINI_PROMPT = os.environ.get("GEMINI_PROMPT", 'Lies das LCD. Antworte nur: {"kwh":int,"w":int}')
+GEMINI_PROMPT = os.environ.get("GEMINI_PROMPT", (
+    'Foto eines EasyMeter-Stromzaehler-LCDs mit zwei Zeilen. '
+    'Zeile 1 = Zaehlerstand in kWh: IMMER exakt 6 Ziffern, ggf. mit '
+    'fuehrender Null (z.B. 035774) — gib ALLE 6 Ziffern an, lass niemals '
+    'die letzte Ziffer weg. Zeile 2 = aktuelle Leistung in W (1-5 Ziffern), '
+    'KANN NEGATIV sein: pruefe genau, ob links ein Minuszeichen steht. '
+    'Sonderfaelle: LCD-Segmenttest (beide Zeilen zeigen nur 8er) -> '
+    '{"kwh":888888,"w":888888}; Display dunkel oder unlesbar -> '
+    '{"kwh":0,"w":0}. Antworte NUR mit JSON: {"kwh":int,"w":int}'))
+
+# --- Akku-Waechter: Strings mit Batterie (Victron) vor Tiefentladung
+# schuetzen. Der HMS kann nicht pro String limitieren — der Waechter senkt
+# stattdessen das Gesamtlimit adaptiv, bis die gemessene Entnahme aus den
+# Akku-Strings ~0 ist, und gibt per Spannungs-Hysterese wieder frei.
+BATT_STRINGS = [int(s) for s in os.environ.get("BATT_STRINGS", "").replace(
+    " ", "").split(",") if s.strip().isdigit()]
+BATT_LOW_V = float(os.environ.get("BATT_LOW_V", "36"))
+BATT_HIGH_V = float(os.environ.get("BATT_HIGH_V", "38"))
+BATT_MAX_DRAIN_W = int(os.environ.get("BATT_MAX_DRAIN_W", "10"))
+BATT_PROBE_W = 25       # Sonnen-Probe: Cap-Anhebung pro Minute im Hold
+BATT_PROBE_S = 60
 CAM_SNAPSHOT_URL = os.environ["CAM_SNAPSHOT_URL"]
 OPENDTU_URL = os.environ["OPENDTU_URL"].rstrip("/")
 OPENDTU_AUTH = (os.environ["OPENDTU_USER"], os.environ["OPENDTU_PASS"])
@@ -497,11 +517,73 @@ def rebaseline(reading: dict, state: dict) -> bool:
     return False
 
 
+def get_livedata() -> tuple[float, dict[int, tuple[float, float]]]:
+    """OpenDTU-Livedata: (AC-Leistung, {String-Nr: (DC-Volt, DC-Watt)}).
+    DC-Daten gibt es nur in der Detail-Ansicht (?inv=serial)."""
+    url = f"{OPENDTU_URL}/api/livedata/status"
+    if BATT_STRINGS:
+        url += f"?inv={INVERTER_SERIAL}"
+    r = requests.get(url, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+    inv = data["inverters"][0]
+    try:
+        ac = float(data["total"]["Power"]["v"])
+    except (KeyError, IndexError):
+        ac = float(inv["AC"]["0"]["Power"]["v"])
+    dc: dict[int, tuple[float, float]] = {}
+    for key, ch in inv.get("DC", {}).items():
+        try:
+            dc[int(key) + 1] = (float(ch["Voltage"]["v"]),
+                                float(ch["Power"]["v"]))
+        except (KeyError, TypeError, ValueError):
+            pass
+    return ac, dc
+
+
 def get_inverter_power() -> float:
     """Aktuelle AC-Leistung des Inverters aus OpenDTU-Livedata."""
-    r = requests.get(f"{OPENDTU_URL}/api/livedata/status", timeout=10)
-    r.raise_for_status()
-    return float(r.json()["total"]["Power"]["v"])
+    return get_livedata()[0]
+
+
+def battery_guard(state: dict, pv_w: float,
+                  dc: dict[int, tuple[float, float]], now: float) -> int:
+    """Liefert das erlaubte Max-Limit. Hysterese: unter BATT_LOW_V wird
+    gehalten (Cap adaptiv auf Solar-only gesenkt), ab BATT_HIGH_V wieder
+    freigegeben. Waehrend des Holds hebt eine Sonnen-Probe das Cap langsam
+    an; zieht der Akku wieder, senkt die Messung es sofort zurueck."""
+    volts = [dc[s][0] for s in BATT_STRINGS if s in dc]
+    batt_w = sum(dc[s][1] for s in BATT_STRINGS if s in dc)
+    hold = state.get("batt_hold", False)
+    if not volts:
+        return MAX_LIMIT_W if not hold else state.get("batt_cap", MAX_LIMIT_W)
+    v = min(volts)
+    state["batt_v"] = v
+    if not hold and v < BATT_LOW_V:
+        hold = True
+        state["batt_cap"] = max(MIN_LIMIT_W, int(pv_w - batt_w))
+        state["batt_cap_ts"] = now
+        print(f"Akku-Waechter: {v:.1f}V < {BATT_LOW_V}V — halte Limit auf "
+              f"Solar-only (Cap {state['batt_cap']}W, Akku zog {batt_w:.0f}W)")
+    elif hold and v >= BATT_HIGH_V:
+        hold = False
+        state.pop("batt_cap", None)
+        print(f"Akku-Waechter: {v:.1f}V >= {BATT_HIGH_V}V — Akku-Strings "
+              "wieder freigegeben")
+    state["batt_hold"] = hold
+    if not hold:
+        return MAX_LIMIT_W
+    cap = state.get("batt_cap", MAX_LIMIT_W)
+    since = now - state.get("batt_cap_ts", 0)
+    if batt_w > BATT_MAX_DRAIN_W and since >= LATENCY_S:
+        cap = max(MIN_LIMIT_W, min(cap, int(pv_w - batt_w)))
+        state["batt_cap_ts"] = now
+        print(f"Akku-Waechter: Akku zieht {batt_w:.0f}W — Cap -> {cap}W")
+    elif since >= BATT_PROBE_S and cap < MAX_LIMIT_W:
+        cap = min(MAX_LIMIT_W, cap + BATT_PROBE_W)  # Sonnen-Probe
+        state["batt_cap_ts"] = now
+    state["batt_cap"] = cap
+    return cap
 
 
 def set_limit(watts: int):
@@ -535,7 +617,8 @@ def _get_mqtt():
     return _mqtt
 
 
-def publish(reading: dict | None, status: str, limit: int | None):
+def publish(reading: dict | None, status: str, limit: int | None,
+            state: dict | None = None):
     c = _get_mqtt()
     if c is None:
         return
@@ -545,6 +628,10 @@ def publish(reading: dict | None, status: str, limit: int | None):
                  (f"{TOPIC}/w", str(reading["w"]))]
     if limit is not None:
         msgs.append((f"{TOPIC}/limit_w", str(limit)))
+    if state is not None and "batt_v" in state:
+        msgs += [(f"{TOPIC}/batt_v", f"{state['batt_v']:.1f}"),
+                 (f"{TOPIC}/batt_hold",
+                  "ON" if state.get("batt_hold") else "OFF")]
     try:
         for topic, payload in msgs:
             c.publish(topic, payload, retain=True)
@@ -575,6 +662,14 @@ def publish_discovery():
                     "icon": "mdi:speedometer"},
         "status": {"name": "Status", "icon": "mdi:eye-check"},
     }
+    if BATT_STRINGS:
+        sensors["batt_v"] = {"name": "Akku-Spannung",
+                             "unit_of_measurement": "V",
+                             "device_class": "voltage",
+                             "state_class": "measurement",
+                             "icon": "mdi:battery-outline"}
+        sensors["batt_hold"] = {"name": "Akku-Schutz aktiv",
+                                "icon": "mdi:battery-lock"}
     msgs = []
     for key, cfg in sensors.items():
         cfg.update({
@@ -613,13 +708,16 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     if not INVERTER_SERIAL or INVERTER_SERIAL == "CHANGE_ME":
         return None, None
     try:
-        pv_w = get_inverter_power()
+        pv_w, dc = get_livedata()
     except Exception as e:
         print(f"OpenDTU nicht erreichbar: {e}", file=sys.stderr)
         return None, None
     now = time.time()
+    max_limit = MAX_LIMIT_W
+    if BATT_STRINGS:
+        max_limit = battery_guard(state, pv_w, dc, now)
     error = grid_w - TARGET_GRID_W  # >0: zu viel Bezug
-    wanted = int(round(max(MIN_LIMIT_W, min(MAX_LIMIT_W, pv_w + error))))
+    wanted = int(round(max(MIN_LIMIT_W, min(max_limit, pv_w + error))))
     current = state.get("limit_w")
 
     def send(value: int, tag: str):
@@ -635,6 +733,10 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
 
     if current is None:
         return send(wanted, "init"), pv_w
+    # Akku-Hold: Limit ueber dem Cap SOFORT senken — die normale
+    # runter-Bedingung greift nicht, solange der Akku das Netz auf Ziel haelt
+    if current > max_limit and now - state.get("limit_sent_ts", 0) >= LATENCY_S:
+        return send(max_limit, "akku-schutz") or current, pv_w
     if error > DEADBAND_W and wanted > current:
         return send(wanted, "hoch") or current, pv_w
     if error < -DEADBAND_W and wanted < current:
@@ -774,7 +876,7 @@ def main(once: bool = False):
                     pv_w = None
             if limit is not None:
                 state["limit_w"] = limit
-            publish(reading, "ok", limit)
+            publish(reading, "ok", limit, state)
             pv = f"{pv_w:.0f}" if pv_w is not None else "?"
             print(f"kwh={reading['kwh']} w={reading['w']:+d} pv={pv}"
                   f" limit={limit} [{source}]")

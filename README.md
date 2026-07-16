@@ -299,3 +299,17 @@ reicht 1 Frame und die LED ist nur ~1 s an. Danach `INTERVAL_S=5` setzen und
   [Google AI Studio](https://aistudio.google.com/apikey) **rotieren** und den neuen
   Key nur in `.env` ablegen
 - OpenDTU-Passwort bei Gelegenheit ändern (WebUI → Settings → Security)
+
+## Akku-Wächter (Victron an einzelnen Strings)
+
+Hängt an einzelnen Inverter-Eingängen ein Akku (z.B. Victron-Laderegler an
+String 1+4, Solar an String 2), schützt der Wächter vor Tiefentladung:
+`BATT_STRINGS=1,4`, unter `BATT_LOW_V` (36 V) wird das Gesamtlimit adaptiv
+gesenkt, bis die gemessene Entnahme aus den Akku-Strings ~0 W ist
+(der HMS kann nicht pro String limitieren — der Wächter regelt deshalb
+per Feedback auf die OpenDTU-Livedaten). Eine Sonnen-Probe hebt das Cap
+langsam wieder an; ab `BATT_HIGH_V` (38 V) sind die Akku-Strings wieder
+frei. Akku-Spannung und Schutz-Status erscheinen als eigene HA-Sensoren.
+
+**Wichtig:** In OpenDTU-on-Battery den Dynamic Power Limiter deaktivieren —
+zwei Regler am selben Limit arbeiten gegeneinander.
