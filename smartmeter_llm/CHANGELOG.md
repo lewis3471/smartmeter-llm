@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.1
+
+- Gemini-Label-Bug behoben: Gemini trunkiert kWh gelegentlich auf 4 Stellen
+  ("3574" statt 35741) — 123 vergiftete Auto-Labels repariert (98 per
+  Modell-Konsens) bzw. geloescht; valid_label() verwirft kWh < 10000
+- Segmenttest wird lokal auch bei 8er-dominierten Fehl-Lesungen erkannt
+  (halbiert die Gemini-Fallback-Calls auf Segmenttest-Frames)
+- Modell neu trainiert (829 Samples, inkl. Abend-Evidence bis 16.07.)
+
 ## 1.5.0
 
 - NUC trainiert nicht mehr: der Feedback-Sync sammelt und committet nur

@@ -47,8 +47,11 @@ def keep_routine(name: str) -> bool:
 
 
 def valid_label(d: dict) -> bool:
+    # kWh hat auf dem ESY11 immer 6 Ziffern (fuehrende 0 -> int 5-6-stellig).
+    # Gemini trunkiert gelegentlich auf 4 Stellen — solche Labels vergiften
+    # das Training und werden hier verworfen.
     return (isinstance(d.get("kwh"), int) and isinstance(d.get("w"), int)
-            and 0 < d["kwh"] < 1_000_000 and abs(d["w"]) <= 20_000
+            and 10_000 <= d["kwh"] < 1_000_000 and abs(d["w"]) <= 20_000
             and d["kwh"] != 888888 and abs(d["w"]) not in (88888, 888888))
 
 

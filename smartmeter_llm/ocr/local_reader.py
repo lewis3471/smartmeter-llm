@@ -70,8 +70,13 @@ class LocalReader:
         kwh_s = "".join(labels[:6])
         w_s = "".join(labels[6:])
         digits = (kwh_s + w_s).replace("_", "")
-        if len(digits) >= 8 and set(digits) <= {"8", "0"} and digits.count("8") >= 6:
+        # Echte Lesungen haben nie >5 Achten (35888 + 88 W); der Segmenttest
+        # wird oft als Mix aus 8ern und 8-aehnlichen Ziffern (3/5/6/9/0) gelesen
+        if len(digits) >= 8 and digits.count("8") >= 7:
             raise ValueError("LCD-Segmenttest (alles 8er)")
+        if len(digits) >= 8 and set(digits) <= {"8", "0", "3", "5", "6", "9"} \
+                and digits.count("8") >= 6:
+            raise ValueError("LCD-Segmenttest (8er-dominiert)")
         if "_" in kwh_s or "-" in kwh_s:
             raise ValueError(f"kWh-Zeile unlesbar: {kwh_s!r}")
         w_clean = w_s.replace("_", "")
