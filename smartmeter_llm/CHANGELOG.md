@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1
+
+- Akku-Waechter: Freigabe erst, wenn die Bus-Spannung batt_release_s
+  (Default 300 s) durchgehend ueber batt_high_v lag — die Victron-
+  Ladespannung liegt beim Laden sofort ueber der Schwelle, obwohl der
+  Akku noch leer ist (verhindert Hold/Frei-Pendeln)
+
 ## 1.6.0
 
 - Akku-Waechter: batt_strings (z.B. "1,4") schuetzt Akku-Strings vor

@@ -30,6 +30,7 @@ export BATT_STRINGS=$(bashio::config 'batt_strings')
 export BATT_LOW_V=$(bashio::config 'batt_low_v')
 export BATT_HIGH_V=$(bashio::config 'batt_high_v')
 export BATT_MAX_DRAIN_W=$(bashio::config 'batt_max_drain_w')
+export BATT_RELEASE_S=$(bashio::config 'batt_release_s')
 export LOG_LEVEL=$(bashio::config 'log_level')
 # MQTT automatisch vom HA-Broker-Service (Mosquitto-Add-on)
 if bashio::services.available "mqtt"; then

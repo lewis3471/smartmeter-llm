@@ -123,6 +123,9 @@ BATT_STRINGS = [int(s) for s in os.environ.get("BATT_STRINGS", "").replace(
 BATT_LOW_V = float(os.environ.get("BATT_LOW_V", "36"))
 BATT_HIGH_V = float(os.environ.get("BATT_HIGH_V", "38"))
 BATT_MAX_DRAIN_W = int(os.environ.get("BATT_MAX_DRAIN_W", "10"))
+# Freigabe erst nach durchgehend gehaltener Spannung: die Victron-LADE-
+# Spannung liegt sonst sofort ueber der Schwelle, obwohl der Akku leer ist
+BATT_RELEASE_S = float(os.environ.get("BATT_RELEASE_S", "300"))
 BATT_PROBE_W = 25       # Sonnen-Probe: Cap-Anhebung pro Minute im Hold
 BATT_PROBE_S = 60
 CAM_SNAPSHOT_URL = os.environ["CAM_SNAPSHOT_URL"]
@@ -566,10 +569,20 @@ def battery_guard(state: dict, pv_w: float,
         print(f"Akku-Waechter: {v:.1f}V < {BATT_LOW_V}V — halte Limit auf "
               f"Solar-only (Cap {state['batt_cap']}W, Akku zog {batt_w:.0f}W)")
     elif hold and v >= BATT_HIGH_V:
-        hold = False
-        state.pop("batt_cap", None)
-        print(f"Akku-Waechter: {v:.1f}V >= {BATT_HIGH_V}V — Akku-Strings "
-              "wieder freigegeben")
+        # Victron haengt mit Solar am selben Bus: beim Laden liegt die
+        # BUS-Spannung sofort ueber der Schwelle, obwohl der Akku noch leer
+        # ist. Erst freigeben, wenn sie BATT_RELEASE_S durchgehend hielt.
+        if "batt_high_since" not in state:
+            state["batt_high_since"] = now
+        if now - state["batt_high_since"] >= BATT_RELEASE_S:
+            hold = False
+            state.pop("batt_cap", None)
+            state.pop("batt_high_since", None)
+            print(f"Akku-Waechter: {v:.1f}V >= {BATT_HIGH_V}V "
+                  f"({BATT_RELEASE_S:.0f}s gehalten) — Akku-Strings "
+                  "wieder freigegeben")
+    elif hold:
+        state.pop("batt_high_since", None)  # Spannung wieder eingebrochen
     state["batt_hold"] = hold
     if not hold:
         return MAX_LIMIT_W
