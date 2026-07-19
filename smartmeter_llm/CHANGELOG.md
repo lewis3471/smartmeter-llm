@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.2
+
+- Regler-Telemetrie: jeder Limit-Send + Leistungsverlauf (Inverter-AC)
+  ±45 s drumherum als JSONL unter samples/control/, wird per Git-Sync
+  nach training-data/control/ committet. Grundlage fuer die FOPDT-
+  Analyse der HMS-Totzeit (scripts/analyze_latency.py) und das Tuning
+  von LATENCY_S — Ziel: das +/-Pendeln bei traegem HMS beenden
+
 ## 1.6.1
 
 - Akku-Waechter: Freigabe erst, wenn die Bus-Spannung batt_release_s

@@ -108,6 +108,19 @@ def collect_evidence(samples: Path, evidence: Path) -> tuple[list[Path], int]:
         shutil.copy2(jf.with_suffix(".jpg"), dst.with_suffix(".jpg"))
         copied.extend([jf, jf.with_suffix(".jpg")])
         new_labels += 1
+    # 4) Regler-Telemetrie (control/*.jsonl): heutige Datei waechst noch und
+    #    wird nur kopiert (Overwrite); abgeschlossene Tage werden geprunt
+    ctl = samples / "control"
+    if ctl.exists():
+        (evidence / "control").mkdir(parents=True, exist_ok=True)
+        today = time.strftime("%Y%m%d")
+        for f in sorted(ctl.glob("*.jsonl")):
+            dst = evidence / "control" / f.name
+            if dst.exists() and dst.stat().st_size == f.stat().st_size:
+                continue
+            shutil.copy2(f, dst)
+            if f.stem != today:
+                copied.append(f)
     return copied, new_labels
 
 

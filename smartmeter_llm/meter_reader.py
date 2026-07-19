@@ -705,6 +705,47 @@ def publish_discovery():
         print(f"MQTT-Discovery fehlgeschlagen: {e}", file=sys.stderr)
 
 
+# --- Regler-Telemetrie: Limit-Sends + Leistungsverlauf (JSONL) fuer die
+# FOPDT-Analyse der HMS-Totzeit (scripts/analyze_latency.py). Vorlauf-Ticks
+# kommen aus einem Ringpuffer, nach jedem Send wird 45s lang mitgeschrieben.
+from collections import deque as _deque
+
+_ctl_buf: "_deque[dict]" = _deque(maxlen=30)
+_ctl_until = 0.0
+CTL_LOG_AFTER_S = 45
+
+
+def _ctl_write(rec: dict):
+    if not SAVE_SAMPLES_DIR:
+        return
+    d = Path(SAVE_SAMPLES_DIR) / "control"
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+        with open(d / (time.strftime("%Y%m%d") + ".jsonl"), "a") as fh:
+            fh.write(json.dumps(rec) + "\n")
+    except OSError:
+        pass
+
+
+def ctl_tick(grid_w: int, pv_w: float, limit):
+    rec = {"t": round(time.time(), 2), "ev": "tick", "grid": grid_w,
+           "pv": round(pv_w, 1), "limit": limit}
+    if time.time() < _ctl_until:
+        _ctl_write(rec)
+    else:
+        _ctl_buf.append(rec)
+
+
+def ctl_send(old, new, tag: str):
+    global _ctl_until
+    for rec in _ctl_buf:
+        _ctl_write(rec)
+    _ctl_buf.clear()
+    _ctl_write({"t": round(time.time(), 2), "ev": "limit",
+                "from": old, "to": new, "tag": tag})
+    _ctl_until = time.time() + CTL_LOG_AFTER_S
+
+
 def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     """Asymmetrischer Absolut-Regler ("GIB IHM"-Politik):
 
@@ -732,11 +773,13 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     error = grid_w - TARGET_GRID_W  # >0: zu viel Bezug
     wanted = int(round(max(MIN_LIMIT_W, min(max_limit, pv_w + error))))
     current = state.get("limit_w")
+    ctl_tick(grid_w, pv_w, current)
 
     def send(value: int, tag: str):
         try:
             set_limit(value)
             state["limit_sent_ts"] = now
+            ctl_send(current, value, tag)
             print(f"Regler: Limit {current}->{value} [{tag}] "
                   f"(e={error:+d}, pv={pv_w:.0f})")
             return value
