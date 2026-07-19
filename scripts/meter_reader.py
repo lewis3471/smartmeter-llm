@@ -148,6 +148,12 @@ DEADBAND_W = int(os.environ.get("DEADBAND_W", "15"))
 # Regelkreis-Totzeit Limit->Wirkung (gemessen ~6-8s inkl. MPPT/LCD/Median);
 # gilt nur fuer Abwaerts-Korrekturen — hoch geht immer sofort
 LATENCY_S = float(os.environ.get("LATENCY_S", "8"))
+# Sende-Sperrzeit ~ gemessene Totzeit theta (analyze_latency: 4-5s).
+# Innerhalb davon basiert jede neue Messung noch auf dem alten Limit —
+# Nachlegen erzeugt nur Ueberschiessen. Ausnahme: echter Netzbezug ueber
+# URGENT_ERROR_W feuert sofort (kein Cent Netzbezug!).
+MIN_SEND_GAP_S = float(os.environ.get("MIN_SEND_GAP_S", "5"))
+URGENT_ERROR_W = int(os.environ.get("URGENT_ERROR_W", "100"))
 MIN_LIMIT_W = int(os.environ.get("MIN_LIMIT_W", "50"))
 MAX_LIMIT_W = int(os.environ.get("MAX_LIMIT_W", "1500"))
 FAILSAFE_LIMIT_W = int(os.environ.get("FAILSAFE_LIMIT_W", "200"))
@@ -794,6 +800,9 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     if current > max_limit and now - state.get("limit_sent_ts", 0) >= LATENCY_S:
         return send(max_limit, "akku-schutz") or current, pv_w
     if error > DEADBAND_W and wanted > current:
+        if (error < URGENT_ERROR_W
+                and now - state.get("limit_sent_ts", 0) < MIN_SEND_GAP_S):
+            return current, pv_w  # letzter Schritt noch nicht messbar
         return send(wanted, "hoch") or current, pv_w
     if error < -DEADBAND_W and wanted < current:
         if now - state.get("limit_sent_ts", 0) < LATENCY_S:

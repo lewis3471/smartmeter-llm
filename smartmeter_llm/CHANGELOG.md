@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.3
+
+- Anti-Pendel: Sende-Sperrzeit min_send_gap_s (Default 5 s ~ gemessene
+  HMS-Totzeit) gilt jetzt auch fuer hoch — Telemetrie zeigte 783 Sends/Tag
+  mit Median-Abstand 3,9 s, davon 205x hoch-auf-hoch bevor der erste
+  Schritt messbar war, plus 164 Richtungswechsel (Schwingweite median
+  58 W). Notbremse: ab urgent_error_w (100 W) Netzbezug feuert der Regler
+  sofort, Sperrzeit egal
+
 ## 1.6.2
 
 - Regler-Telemetrie: jeder Limit-Send + Leistungsverlauf (Inverter-AC)
