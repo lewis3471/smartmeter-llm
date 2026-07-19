@@ -148,12 +148,13 @@ DEADBAND_W = int(os.environ.get("DEADBAND_W", "15"))
 # Regelkreis-Totzeit Limit->Wirkung (gemessen ~6-8s inkl. MPPT/LCD/Median);
 # gilt nur fuer Abwaerts-Korrekturen — hoch geht immer sofort
 LATENCY_S = float(os.environ.get("LATENCY_S", "8"))
-# Sende-Sperrzeit ~ gemessene Totzeit theta (analyze_latency: 4-5s).
-# Innerhalb davon basiert jede neue Messung noch auf dem alten Limit —
-# Nachlegen erzeugt nur Ueberschiessen. Ausnahme: echter Netzbezug ueber
-# URGENT_ERROR_W feuert sofort (kein Cent Netzbezug!).
-MIN_SEND_GAP_S = float(os.environ.get("MIN_SEND_GAP_S", "5"))
-URGENT_ERROR_W = int(os.environ.get("URGENT_ERROR_W", "100"))
+# Pending-Kompensation (Smith-Predictor light): Limit-Schritte der letzten
+# PENDING_S Sekunden (~ gemessene Totzeit theta) sind in der aktuellen
+# Messung noch nicht sichtbar und werden vom Fehler abgezogen — Nachpumpen
+# auf das Stale-Echo des eigenen Schritts entfaellt, echte Lastspruenge
+# reagieren weiterhin sofort. MIN_STEP_W filtert Funk-Spam-Mikroschritte.
+PENDING_S = float(os.environ.get("PENDING_S", "5"))
+MIN_STEP_W = int(os.environ.get("MIN_STEP_W", "15"))
 MIN_LIMIT_W = int(os.environ.get("MIN_LIMIT_W", "50"))
 MAX_LIMIT_W = int(os.environ.get("MAX_LIMIT_W", "1500"))
 FAILSAFE_LIMIT_W = int(os.environ.get("FAILSAFE_LIMIT_W", "200"))
@@ -776,8 +777,15 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     max_limit = MAX_LIMIT_W
     if BATT_STRINGS:
         max_limit = battery_guard(state, pv_w, dc, now)
-    error = grid_w - TARGET_GRID_W  # >0: zu viel Bezug
-    wanted = int(round(max(MIN_LIMIT_W, min(max_limit, pv_w + error))))
+    pend = [(ts, d) for ts, d in state.get("pending", [])
+            if now - ts < PENDING_S]
+    state["pending"] = pend
+    pending = sum(d for _, d in pend)
+    error_raw = grid_w - TARGET_GRID_W  # >0: zu viel Bezug
+    # wanted bleibt absolut aus Roh-Messwerten (staleness-invariant);
+    # ENTSCHIEDEN wird auf dem kompensierten Fehler
+    error = error_raw - pending
+    wanted = int(round(max(MIN_LIMIT_W, min(max_limit, pv_w + error_raw))))
     current = state.get("limit_w")
     ctl_tick(grid_w, pv_w, current)
 
@@ -785,6 +793,8 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
         try:
             set_limit(value)
             state["limit_sent_ts"] = now
+            if current is not None:
+                state.setdefault("pending", []).append((now, value - current))
             ctl_send(current, value, tag)
             print(f"Regler: Limit {current}->{value} [{tag}] "
                   f"(e={error:+d}, pv={pv_w:.0f})")
@@ -800,11 +810,12 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     if current > max_limit and now - state.get("limit_sent_ts", 0) >= LATENCY_S:
         return send(max_limit, "akku-schutz") or current, pv_w
     if error > DEADBAND_W and wanted > current:
-        if (error < URGENT_ERROR_W
-                and now - state.get("limit_sent_ts", 0) < MIN_SEND_GAP_S):
-            return current, pv_w  # letzter Schritt noch nicht messbar
+        if wanted - current < MIN_STEP_W:
+            return current, pv_w  # Mikro-Trim: Funk-Spam ohne Wirkung
         return send(wanted, "hoch") or current, pv_w
     if error < -DEADBAND_W and wanted < current:
+        if current - wanted < MIN_STEP_W:
+            return current, pv_w
         if now - state.get("limit_sent_ts", 0) < LATENCY_S:
             return current, pv_w  # letzte Korrektur erst wirken lassen
         return send(wanted, "runter") or current, pv_w

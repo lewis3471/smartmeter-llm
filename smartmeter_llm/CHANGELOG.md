@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.4
+
+- Anti-Pendel v2 (Pending-Kompensation): Limit-Schritte der letzten
+  pending_s (~Totzeit) werden vom Regelfehler abgezogen — das Stale-Echo
+  des eigenen Schritts kann kein Nachpumpen mehr ausloesen, echte
+  Lastspruenge reagieren unveraendert sofort. Ersetzt min_send_gap_s/
+  urgent_error_w aus 1.6.3: deren Notbremse (error>100) war abends
+  praktisch immer aktiv (Fehler-Median 180 W) und hebelte die Sperre aus
+- min_step_w (15 W): Mikro-Limit-Aenderungen werden nicht mehr gefunkt —
+  heute waren 940 von 1908 Sends Schritte unter 20 W
+
 ## 1.6.3
 
 - Anti-Pendel: Sende-Sperrzeit min_send_gap_s (Default 5 s ~ gemessene
