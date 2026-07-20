@@ -1,0 +1,1 @@
+{"accepted_kwh": 35844, "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", "failures": 1, "kind": "rejected_reading", "timestamp": "2026-07-20T20:21:31+0200"}
