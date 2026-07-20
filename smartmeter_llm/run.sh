@@ -91,5 +91,5 @@ if bashio::config.true 'git_sync_enabled'; then
     fi
 fi
 
-bashio::log.info "Starte meter_reader (Modus $(bashio::config 'reader_mode'), Ziel $(bashio::config 'target_grid_w')W)"
+bashio::log.info "Starte meter_reader (Modus $READER_MODE, Ziel $(bashio::config 'target_grid_w')W)"
 exec python3 -u /app/scripts/meter_reader.py

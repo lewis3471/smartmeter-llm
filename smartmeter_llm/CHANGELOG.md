@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.3
+
+- Startzeile las die in 1.7.0 entfernte Option reader_mode ("Modus null")
+  — nutzt jetzt den fest verdrahteten Wert
+
 ## 1.7.2
 
 - MPPT-Kick als Eskalationstreppe: +100/+200/+400/+800 W ueber dem
