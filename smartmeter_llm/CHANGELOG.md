@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.5
+
+- Pending-Kompensation v2: Schritte klingen mit der gemessenen
+  Sprungantwort ab (voll bis theta=4s, dann exp(-t/tau), tau=2.5s) statt
+  hart nach 5s zu verfallen — 1.6.4 liess die Kompensation genau dann
+  fallen, wenn die Wirkung erst halb angekommen war (Telemetrie 20.07.:
+  Umkehrungen 6x seltener, aber Restschwinger 123W statt 105W)
+- WICHTIG fuer bestehende Installationen: Add-on-Option latency_s
+  pruefen — Telemetrie zeigt runter-Sends im 1,2s-Abstand, die Option
+  steht dort offenbar auf ~1 statt 8 (Default). Auf 8 stellen!
+
 ## 1.6.4
 
 - Anti-Pendel v2 (Pending-Kompensation): Limit-Schritte der letzten

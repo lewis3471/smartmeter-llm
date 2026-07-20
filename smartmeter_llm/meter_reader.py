@@ -10,6 +10,7 @@ import base64
 import builtins
 import json
 import os
+import math
 import re
 import socket
 import sys
@@ -148,13 +149,21 @@ DEADBAND_W = int(os.environ.get("DEADBAND_W", "15"))
 # Regelkreis-Totzeit Limit->Wirkung (gemessen ~6-8s inkl. MPPT/LCD/Median);
 # gilt nur fuer Abwaerts-Korrekturen — hoch geht immer sofort
 LATENCY_S = float(os.environ.get("LATENCY_S", "8"))
-# Pending-Kompensation (Smith-Predictor light): Limit-Schritte der letzten
-# PENDING_S Sekunden (~ gemessene Totzeit theta) sind in der aktuellen
-# Messung noch nicht sichtbar und werden vom Fehler abgezogen — Nachpumpen
-# auf das Stale-Echo des eigenen Schritts entfaellt, echte Lastspruenge
-# reagieren weiterhin sofort. MIN_STEP_W filtert Funk-Spam-Mikroschritte.
-PENDING_S = float(os.environ.get("PENDING_S", "5"))
+# Pending-Kompensation (Smith-Predictor): eigene Limit-Schritte werden mit
+# ihrer erwarteten UNSICHTBARKEIT gewichtet vom Fehler abgezogen — voll bis
+# theta (Totzeit), danach exponentiell abklingend mit tau (beide aus
+# analyze_latency gefittet). Kein hartes Fenster: 1.6.4 schnitt bei 5s ab,
+# genau wenn die Wirkung halb angekommen war -> Ueberreaktion auf den Rest.
+PENDING_THETA_S = float(os.environ.get("PENDING_THETA_S", "4"))
+PENDING_TAU_S = float(os.environ.get("PENDING_TAU_S", "2.5"))
 MIN_STEP_W = int(os.environ.get("MIN_STEP_W", "15"))
+
+
+def pending_weight(age_s: float) -> float:
+    """Anteil eines Limit-Schritts, der nach age_s noch NICHT messbar ist."""
+    if age_s <= PENDING_THETA_S:
+        return 1.0
+    return math.exp(-(age_s - PENDING_THETA_S) / PENDING_TAU_S)
 MIN_LIMIT_W = int(os.environ.get("MIN_LIMIT_W", "50"))
 MAX_LIMIT_W = int(os.environ.get("MAX_LIMIT_W", "1500"))
 FAILSAFE_LIMIT_W = int(os.environ.get("FAILSAFE_LIMIT_W", "200"))
@@ -777,10 +786,11 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     max_limit = MAX_LIMIT_W
     if BATT_STRINGS:
         max_limit = battery_guard(state, pv_w, dc, now)
+    horizon = PENDING_THETA_S + 4 * PENDING_TAU_S
     pend = [(ts, d) for ts, d in state.get("pending", [])
-            if now - ts < PENDING_S]
+            if now - ts < horizon]
     state["pending"] = pend
-    pending = sum(d for _, d in pend)
+    pending = sum(d * pending_weight(now - ts) for ts, d in pend)
     error_raw = grid_w - TARGET_GRID_W  # >0: zu viel Bezug
     # wanted bleibt absolut aus Roh-Messwerten (staleness-invariant);
     # ENTSCHIEDEN wird auf dem kompensierten Fehler
