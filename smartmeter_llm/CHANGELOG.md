@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.7.0
+
+- Options-Grossputz: 18 tote/nie angefasste Optionen entfernt
+  (reader_mode, ocr_min_conf, cross_check_every, gemini_cooldown_s,
+  cam_mode, led_brightness, cam_frames, interval_s, control_every,
+  min_limit_w, failsafe_after, max_jump_w, auto_train_hour,
+  pending_theta_s, pending_tau_s, min_step_w, batt_max_drain_w,
+  batt_release_s) — Werte sind jetzt fest verdrahtet bzw. Code-Defaults
+- Neue Defaults: latency_s 0 (Smith-Predictor bremst), target_grid_w -20,
+  batt_low_v/high_v 51.2/54.4 (16S LiFePO4), failsafe_limit_w 51
+- HINWEIS: Meckert HA nach dem Update ueber unbekannte Optionen, einmal
+  die Add-on-Konfiguration oeffnen und speichern — das raeumt alte
+  Schluessel weg
+
 ## 1.6.5
 
 - Pending-Kompensation v2: Schritte klingen mit der gemessenen
