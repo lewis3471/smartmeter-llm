@@ -72,6 +72,10 @@ GEMINI_MODELS = [
 ]
 _combo_idx = 0  # Index in (Modell x Key)-Kombinationen
 _combo_day = time.strftime("%Y-%m-%d")
+# Modelle, die heute 404 lieferten (aus der API entfernt / kein Free-Tier-
+# Zugriff mehr): fuer den Rest des Tages aus der Rotation nehmen. Heilt
+# auch veraltete Modell-Listen in gespeicherten Add-on-Optionen.
+_dead_models: set = set()
 ESPHOME_HOST = os.environ.get("ESPHOME_HOST", "")
 ESPHOME_API_KEY = os.environ.get("ESPHOME_API_KEY", "")
 CAM_WARMUP_S = float(os.environ.get("CAM_WARMUP_S", "3.5"))
@@ -443,10 +447,14 @@ def gemini_read(img: bytes) -> dict:
     today = time.strftime("%Y-%m-%d")
     if today != _combo_day:  # Quota-Reset -> wieder mit bestem Modell/Key starten
         _combo_idx, _combo_day = 0, today
+        _dead_models.clear()
     n_combos = len(GEMINI_MODELS) * len(GEMINI_API_KEYS)
     r = None
     for _ in range(n_combos):
         model, key = gemini_combo(_combo_idx)
+        if model in _dead_models:
+            _combo_idx += 1
+            continue
         r = requests.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
             headers={"Content-Type": "application/json", "X-goog-api-key": key},
@@ -454,6 +462,8 @@ def gemini_read(img: bytes) -> dict:
             timeout=30,
         )
         if r.status_code in (404, 429, 503):
+            if r.status_code == 404:
+                _dead_models.add(model)  # Modell existiert nicht (mehr)
             _combo_idx += 1
             nm, nk = gemini_combo(_combo_idx)
             print(
@@ -463,6 +473,8 @@ def gemini_read(img: bytes) -> dict:
             )
             continue
         break
+    if r is None:
+        raise RuntimeError("alle Gemini-Modelle tot (404) — Rotation leer")
     r.raise_for_status()
     # Antwort-Part suchen: Thinking-Modelle liefern zusaetzlich "thought"-Parts
     parts = r.json()["candidates"][0]["content"]["parts"]

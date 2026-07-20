@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.5
+
+- Gemini: 404-Modelle fliegen fuer den Rest des Tages aus der Rotation
+  (die 2.5er sind aus dem Free-Tier verschwunden und verbrannten bei
+  jedem Fallback 4 sinnlose Requests) — heilt auch alte Modell-Listen
+  in gespeicherten Optionen ohne Konfig-Aenderung
+- Default-Modellkette aktualisiert: flash-lite-latest, flash-latest,
+  3.1-flash-lite, 3.5-flash, 2.0-flash-lite (gegen die Live-API geprueft)
+
 ## 1.7.4
 
 - Stuck-Detection nur noch mit Kick-Spielraum: stand das Limit schon am
