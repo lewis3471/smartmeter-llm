@@ -860,7 +860,10 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
                     return send(target, f"kick{k['step']}") or current, pv_w
         else:
             return current, pv_w  # Stufe wirken lassen
-    elif error > DEADBAND_W and current - pv_w > STUCK_GAP_W:
+    elif (error > DEADBAND_W and current - pv_w > STUCK_GAP_W
+          and max_limit - current >= KICK_STEPS_W[0]):
+        # nur wenn Kick-Spielraum existiert — Limit am Anschlag heisst
+        # quellenbegrenzt (Wolke/Akku-Cap), nicht verklemmt
         if "stuck_since" not in state:
             state["stuck_since"] = now
             state["stuck_pv0"] = pv_w

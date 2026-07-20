@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.4
+
+- Stuck-Detection nur noch mit Kick-Spielraum: stand das Limit schon am
+  Anschlag (max_limit/Akku-Cap), war "pv unter Limit" Quellenbegrenzung,
+  kein Klemmen — 3 der ersten 5 kick_results waren solche Fehlalarme
+
 ## 1.7.3
 
 - Startzeile las die in 1.7.0 entfernte Option reader_mode ("Modus null")
