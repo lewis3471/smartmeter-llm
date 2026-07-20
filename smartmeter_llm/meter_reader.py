@@ -165,6 +165,12 @@ MIN_STEP_W = int(os.environ.get("MIN_STEP_W", "15"))
 STUCK_S = float(os.environ.get("STUCK_S", "25"))
 STUCK_GAP_W = int(os.environ.get("STUCK_GAP_W", "150"))
 KICK_COOLDOWN_S = float(os.environ.get("KICK_COOLDOWN_S", "180"))
+# Eskalationstreppe statt Verdopplung: Schwelle, ab der der Tracker sich
+# loest, ist unbekannt — wir tasten uns hoch und LOGGEN den loesenden
+# Schritt (ev=kick_result), um die HMS-Schwelle zu vermessen.
+KICK_STEPS_W = (100, 200, 400, 800)
+KICK_STEP_HOLD_S = float(os.environ.get("KICK_STEP_HOLD_S", "10"))
+KICK_UNSTUCK_W = 50   # so viel pv-Bewegung gilt als "geloest"
 
 
 def pending_weight(age_s: float) -> float:
@@ -802,7 +808,7 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     error_raw = grid_w - TARGET_GRID_W  # >0: zu viel Bezug
     # wanted bleibt absolut aus Roh-Messwerten (staleness-invariant);
     # ENTSCHIEDEN wird auf dem kompensierten Fehler
-    error = error_raw - pending
+    error = error_raw - int(round(pending))
     wanted = int(round(max(MIN_LIMIT_W, min(max_limit, pv_w + error_raw))))
     current = state.get("limit_w")
     ctl_tick(grid_w, pv_w, current)
@@ -815,7 +821,7 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
                 state.setdefault("pending", []).append((now, value - current))
             ctl_send(current, value, tag)
             print(f"Regler: Limit {current}->{value} [{tag}] "
-                  f"(e={error:+d}, pv={pv_w:.0f})")
+                  f"(e={error:+.0f}, pv={pv_w:.0f})")
             return value
         except Exception as e:
             print(f"Limit setzen fehlgeschlagen: {e}", file=sys.stderr)
@@ -823,9 +829,38 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
 
     if current is None:
         return send(wanted, "init"), pv_w
-    # MPPT-Stuck-Kick (siehe oben): grosser Sprung reisst den Tracker los,
-    # der normale runter-Pfad holt das Limit danach von selbst zurueck
-    if error > DEADBAND_W and current - pv_w > STUCK_GAP_W:
+    # MPPT-Stuck-Kick (siehe oben): Eskalationstreppe reisst den Tracker
+    # los; der loesende Schritt wird geloggt (Schwellen-Vermessung), der
+    # normale runter-Pfad holt das Limit danach von selbst zurueck
+    k = state.get("kick")
+    if k:
+        if pv_w - k["pv0"] >= KICK_UNSTUCK_W:
+            delta = current - k["base"]
+            print(f"MPPT-Kick GELOEST: +{delta}W (Stufe {k['step']}) — "
+                  f"pv {k['pv0']:.0f} -> {pv_w:.0f}W")
+            _ctl_write({"t": round(now, 2), "ev": "kick_result", "ok": True,
+                        "base": k["base"], "pv0": k["pv0"], "delta": delta,
+                        "step": k["step"], "pv": round(pv_w, 1)})
+            state.pop("kick")
+            state["kick_ts"] = now
+        elif now - k["ts"] >= KICK_STEP_HOLD_S:
+            if k["step"] >= len(KICK_STEPS_W) or current >= max_limit:
+                print(f"MPPT-Kick erfolglos (Quelle begrenzt?) — "
+                      f"pv {pv_w:.0f}W bei Limit {current}W")
+                _ctl_write({"t": round(now, 2), "ev": "kick_result",
+                            "ok": False, "base": k["base"], "pv0": k["pv0"],
+                            "delta": current - k["base"], "pv": round(pv_w, 1)})
+                state.pop("kick")
+                state["kick_ts"] = now
+            else:
+                target = int(min(max_limit, k["base"] + KICK_STEPS_W[k["step"]]))
+                k["step"] += 1
+                k["ts"] = now
+                if target > current:
+                    return send(target, f"kick{k['step']}") or current, pv_w
+        else:
+            return current, pv_w  # Stufe wirken lassen
+    elif error > DEADBAND_W and current - pv_w > STUCK_GAP_W:
         if "stuck_since" not in state:
             state["stuck_since"] = now
             state["stuck_pv0"] = pv_w
@@ -833,12 +868,12 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
               and pv_w - state.get("stuck_pv0", 0) < 25
               and now - state.get("kick_ts", 0) > KICK_COOLDOWN_S):
             state.pop("stuck_since", None)
-            state["kick_ts"] = now
-            kick = int(min(max_limit, max(2 * wanted, wanted + 400)))
-            if kick > current:
-                print(f"MPPT-Kick: pv {pv_w:.0f}W klemmt unter Limit "
-                      f"{current}W — Limit kurz auf {kick}W")
-                return send(kick, "kick") or current, pv_w
+            print(f"MPPT-Kick: pv {pv_w:.0f}W klemmt unter Limit {current}W "
+                  f"— Eskalation startet (+{KICK_STEPS_W[0]}W)")
+            state["kick"] = {"base": current, "pv0": pv_w, "step": 1,
+                             "ts": now}
+            target = int(min(max_limit, current + KICK_STEPS_W[0]))
+            return send(target, "kick1") or current, pv_w
     else:
         state.pop("stuck_since", None)
     # Akku-Hold: Limit ueber dem Cap SOFORT senken — die normale

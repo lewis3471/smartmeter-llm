@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.2
+
+- MPPT-Kick als Eskalationstreppe: +100/+200/+400/+800 W ueber dem
+  Klemm-Limit, je 10 s gehalten, statt sofortiger Verdopplung. Der
+  loesende Schritt wird als kick_result-Event in die Telemetrie
+  geschrieben — damit vermessen wir die Loese-Schwelle des HMS und
+  koennen den Kick spaeter datenbasiert auf einen Schritt verkuerzen
+- BUGFIX (seit 1.6.4): Send-Logzeile crashte, sobald die Pending-
+  Kompensation aktiv war (float im :+d-Format) — das Limit ging zwar an
+  die DTU, aber der Regler-State behielt den alten Wert (State-Drift,
+  moeglicher Zappel-Verstaerker). Log gefixt, Fehler wieder ganzzahlig
+
 ## 1.7.1
 
 - MPPT-Stuck-Kick: klemmt der HMS an der Batterie weit unter dem Limit
