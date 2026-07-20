@@ -39,11 +39,16 @@ def load_samples(root: Path) -> list[tuple[Path, dict]]:
 
 
 def clean(samples):
-    """Offensichtliche Fehl-Labels raus: kWh-Ausreisser gegen den Median."""
-    kwhs = sorted(s[1]["kwh"] for s in samples)
-    med = kwhs[len(kwhs) // 2]
+    """Offensichtliche Fehl-Labels raus: kWh-Ausreisser gegen den TAGES-
+    Median (der Zaehler laeuft ueber die Korpus-Lebensdauer weiter — ein
+    globaler Median wuerde die neuesten Samples verwerfen)."""
+    by_day = {}
+    for s in samples:
+        by_day.setdefault(s[0].name[:8], []).append(s[1]["kwh"])
+    day_med = {d: sorted(v)[len(v) // 2] for d, v in by_day.items()}
     good = [s for s in samples
-            if abs(s[1]["kwh"] - med) <= 50 and abs(s[1].get("w", 0)) <= 20000]
+            if abs(s[1]["kwh"] - day_med[s[0].name[:8]]) <= 10
+            and abs(s[1].get("w", 0)) <= 20000]
     return good, len(samples) - len(good)
 
 
