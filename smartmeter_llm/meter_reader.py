@@ -63,7 +63,8 @@ GEMINI_API_KEYS = [
     if k.strip()
 ]
 GEMINI_MODELS = [
-    m.strip()
+    # Praefix-Normalisierung: "flash-latest" -> "gemini-flash-latest"
+    (m.strip() if m.strip().startswith("gemini") else "gemini-" + m.strip())
     for m in os.environ.get(
         "GEMINI_MODELS",
         os.environ.get("GEMINI_MODEL", "gemini-3.1-flash-lite"),
@@ -562,9 +563,18 @@ def rebaseline(reading: dict, state: dict) -> bool:
     return False
 
 
+_livedata_cache: tuple[float, tuple] | None = None
+LIVEDATA_CACHE_S = float(os.environ.get("LIVEDATA_CACHE_S", "2.5"))
+
+
 def get_livedata() -> tuple[float, dict[int, tuple[float, float]]]:
     """OpenDTU-Livedata: (AC-Leistung, {String-Nr: (DC-Volt, DC-Watt)}).
-    DC-Daten gibt es nur in der Detail-Ansicht (?inv=serial)."""
+    DC-Daten gibt es nur in der Detail-Ansicht (?inv=serial). Gecacht
+    (LIVEDATA_CACHE_S): die DTU ist ein ESP32 — HTTP-Polling im Regeltakt
+    plus Limit-POSTs wuergt ihren Webserver und die RF-Queue ab."""
+    global _livedata_cache
+    if _livedata_cache and time.time() - _livedata_cache[0] < LIVEDATA_CACHE_S:
+        return _livedata_cache[1]
     url = f"{OPENDTU_URL}/api/livedata/status"
     if BATT_STRINGS:
         url += f"?inv={INVERTER_SERIAL}"
@@ -583,6 +593,7 @@ def get_livedata() -> tuple[float, dict[int, tuple[float, float]]]:
                                 float(ch["Power"]["v"]))
         except (KeyError, TypeError, ValueError):
             pass
+    _livedata_cache = (time.time(), (ac, dc))
     return ac, dc
 
 
@@ -672,6 +683,23 @@ def _get_mqtt():
     return _mqtt
 
 
+_mqtt_last: dict = {}
+MQTT_MIN_INTERVAL_S = float(os.environ.get("MQTT_MIN_INTERVAL_S", "5"))
+
+
+def _throttled(topic: str, payload: str, now: float) -> bool:
+    """True = senden. Identische Payloads werden unterdrueckt, Aenderungen
+    hoechstens alle MQTT_MIN_INTERVAL_S — ausser kwh/status (sofort)."""
+    last = _mqtt_last.get(topic)
+    if last and last[1] == payload:
+        return False
+    if (last and topic.rsplit("/", 1)[-1] in ("w", "limit_w", "batt_v")
+            and now - last[0] < MQTT_MIN_INTERVAL_S):
+        return False
+    _mqtt_last[topic] = (now, payload)
+    return True
+
+
 def publish(reading: dict | None, status: str, limit: int | None,
             state: dict | None = None):
     c = _get_mqtt()
@@ -688,8 +716,10 @@ def publish(reading: dict | None, status: str, limit: int | None,
                  (f"{TOPIC}/batt_hold",
                   "ON" if state.get("batt_hold") else "OFF")]
     try:
+        _now = time.time()
         for topic, payload in msgs:
-            c.publish(topic, payload, retain=True)
+            if _throttled(topic, payload, _now):
+                c.publish(topic, payload, retain=True)
     except Exception as e:
         print(f"MQTT-Fehler: {e}", file=sys.stderr)
 
@@ -826,6 +856,8 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     ctl_tick(grid_w, pv_w, current)
 
     def send(value: int, tag: str):
+        if now - state.get("limit_sent_ts", 0) < 2.0:
+            return None  # DTU-RF-Queue schonen — naechster Zyklus traegt nach
         try:
             set_limit(value)
             state["limit_sent_ts"] = now

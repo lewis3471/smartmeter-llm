@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.6
+
+- Gemini-Modellnamen werden normalisiert ("flash-latest" ->
+  "gemini-flash-latest") — die 1.7.5-Changelog-Kurzformen waren als
+  Optionswert ungueltig (404-Sturm); jetzt funktionieren beide Formen
+- Lastreduktion (Netz/DTU): OpenDTU-Livedata 2,5s gecacht statt jeden
+  Regelzyklus gepollt; Limit-Sends min. 2s Abstand (RF-Queue!); MQTT
+  drosselt w/limit auf alle 5s, kwh/status weiter sofort bei Aenderung
+
 ## 1.7.5
 
 - Gemini: 404-Modelle fliegen fuer den Rest des Tages aus der Rotation
