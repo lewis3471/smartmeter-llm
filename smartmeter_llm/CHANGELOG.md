@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.1
+
+- MPPT-Stuck-Kick: klemmt der HMS an der Batterie weit unter dem Limit
+  (taeglich beobachtet: 178 W bei Limit 420, kleine Schritte wirkungslos,
+  grosser Sprung loest), erkennt der Regler das (Bezug + Limit >150 W
+  ueber Ist + 25 s keine Bewegung) und ueberzieht das Limit einmal
+  kraeftig (2x Soll, gedeckelt) — der normale Runter-Pfad holt es danach
+  zurueck. Cooldown 180 s, damit ein quellenbegrenzter Inverter (Wolke,
+  Akku leer) keinen Kick-Loop erzeugt
+
 ## 1.7.0
 
 - Options-Grossputz: 18 tote/nie angefasste Optionen entfernt

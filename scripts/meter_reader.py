@@ -157,6 +157,14 @@ LATENCY_S = float(os.environ.get("LATENCY_S", "8"))
 PENDING_THETA_S = float(os.environ.get("PENDING_THETA_S", "4"))
 PENDING_TAU_S = float(os.environ.get("PENDING_TAU_S", "2.5"))
 MIN_STEP_W = int(os.environ.get("MIN_STEP_W", "15"))
+# MPPT-Stuck-Kick: der HMS verklemmt sich an der Batterie gelegentlich weit
+# unter dem Limit (z.B. 178W bei Limit 420) und reagiert auf kleine Schritte
+# kaum — ein grosser Limit-Sprung zwingt den Tracker zum Neu-Akquirieren,
+# danach laeuft er auch auf niedrigeren Limits normal. Detektion: Bezug ueber
+# Deadband + Limit deutlich ueber Ist + keine Bewegung ueber STUCK_S.
+STUCK_S = float(os.environ.get("STUCK_S", "25"))
+STUCK_GAP_W = int(os.environ.get("STUCK_GAP_W", "150"))
+KICK_COOLDOWN_S = float(os.environ.get("KICK_COOLDOWN_S", "180"))
 
 
 def pending_weight(age_s: float) -> float:
@@ -815,6 +823,24 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
 
     if current is None:
         return send(wanted, "init"), pv_w
+    # MPPT-Stuck-Kick (siehe oben): grosser Sprung reisst den Tracker los,
+    # der normale runter-Pfad holt das Limit danach von selbst zurueck
+    if error > DEADBAND_W and current - pv_w > STUCK_GAP_W:
+        if "stuck_since" not in state:
+            state["stuck_since"] = now
+            state["stuck_pv0"] = pv_w
+        elif (now - state["stuck_since"] > STUCK_S
+              and pv_w - state.get("stuck_pv0", 0) < 25
+              and now - state.get("kick_ts", 0) > KICK_COOLDOWN_S):
+            state.pop("stuck_since", None)
+            state["kick_ts"] = now
+            kick = int(min(max_limit, max(2 * wanted, wanted + 400)))
+            if kick > current:
+                print(f"MPPT-Kick: pv {pv_w:.0f}W klemmt unter Limit "
+                      f"{current}W — Limit kurz auf {kick}W")
+                return send(kick, "kick") or current, pv_w
+    else:
+        state.pop("stuck_since", None)
     # Akku-Hold: Limit ueber dem Cap SOFORT senken — die normale
     # runter-Bedingung greift nicht, solange der Akku das Netz auf Ziel haelt
     if current > max_limit and now - state.get("limit_sent_ts", 0) >= LATENCY_S:
