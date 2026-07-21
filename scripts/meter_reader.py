@@ -500,6 +500,24 @@ def gemini_read(img: bytes) -> dict:
     return reading
 
 
+_event_counts: dict = {}
+_event_day = ""
+
+
+def _event_worth_saving(reason: str) -> bool:
+    """Ersten 5 Frames je Fehlergrund/Tag speichern, danach jeden 50. —
+    Segmenttest-Rotationen und Rueckläufig-Stuerme fluteten sonst das Repo
+    (2300+ Frames/Tag) ohne neuen Informationswert."""
+    global _event_day
+    today = time.strftime("%Y%m%d")
+    if today != _event_day:
+        _event_day = today
+        _event_counts.clear()
+    key = reason[:40]
+    n = _event_counts[key] = _event_counts.get(key, 0) + 1
+    return n <= 5 or n % 50 == 0
+
+
 def plausible(reading: dict, state: dict) -> str | None:
     """Gibt Fehlergrund zurück oder None wenn die Lesung plausibel ist."""
     kwh, w = reading["kwh"], reading["w"]
@@ -535,18 +553,20 @@ def rebaseline(reading: dict, state: dict) -> bool:
     per Gemini verifiziert und bei Bestaetigung als neuer Stand akzeptiert.
     Verhindert, dass eine einmal akzeptierte Fehl-Lesung alles blockiert."""
     kwh = reading["kwh"]
-    if abs(kwh - state.get("rb_kwh", -9999)) <= 1:
-        state["rb_count"] = state.get("rb_count", 0) + 1
-    else:
-        state["rb_kwh"], state["rb_count"] = kwh, 1
-    if state["rb_count"] < 4:
+    # Zaehler JE KANDIDAT: eingestreute Dunkel-Fehl-Lesungen (500, 3570...)
+    # duerfen den Konsens fuer den echten Stand nicht mehr zuruecksetzen
+    counts = state.setdefault("rb_counts", {})
+    counts[kwh] = counts.get(kwh, 0) + 1
+    if len(counts) > 20:
+        state["rb_counts"] = counts = {kwh: counts[kwh]}
+    if counts[kwh] < 4:
         return False
     # Gemini-Cooldown gilt auch hier — aber der Zaehler bleibt stehen,
     # damit der naechste freie Slot sofort verifiziert
     global _last_gemini_call
     if time.time() - _last_gemini_call < GEMINI_COOLDOWN_S:
         return False
-    state["rb_count"] = 0
+    state["rb_counts"] = {}
     _last_gemini_call = time.time()
     for attempt in (1, 2):
         try:
@@ -1055,6 +1075,21 @@ def main(once: bool = False):
                     source += " (re-baseline)"
             if reason:
                 raise ValueError(f"verworfen: {reason}")
+            # kWh-ERHOEHUNGEN erst nach 2 uebereinstimmenden Lesungen
+            # uebernehmen: eine einzelne Fehl-Lesung an der Toleranzgrenze
+            # (1->3: 35851->35853) vergiftete sonst den Stand und blockte
+            # danach alles als "rueckläufig" (21.07.: 50min Failsafe)
+            if (state.get("kwh") is not None and reading["kwh"] > state["kwh"]
+                    and "re-baseline" not in source):
+                if state.get("kwh_pend") == reading["kwh"]:
+                    state["kwh_pend_n"] = state.get("kwh_pend_n", 1) + 1
+                else:
+                    state["kwh_pend"], state["kwh_pend_n"] = reading["kwh"], 1
+                if state["kwh_pend_n"] < 2:
+                    reading = {**reading, "kwh": state["kwh"]}
+                else:
+                    state.pop("kwh_pend", None)
+                    state.pop("kwh_pend_n", None)
             state.update(reading)
             state["failures"] = 0
             w_hist.append(reading["w"])
@@ -1076,9 +1111,11 @@ def main(once: bool = False):
                   f" limit={limit} [{source}]")
         except Exception as e:
             state["failures"] = state.get("failures", 0) + 1
-            save_event(SAVE_SAMPLES_DIR, _last_snapshot, "rejected_reading",
-                       error=str(e), failures=state["failures"],
-                       accepted_kwh=state.get("kwh"))
+            if _event_worth_saving(str(e)):
+                save_event(SAVE_SAMPLES_DIR, _last_snapshot,
+                           "rejected_reading", error=str(e),
+                           failures=state["failures"],
+                           accepted_kwh=state.get("kwh"))
             print(f"Fehler ({state['failures']}x): {e}", file=sys.stderr)
             if state["failures"] >= FAILSAFE_AFTER:
                 # Failsafe: Inverter drosseln statt blind weiter einspeisen

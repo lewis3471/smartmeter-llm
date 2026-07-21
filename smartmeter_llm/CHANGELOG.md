@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.7
+
+- kWh-Poison-Schutz: Zaehlerstand-Erhoehungen werden erst nach 2
+  uebereinstimmenden Lesungen uebernommen — am 21.07. vergiftete EINE
+  Fehl-Lesung (35853 statt 35851, exakt an der +2-Grenze) den Stand
+  und blockierte 50 min lang alles als "rueckläufig" (Failsafe)
+- Re-Baseline zaehlt Konsens JE KANDIDAT: eingestreute Dunkel-Fehl-
+  Lesungen resetteten den Zaehler und verzoegerten die Heilung um Stunden
+- Event-Speicherung gedrosselt: 5 Frames je Fehlergrund/Tag, dann jeder
+  50. (vorher 2300+ Frames/Tag Segmenttest/Rueckläufig-Sturm ins Repo)
+
 ## 1.7.6
 
 - Gemini-Modellnamen werden normalisiert ("flash-latest" ->
