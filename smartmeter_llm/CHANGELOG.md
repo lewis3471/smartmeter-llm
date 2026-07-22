@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.8
+
+- Label-Hygiene (Befund des Auto-Train-Reviews): Sync promotet KEINE
+  rohen Gemini-Labels mehr nach training-data/auto/ — Labels entstehen
+  nur noch per Konsens-Labeler auf der Trainings-Maschine
+- Konsens-Labeler: kWh-Aera-Fenster dynamisch aus den juengsten Labels
+  (hartkodiertes Fenster braeche beim Zaehler-Rollover); widersprochene
+  Labels wandern nach training-data/quarantine/ statt geloescht zu
+  werden; Training schliesst quarantine/ aus
+
 ## 1.7.7
 
 - kWh-Poison-Schutz: Zaehlerstand-Erhoehungen werden erst nach 2

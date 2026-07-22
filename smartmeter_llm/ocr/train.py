@@ -28,6 +28,8 @@ FAILS_DIR = Path(__file__).with_name("train_fails")
 def load_samples(root: Path) -> list[tuple[Path, dict]]:
     out = []
     for jf in sorted(root.glob("*/*.json")):
+        if jf.parent.name == "quarantine":  # aussortierte Labels, nie trainieren
+            continue
         img = jf.with_suffix(".jpg")
         if not img.exists():
             continue

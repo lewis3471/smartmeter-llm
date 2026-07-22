@@ -7,8 +7,10 @@ Auth über GIT_SSH_COMMAND mit Deploy-Key). Ablauf pro Lauf:
 1. pull --rebase (Modell/Daten anderer Maschinen integrieren)
 2. Evidence einsammeln: disagreements/ + events/ komplett, Routine-Samples
    (YYYYMMDD/) nur jedes N-te (Klassen-Balance ohne Repo-Flut)
-3. Disagreements mit gueltigem Gemini-Label -> training-data/auto/
-4. commit/push; NUR nach erfolgreichem Push wird lokal geprunt
+3. commit/push; NUR nach erfolgreichem Push wird lokal geprunt
+
+Labels entstehen NICHT hier: nur der Konsens-Labeler auf der Trainings-
+Maschine schreibt training-data/auto/ (scripts/ocr/consensus_label.py).
 
 Training passiert hier NICHT mehr — Gemini-Labels sind fehlerbehaftet und
 werden erst auditiert/relabelt (scripts/ocr/relabel.py). Trainiert wird
@@ -74,22 +76,10 @@ def collect_evidence(samples: Path, evidence: Path) -> tuple[list[Path], int]:
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(f, dst)
             copied.append(f)
-    # 2) Disagreements mit gueltigem Gemini-Label -> auto/ (Trainingslabel)
-    auto = evidence / "auto"
-    auto.mkdir(parents=True, exist_ok=True)
-    for jf in sorted((evidence / "disagreements").glob("*.json")):
-        target = auto / jf.name
-        if target.exists() or not jf.with_suffix(".jpg").exists():
-            continue
-        try:
-            gem = json.loads(jf.read_text()).get("gemini")
-            if not gem or not valid_label(gem):
-                continue
-            target.write_text(json.dumps(gem))
-            shutil.copy2(jf.with_suffix(".jpg"), auto / f"{jf.stem}.jpg")
-            new_labels += 1
-        except (OSError, ValueError, KeyError, TypeError):
-            continue
+    # 2) KEINE Roh-Gemini-Promotion mehr nach auto/ — Labels entstehen nur
+    #    noch durch den Konsens-Labeler (scripts/ocr/consensus_label.py) auf
+    #    der Trainings-Maschine. Rohe Gemini-Labels (W-Dreher, trunkierte
+    #    kWh, verschluckte Vorzeichen) waren die Haupt-Vergiftungsquelle.
     # 3) Routine-Samples (YYYYMMDD/): nur jedes N-te fuer die Klassen-Balance
     for jf in sorted(samples.glob("2*/*.json")):
         if not keep_routine(jf.stem) or not jf.with_suffix(".jpg").exists():
