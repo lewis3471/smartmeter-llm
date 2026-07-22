@@ -378,6 +378,50 @@ def image_brightness(img: bytes) -> float:
         return 255.0  # ohne OpenCV keine Pruefung
 
 
+_seg_reader = None
+_last_seg_save = 0.0
+
+
+def seg_confirm(expected_lo: int, expected_hi: int) -> int | None:
+    """7-Segment-Zweitmeinung auf dem letzten Frame (Rollover-Schiedsrichter).
+
+    Der deterministische Segment-Dekoder braucht keine Trainingsdaten — eine
+    neue Ziffer an neuer Position liest er mit 96-97% (kNN dort: 5-66%).
+    Liest er eine kWh im monotonen Erwartungsfenster, gilt sie als
+    bestaetigt: kein Failsafe, und der Frame wird als Trainingslabel
+    gesichert (samples/seg/, kWh-only)."""
+    global _seg_reader, _last_seg_save
+    if _last_snapshot is None or _local_reader is None:
+        return None
+    try:
+        import cv2
+        import numpy as np
+        if _seg_reader is None:
+            from seg_decoder import SegReader
+            _seg_reader = SegReader(anchor_ref=_local_reader.ex._anchor_ref)
+        gray = cv2.imdecode(np.frombuffer(_last_snapshot, np.uint8),
+                            cv2.IMREAD_GRAYSCALE)
+        labels, confs, _ = _seg_reader.read_cells(gray)
+        kwh_s = "".join(labels[:6])
+        if not kwh_s.isdigit():
+            return None
+        kwh = int(kwh_s)
+        if not (expected_lo <= kwh <= expected_hi):
+            return None
+        now = time.time()
+        if SAVE_SAMPLES_DIR and now - _last_seg_save >= 60:
+            d = Path(SAVE_SAMPLES_DIR) / "seg"
+            d.mkdir(parents=True, exist_ok=True)
+            ts = time.strftime("%Y%m%d_%H%M%S")
+            (d / f"{ts}.jpg").write_bytes(_last_snapshot)
+            (d / f"{ts}.json").write_text(json.dumps({"kwh": kwh}))
+            _last_seg_save = now
+        return kwh
+    except Exception as e:
+        print(f"Seg-Schiedsrichter-Fehler: {e}", file=sys.stderr)
+        return None
+
+
 def read_meter(cycle: int = 0) -> tuple[dict, str]:
     """Snapshot holen und lesen. -> (Lesung, Quelle 'local c=0.97'/'gemini')."""
     global _last_gemini_call
@@ -1069,6 +1113,15 @@ def main(once: bool = False):
             state["cycle"] = state.get("cycle", 0) + 1
             reading, source = read_meter(state["cycle"])
             reason = plausible(reading, state)
+            if (reason and state.get("kwh") is not None
+                    and ("rückläufig" in reason or "kWh-Sprung" in reason)):
+                seg_kwh = seg_confirm(state["kwh"], state["kwh"] + 2)
+                if seg_kwh is not None:
+                    print(f"Seg-Schiedsrichter: kWh {reading['kwh']} "
+                          f"verworfen, Segment-Dekoder bestaetigt {seg_kwh}")
+                    reading = {**reading, "kwh": seg_kwh}
+                    reason = None
+                    source += " (seg)"
             if reason and ("rückläufig" in reason or "Sprung" in reason):
                 if rebaseline(reading, state):
                     reason = None

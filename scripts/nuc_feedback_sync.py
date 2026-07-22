@@ -5,7 +5,7 @@ Läuft aus einem beschreibbaren Git-Checkout (auf dem NUC: /data/feedback-repo,
 Auth über GIT_SSH_COMMAND mit Deploy-Key). Ablauf pro Lauf:
 
 1. pull --rebase (Modell/Daten anderer Maschinen integrieren)
-2. Evidence einsammeln: disagreements/ + events/ komplett, Routine-Samples
+2. Evidence einsammeln: disagreements/ + events/ + seg/ komplett, Routine-Samples
    (YYYYMMDD/) nur jedes N-te (Klassen-Balance ohne Repo-Flut)
 3. commit/push; NUR nach erfolgreichem Push wird lokal geprunt
 
@@ -62,7 +62,7 @@ def collect_evidence(samples: Path, evidence: Path) -> tuple[list[Path], int]:
     Anzahl neuer Labels)."""
     copied, new_labels = [], 0
     # 1) Disagreements + Events: vollstaendig (das ist das Gold)
-    for sub in ("disagreements", "events"):
+    for sub in ("disagreements", "events", "seg"):
         src = samples / sub
         if not src.exists():
             continue

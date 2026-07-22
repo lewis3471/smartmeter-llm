@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.9
+
+- Rollover-Schiedsrichter: verwirft die Plausibilitaet eine kWh-Lesung
+  (ruecklaeufig/Sprung), prueft ein deterministischer 7-Segment-Dekoder
+  denselben Frame — ganz ohne Trainingsdaten, dadurch immun gegen das
+  "neue Ziffer an neuer Position"-Problem (gemessen: 96-97% an den
+  kritischen Slots, wo das kNN auf 5-66% faellt). Bestaetigt er den
+  erwarteten Zaehlerstand, wird die Lesung akzeptiert statt Failsafe,
+  und der Frame landet als Trainingslabel in samples/seg/ (max. 1/min),
+  das der Sync vollstaendig committet — Retraining fuettert sich beim
+  Rollover kuenftig selbst
+
 ## 1.7.8
 
 - Label-Hygiene (Befund des Auto-Train-Reviews): Sync promotet KEINE
