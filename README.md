@@ -313,3 +313,18 @@ frei. Akku-Spannung und Schutz-Status erscheinen als eigene HA-Sensoren.
 
 **Wichtig:** In OpenDTU-on-Battery den Dynamic Power Limiter deaktivieren —
 zwei Regler am selben Limit arbeiten gegeneinander.
+
+## Retraining
+
+Der NUC trainiert nie selbst — er meldet per HA-Sensor **„OCR Retrain
+fällig"** (mit Grund), wenn sich ein Training lohnt (Seg-Schiedsrichter-
+Einsätze, Failsafes oder viele Disagreements). Dann auf der
+Trainings-Maschine:
+
+```bash
+make retrain
+```
+
+Das zieht die Evidence, erzeugt Konsens-Labels, auditiert Vorzeichen,
+trainiert, prüft das Holdout-Gate (≥ 0,90) und pusht — der NUC übernimmt
+das Modell beim nächsten Sync automatisch per Hot-Reload.

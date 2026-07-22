@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.10
+
+- HA-Sensor "OCR Retrain faellig" (+ Grund): rollierende 6h-Zaehler auf
+  dem NUC — Seg-Schiedsrichter-Einsaetze (>=3), Failsafes (>=2),
+  Disagreements (>=20). Meldet, WANN sich ein Retrain lohnt; trainiert
+  wird weiterhin bewusst auf der Trainings-Maschine
+- make retrain: Pull -> Konsens-Labels -> Geometrie-Audit -> Training ->
+  Holdout-Gate (>=0.90, sonst kein Push) -> Push mit Rebase-Retry
+
 ## 1.7.9
 
 - Rollover-Schiedsrichter: verwirft die Plausibilitaet eine kWh-Lesung

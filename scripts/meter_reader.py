@@ -381,6 +381,35 @@ def image_brightness(img: bytes) -> float:
 _seg_reader = None
 _last_seg_save = 0.0
 
+# --- Retrain-Alarm: rollierende 6h-Zaehler. Wird eine Schwelle gerissen,
+# meldet der HA-Sensor "OCR Retrain faellig" — Training bleibt eine bewusste
+# Entscheidung auf der Trainings-Maschine (make retrain), der NUC alarmiert
+# nur (Befund des Auto-Train-Reviews: Autonomie vergiftet sich selbst).
+from collections import deque as _rt_deque
+
+_retrain_ev: dict[str, "_rt_deque[float]"] = {
+    "seg": _rt_deque(), "failsafe": _rt_deque(), "disagree": _rt_deque()}
+_RETRAIN_WIN_S = 6 * 3600
+_RETRAIN_LIMITS = {"seg": 3, "failsafe": 2, "disagree": 20}
+
+
+def retrain_mark(kind: str):
+    q = _retrain_ev[kind]
+    q.append(time.time())
+
+
+def retrain_due() -> str:
+    """Leer = nichts faellig, sonst Begruendung fuer den HA-Sensor."""
+    cutoff = time.time() - _RETRAIN_WIN_S
+    reasons = []
+    for kind, q in _retrain_ev.items():
+        while q and q[0] < cutoff:
+            q.popleft()
+        if len(q) >= _RETRAIN_LIMITS[kind]:
+            reasons.append(f"{kind}={len(q)}")
+    return ", ".join(reasons)
+
+
 
 def seg_confirm(expected_lo: int, expected_hi: int) -> int | None:
     """7-Segment-Zweitmeinung auf dem letzten Frame (Rollover-Schiedsrichter).
@@ -408,6 +437,7 @@ def seg_confirm(expected_lo: int, expected_hi: int) -> int | None:
         kwh = int(kwh_s)
         if not (expected_lo <= kwh <= expected_hi):
             return None
+        retrain_mark("seg")
         now = time.time()
         if SAVE_SAMPLES_DIR and now - _last_seg_save >= 60:
             d = Path(SAVE_SAMPLES_DIR) / "seg"
@@ -472,6 +502,7 @@ def read_meter(cycle: int = 0) -> tuple[dict, str]:
                 {"local": local, "conf": conf, "gemini": gem}))
             print(f"OCR-Abweichung: local={local} (c={conf:.2f})"
                   f" vs gemini={gem} -> gespeichert", file=sys.stderr)
+            retrain_mark("disagree")
         return gem, "gemini" + (" (cross-check)" if cross_check else "")
     return gemini_read(img), "gemini"
 
@@ -779,6 +810,9 @@ def publish(reading: dict | None, status: str, limit: int | None,
         msgs += [(f"{TOPIC}/batt_v", f"{state['batt_v']:.1f}"),
                  (f"{TOPIC}/batt_hold",
                   "ON" if state.get("batt_hold") else "OFF")]
+    due = retrain_due()
+    msgs += [(f"{TOPIC}/retrain_due", "ON" if due else "OFF"),
+             (f"{TOPIC}/retrain_reason", due or "-")]
     try:
         _now = time.time()
         for topic, payload in msgs:
@@ -819,7 +853,14 @@ def publish_discovery():
                              "icon": "mdi:battery-outline"}
         sensors["batt_hold"] = {"name": "Akku-Schutz aktiv",
                                 "icon": "mdi:battery-lock"}
-    msgs = []
+    msgs = [("homeassistant/binary_sensor/smartmeter_llm/retrain_due/config",
+             json.dumps({"name": "OCR Retrain f\u00e4llig",
+                         "unique_id": "smartmeter_llm_retrain_due",
+                         "state_topic": f"{TOPIC}/retrain_due",
+                         "icon": "mdi:school",
+                         "device": device}), 0, True)]
+    sensors["retrain_reason"] = {"name": "OCR Retrain Grund",
+                                 "icon": "mdi:school-outline"}
     for key, cfg in sensors.items():
         cfg.update({
             "unique_id": f"smartmeter_llm_{key}",
@@ -1175,6 +1216,7 @@ def main(once: bool = False):
                 try:
                     set_limit(FAILSAFE_LIMIT_W)
                     state["limit_w"] = FAILSAFE_LIMIT_W
+                    retrain_mark("failsafe")
                     publish(None, "failsafe", FAILSAFE_LIMIT_W)
                 except Exception as e2:
                     print(f"Failsafe fehlgeschlagen: {e2}", file=sys.stderr)
