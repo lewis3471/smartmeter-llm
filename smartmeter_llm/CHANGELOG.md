@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.12
+
+- KRITISCH: W-Sprungfilter hatte keinen Heilpfad (seit v1) — ein einmal
+  akzeptierter Extremwert (Geister-8443 beim Erststart, 23.07. 07:30)
+  liess JEDE echte Lesung als "Sprung >5000W" abprallen: Dauer-Failsafe
+  bis zum Neustart. Jetzt: 4 konsistente Lesungen auf neuem Niveau
+  re-baselinen den W-Stand (wie beim Vorzeichen-Flip-Guard)
+- Retrain-Alarm zaehlt Failsafe-EINTRITTE statt Zyklen im Failsafe
+  (Grund-Sensor zeigte 3000+ statt 1)
+
 ## 1.7.11
 
 - Erststart-Loch geschlossen: die allererste W-Lesung nach einem Neustart

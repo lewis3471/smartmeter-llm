@@ -603,6 +603,20 @@ def plausible(reading: dict, state: dict) -> str | None:
     if abs(w) > 20000:
         return f"unplausible Leistung {w} W"
     if state.get("w") is not None and abs(w - state["w"]) > MAX_JUMP_W:
+        # Heilpfad: 4 konsistente Lesungen auf neuem Niveau heissen, dass
+        # der GESPEICHERTE Stand vergiftet war (23.07.: Geister-8443 beim
+        # Erststart -> jede echte Lesung "Sprung >5000" -> Deadlock).
+        cand, n = state.get("wjump", (None, 0))
+        if cand is not None and abs(w - cand) <= max(100, abs(cand) // 5):
+            n += 1
+            if n >= 4:
+                state.pop("wjump", None)
+                print(f"W-Re-Baseline: {state['w']} W war vergiftet, "
+                      f"4x konsistent ~{w} W -> uebernehme")
+                return None
+            state["wjump"] = (cand, n)
+        else:
+            state["wjump"] = (w, 1)
         return f"Sprung {w - state['w']:+d} W > {MAX_JUMP_W} W"
     # Erststart-Loch: ohne Vergleichswert wuerde die allererste Lesung
     # bedingungslos akzeptiert — ein Geisterziffer-Frame (z.B. 8443 statt
@@ -630,6 +644,7 @@ def plausible(reading: dict, state: dict) -> str | None:
             return f"kWh rückläufig ({state['kwh']} -> {kwh})"
         if kwh > state["kwh"] + 2:
             return f"kWh-Sprung ({state['kwh']} -> {kwh})"
+    state.pop("wjump", None)
     return None
 
 
@@ -1226,7 +1241,8 @@ def main(once: bool = False):
                 try:
                     set_limit(FAILSAFE_LIMIT_W)
                     state["limit_w"] = FAILSAFE_LIMIT_W
-                    retrain_mark("failsafe")
+                    if state["failures"] == FAILSAFE_AFTER:  # nur Eintritt
+                        retrain_mark("failsafe")
                     publish(None, "failsafe", FAILSAFE_LIMIT_W)
                 except Exception as e2:
                     print(f"Failsafe fehlgeschlagen: {e2}", file=sys.stderr)
