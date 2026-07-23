@@ -604,6 +604,16 @@ def plausible(reading: dict, state: dict) -> str | None:
         return f"unplausible Leistung {w} W"
     if state.get("w") is not None and abs(w - state["w"]) > MAX_JUMP_W:
         return f"Sprung {w - state['w']:+d} W > {MAX_JUMP_W} W"
+    # Erststart-Loch: ohne Vergleichswert wuerde die allererste Lesung
+    # bedingungslos akzeptiert — ein Geisterziffer-Frame (z.B. 8443 statt
+    # 443, 23.07. 07:30) landet dann ungefiltert in HA und im Init-Limit.
+    # Grosse |W| brauchen direkt nach dem Start eine zweite, konsistente
+    # Lesung (+-20%, min. 100 W); der naechste Zyklus kommt ja in ~1s.
+    if state.get("w") is None and abs(w) > 1000:
+        first = state.get("w_first")
+        state["w_first"] = w
+        if first is None or abs(w - first) > max(100, abs(w) // 5):
+            return f"Erststart: {w} W braucht Bestaetigung"
     # Vorzeichen-Flip bei ~gleichem Betrag = fast immer ein Minus-OCR-Fehler
     # (die '-'-Zelle ist klein und selten im Training). Erst nach 4
     # konsistenten Lesungen akzeptieren (echter Nulldurchgang bleibt moeglich).

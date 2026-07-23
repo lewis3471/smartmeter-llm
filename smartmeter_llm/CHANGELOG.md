@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.11
+
+- Erststart-Loch geschlossen: die allererste W-Lesung nach einem Neustart
+  hatte keinen Sprungfilter-Vergleichswert und wurde bedingungslos
+  akzeptiert (23.07. 07:30: Geister-8 machte aus 443 W einen 8443-W-Spike
+  in HA). |W| > 1000 braucht jetzt direkt nach dem Start eine zweite
+  konsistente Lesung (+-20%)
+
 ## 1.7.10
 
 - HA-Sensor "OCR Retrain faellig" (+ Grund): rollierende 6h-Zaehler auf
