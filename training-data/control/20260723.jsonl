@@ -1935,3 +1935,16 @@
 {"t": 1784781015.06, "ev": "tick", "grid": 218, "pv": 34.3, "limit": 50}
 {"t": 1784784602.34, "ev": "tick", "grid": 8443, "pv": 34.9, "limit": null}
 {"t": 1784784602.36, "ev": "limit", "from": null, "to": 50, "tag": "init"}
+{"t": 1784790081.94, "ev": "tick", "grid": 491, "pv": 35.7, "limit": null}
+{"t": 1784790081.96, "ev": "limit", "from": null, "to": 477, "tag": "init"}
+{"t": 1784790083.58, "ev": "tick", "grid": 491, "pv": 35.7, "limit": 477}
+{"t": 1784790085.55, "ev": "tick", "grid": 491, "pv": 35.7, "limit": 477}
+{"t": 1784790087.07, "ev": "tick", "grid": 491, "pv": 35.7, "limit": 477}
+{"t": 1784790088.7, "ev": "tick", "grid": 298, "pv": 443.7, "limit": 477}
+{"t": 1784790088.72, "ev": "limit", "from": 477, "to": 692, "tag": "hoch"}
+{"t": 1784790090.14, "ev": "tick", "grid": 89, "pv": 443.7, "limit": 692}
+{"t": 1784790091.58, "ev": "tick", "grid": 62, "pv": 443.7, "limit": 692}
+{"t": 1784790091.6, "ev": "limit", "from": 692, "to": 456, "tag": "runter"}
+{"t": 1784790092.94, "ev": "tick", "grid": 61, "pv": 443.7, "limit": 456}
+{"t": 1784790095.52, "ev": "tick", "grid": -16, "pv": 620.0, "limit": 456}
+{"t": 1784790095.54, "ev": "limit", "from": 456, "to": 554, "tag": "hoch"}
