@@ -65,8 +65,16 @@ if bashio::config.true 'git_sync_enabled'; then
             bashio::log.info "Migriere Feedback-Repo auf Blobless-Clone"
             rm -rf "$FEEDBACK_REPO"
         fi
+        # Selbstbegrenzung: waechst .git ueber 1 GB (gefetchte Blobs +
+        # eigene Evidence-Commits sammeln sich), frisch re-clonen —
+        # shallow+blobless startet bei Groesse der aktuellen Arbeitskopie
+        if [ -d "$FEEDBACK_REPO/.git" ] && \
+           [ "$(du -sm "$FEEDBACK_REPO/.git" | cut -f1)" -gt 1024 ]; then
+            bashio::log.info "Feedback-Repo .git > 1GB — Re-Clone"
+            rm -rf "$FEEDBACK_REPO"
+        fi
         if [ ! -d "$FEEDBACK_REPO/.git" ]; then
-            git clone --filter=blob:none --branch "$GIT_BRANCH" "$GIT_REPO" "$FEEDBACK_REPO" || \
+            git clone --filter=blob:none --depth 50 --branch "$GIT_BRANCH" "$GIT_REPO" "$FEEDBACK_REPO" || \
                 bashio::log.error "Git-Clone fuer Feedback fehlgeschlagen"
         fi
         if [ -d "$FEEDBACK_REPO/.git" ]; then

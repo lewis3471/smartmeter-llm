@@ -33,6 +33,9 @@ if ! $PY -c "exit(0 if float('$ACC') >= $GATE else 1)"; then
     exit 1
 fi
 
+echo "== Korpus-Retention =="
+$PY scripts/compact_corpus.py training-data
+
 echo "== Push (Holdout $ACC >= $GATE) =="
 for i in 1 2 3; do
     git add -A

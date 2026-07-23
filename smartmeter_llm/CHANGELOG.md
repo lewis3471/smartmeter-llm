@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.13
+
+- Disk-Diaet: events/ (Diagnose-Frames, 93% des 1,2-GB-Korpus, 71k
+  Dateien) unterliegt jetzt Retention — max 10 Tage und 300 Dateien/Tag
+  (Failsafe-Stuerme schrieben tausende identische Frames); Roh-Evidence
+  45 Tage, control-Logs 14 Tage; auto/ (kuratierte Labels) unbegrenzt.
+  Laeuft in make retrain (scripts/compact_corpus.py)
+- NUC begrenzt sich selbst: .git > 1 GB -> automatischer Re-Clone
+  (shallow+blobless, --depth 50). Einmaliges Update raeumt die
+  aktuellen 3,7 GB auf ~0,4 GB ab
+
 ## 1.7.12
 
 - KRITISCH: W-Sprungfilter hatte keinen Heilpfad (seit v1) — ein einmal
