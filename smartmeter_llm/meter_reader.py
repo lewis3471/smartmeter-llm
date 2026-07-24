@@ -171,6 +171,15 @@ MAX_KWH_STEP = 1
 # gemessen: Schwelle 0.8 hebt die Treffsicherheit von 76% auf 95% bei noch
 # 60% Abdeckung. Schweigen ist fuer eine Zweitmeinung billiger als Raten.
 SEG_MIN_CONF = float(os.environ.get("SEG_MIN_CONF", "0.8"))
+# Der Schiedsrichter entscheidet nicht per offenem Lesen, sondern als
+# HYPOTHESENTEST zwischen den beiden einzig moeglichen Kandidaten (Stand,
+# Stand+1). Gemessen an 1294 Frames: offenes Lesen ist an der rechten
+# Schattenzone nicht sicher zu bekommen (Slot 5 braeuchte conf>=3.9, das
+# schaffen 11% der Frames). Der Zweiwege-Test dagegen irrt in der
+# GEFAEHRLICHEN Richtung (faelschlich "+1") nur bei 0.4% der Frames, wenn
+# man eine Log-Likelihood-Marge von 6 verlangt — mit den zwei geforderten
+# konsistenten Lesungen bleibt ein Restrisiko von ~1:60000.
+SEG_UP_MARGIN = float(os.environ.get("SEG_UP_MARGIN", "6"))
 # MPPT-Stuck-Kick: der HMS verklemmt sich an der Batterie gelegentlich weit
 # unter dem Limit (z.B. 178W bei Limit 420) und reagiert auf kleine Schritte
 # kaum — ein grosser Limit-Sprung zwingt den Tracker zum Neu-Akquirieren,
@@ -440,22 +449,32 @@ def seg_confirm(expected_lo: int, expected_hi: int,
             _seg_reader = SegReader(anchor_ref=_local_reader.ex._anchor_ref)
         gray = cv2.imdecode(np.frombuffer(_last_snapshot, np.uint8),
                             cv2.IMREAD_GRAYSCALE)
+        # 1) Offenes Lesen NUR als Veto: liest der Dekoder selbstbewusst
+        #    etwas ausserhalb des Erwartungsfensters, ist vermutlich der
+        #    gespeicherte Stand veraltet — dann schweigen und die
+        #    Re-Baseline (mit Gemini) uebernehmen lassen.
         labels, confs, _ = _seg_reader.read_cells(gray)
         kwh_s = "".join(labels[:6])
-        if not kwh_s.isdigit():
-            return None
-        if set(kwh_s) == {"8"}:
+        if kwh_s.isdigit() and set(kwh_s) == {"8"}:
             print("Seg-Schiedsrichter: LCD-Segmenttest — schweigt",
                   file=sys.stderr)
             return None
-        weakest = min(confs[:6])
-        if weakest < SEG_MIN_CONF:
-            print(f"Seg-Schiedsrichter: unsicher (conf {weakest:.2f} < "
-                  f"{SEG_MIN_CONF}) — schweigt statt zu raten", file=sys.stderr)
+        if (kwh_s.isdigit() and min(confs[:6]) >= SEG_MIN_CONF
+                and not (expected_lo <= int(kwh_s) <= expected_hi)):
+            print(f"Seg-Schiedsrichter: liest {kwh_s} ausserhalb "
+                  f"[{expected_lo},{expected_hi}] — Stand evtl. veraltet, "
+                  f"schweigt", file=sys.stderr)
             return None
-        kwh = int(kwh_s)
-        if not (expected_lo <= kwh <= expected_hi):
+        # 2) Entscheidung als Zweiwege-Hypothesentest (s.o.)
+        cands = sorted({expected_lo, expected_hi})
+        best, margin = _seg_reader.score_candidates(gray, cands)
+        if best is None:
             return None
+        if best > expected_lo and margin < SEG_UP_MARGIN:
+            print(f"Seg-Schiedsrichter: Zuwachs auf {best} nur mit Marge "
+                  f"{margin:.1f} < {SEG_UP_MARGIN} — schweigt", file=sys.stderr)
+            return None
+        kwh = best
         # "Kein Zuwachs" darf sofort bestaetigt werden — das ist die
         # konservative Aussage (Stand bleibt, kann nichts vergiften).
         # Ein ZUWACHS (+1) braucht zwei konsistente Lesungen: eine einzelne

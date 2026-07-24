@@ -273,6 +273,51 @@ class SegReader:
         sdy = list(tshift)[int(np.argmax(scoresy))]
         return dx + sdx, dy + sdy, pfit
 
+    def score_candidates(self, gray, candidates):
+        """Binaerer (bzw. n-facher) Hypothesentest auf der kWh-Zeile.
+
+        Statt offen zu lesen ("welche der 10 Ziffern steht da?") wird nur
+        gefragt: "welcher der uebergebenen Zaehlerstaende passt besser?".
+        Das ist der Job des Schiedsrichters — er kennt die Kandidaten
+        (aktueller Stand und Stand+1). Offenes Lesen ist an der rechten
+        Schattenzone nicht zuverlaessig zu bekommen (Slot 5 braucht fuer
+        99% Praezision conf>=3.9, was nur 11% der Frames erreichen); die
+        Unterscheidung ZWEIER bekannter Muster dagegen schon, weil sie nur
+        die tatsaechlich unterschiedlichen Zellen bewerten muss.
+
+        -> (bester Kandidat, Vorsprung in Log-Likelihood ueber alle
+        unterscheidenden Zellen) oder (None, 0.0) wenn nicht auswertbar.
+        """
+        cands = [f"{c:06d}" for c in candidates]
+        if len({len(c) for c in cands}) != 1 or any(len(c) != 6 for c in cands):
+            return None, 0.0
+        diff = [i for i in range(6) if len({c[i] for c in cands}) > 1]
+        if not diff:
+            return candidates[0], float("inf")
+        dx, dy = self.ex._drift(gray)
+        dx, dy, pfit = self._refine_pose(gray, dx, dy)
+        pats = self._raw_patches(gray, dx, dy, pitch=pfit)[:6]
+        diffs = [self._diff_map(p) for p in pats]
+        scale = max(float(np.percentile(np.concatenate(
+            [d.ravel() for d in diffs]), 98)), 8.0)
+        totals = [0.0] * len(cands)
+        for i in diff:
+            d = np.clip(diffs[i] / scale, 0, 1)
+            ds = self.dec.deslant(d)
+            best = {}
+            for off in range(-self.dec.x_search, self.dec.x_search + 1):
+                acts = self.dec.activations(ds, off)
+                ink_o = max(self.dec._ink_level(ds, off), 1e-3)
+                acts = np.clip(acts / ink_o, 0, 1.2)
+                for c, ll in self.dec._loglik(acts).items():
+                    if c not in best or ll > best[c]:
+                        best[c] = ll
+            for j, cand in enumerate(cands):
+                totals[j] += best.get(cand[i], -1e9)
+        order = sorted(range(len(cands)), key=lambda j: -totals[j])
+        margin = totals[order[0]] - totals[order[1]]
+        return candidates[order[0]], float(margin)
+
     def read_cells(self, gray):
         dx, dy = self.ex._drift(gray)
         dx, dy, pfit = self._refine_pose(gray, dx, dy)

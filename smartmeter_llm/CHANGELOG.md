@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.7.17
+
+- Schiedsrichter entscheidet per Hypothesentest statt per offenem Lesen:
+  er kennt die beiden einzig moeglichen Kandidaten (Stand, Stand+1) und
+  vergleicht nur noch deren Segmentmuster. Messung an 1294 Frames:
+  offenes Lesen ist in der rechten Schattenzone prinzipiell nicht sicher
+  (Slot 5 braeuchte conf>=3.9 — schaffen 11% der Frames), der
+  Zweiwege-Test irrt in der gefaehrlichen Richtung ("+1" statt "kein
+  Zuwachs") bei Marge>=6 nur in 0.4% der Frames; mit den zwei
+  geforderten konsistenten Lesungen bleibt ~1:60000
+- Offenes Lesen bleibt als VETO: liest der Dekoder selbstbewusst etwas
+  ausserhalb des Fensters, ist der gespeicherte Stand vermutlich
+  veraltet -> schweigen, Re-Baseline mit Gemini uebernimmt
+
 ## 1.7.16
 
 - Der Segment-Schiedsrichter darf jetzt schweigen: seine Zell-Konfidenzen
