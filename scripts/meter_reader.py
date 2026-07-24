@@ -411,7 +411,8 @@ def retrain_due() -> str:
 
 
 
-def seg_confirm(expected_lo: int, expected_hi: int) -> int | None:
+def seg_confirm(expected_lo: int, expected_hi: int,
+                state: dict | None = None) -> int | None:
     """7-Segment-Zweitmeinung auf dem letzten Frame (Rollover-Schiedsrichter).
 
     Der deterministische Segment-Dekoder braucht keine Trainingsdaten — eine
@@ -437,8 +438,25 @@ def seg_confirm(expected_lo: int, expected_hi: int) -> int | None:
         kwh = int(kwh_s)
         if not (expected_lo <= kwh <= expected_hi):
             return None
-        retrain_mark("seg")
+        # Monotonie-Sperre: der Dekoder verwechselt in der rechten
+        # Schattenzone die letzte Ziffer (24.07. nachts: 35873 -> 35871).
+        # Ein Wert UNTER dem hoechsten kuerzlich gesehenen ist physikalisch
+        # unmoeglich -> Fehllesung. Ohne die Sperre pendelte der Stand und
+        # das falsche Label landete im Korpus (Selbstvergiftung).
         now = time.time()
+        if state is not None:
+            top, top_ts, top_n = state.get("seg_top", (0, 0.0, 0))
+            if now - top_ts > 1800:  # 30-min-Fenster
+                top, top_n = 0, 0
+            if kwh < top:
+                print(f"Seg-Schiedsrichter: {kwh} < gesehene {top} — "
+                      f"Fehllesung verworfen", file=sys.stderr)
+                return None
+            top_n = top_n + 1 if kwh == top else 1
+            state["seg_top"] = (kwh, now, top_n)
+            if top_n < 2:
+                return None  # erst die zweite konsistente Lesung zaehlt
+        retrain_mark("seg")
         if SAVE_SAMPLES_DIR and now - _last_seg_save >= 60:
             d = Path(SAVE_SAMPLES_DIR) / "seg"
             d.mkdir(parents=True, exist_ok=True)
@@ -1181,7 +1199,7 @@ def main(once: bool = False):
             reason = plausible(reading, state)
             if (reason and state.get("kwh") is not None
                     and ("rückläufig" in reason or "kWh-Sprung" in reason)):
-                seg_kwh = seg_confirm(state["kwh"], state["kwh"] + 2)
+                seg_kwh = seg_confirm(state["kwh"], state["kwh"] + 2, state)
                 if seg_kwh is not None:
                     print(f"Seg-Schiedsrichter: kWh {reading['kwh']} "
                           f"verworfen, Segment-Dekoder bestaetigt {seg_kwh}")
@@ -1199,7 +1217,7 @@ def main(once: bool = False):
             # (1->3: 35851->35853) vergiftete sonst den Stand und blockte
             # danach alles als "rueckläufig" (21.07.: 50min Failsafe)
             if (state.get("kwh") is not None and reading["kwh"] > state["kwh"]
-                    and "re-baseline" not in source):
+                    and "re-baseline" not in source and "(seg)" not in source):
                 if state.get("kwh_pend") == reading["kwh"]:
                     state["kwh_pend_n"] = state.get("kwh_pend_n", 1) + 1
                 else:
