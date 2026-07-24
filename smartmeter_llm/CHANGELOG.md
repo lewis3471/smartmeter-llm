@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.19
+
+- FIX: config.yaml-Version hing seit 1.7.13 fest (ab 1.7.14 stumm per sed
+  gebumpt, das bei Nichttreffer nichts tut) — HA sah keine neue Version,
+  obwohl der Code aktuell war. Version zieht jetzt wieder; dieses Update
+  enthaelt alles aus 1.7.14-1.7.18 (Segment-Schiedsrichter als
+  Hypothesentest, MAX_KWH_STEP=1, Label-Audit, Kamm-Pose-Refinement)
+
 ## 1.7.18
 
 - Extractor: Pose-Refinement per Kamm-Korrelation (Schritt 4). Der
