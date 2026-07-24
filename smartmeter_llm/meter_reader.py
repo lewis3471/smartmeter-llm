@@ -164,6 +164,13 @@ PENDING_TAU_S = float(os.environ.get("PENDING_TAU_S", "2.5"))
 MIN_STEP_W = int(os.environ.get("MIN_STEP_W", "15"))
 # Max. kWh-Zuwachs pro Lesung — physikalisch 1 (Zaehler zaehlt ganze kWh)
 MAX_KWH_STEP = 1
+# Der Schiedsrichter darf RATEN VERWEIGERN: der Segment-Dekoder liefert pro
+# Zelle einen Log-Likelihood-Abstand zum zweitbesten Muster. Bei Ghost-
+# Fehllesungen (Phantom-Segmente in der Schattenzone) faellt der auf 0.03-0.09,
+# bei korrekten Lesungen liegt er 3-20x hoeher. Auf 403 gelabelten Frames
+# gemessen: Schwelle 0.8 hebt die Treffsicherheit von 76% auf 95% bei noch
+# 60% Abdeckung. Schweigen ist fuer eine Zweitmeinung billiger als Raten.
+SEG_MIN_CONF = float(os.environ.get("SEG_MIN_CONF", "0.8"))
 # MPPT-Stuck-Kick: der HMS verklemmt sich an der Batterie gelegentlich weit
 # unter dem Limit (z.B. 178W bei Limit 420) und reagiert auf kleine Schritte
 # kaum — ein grosser Limit-Sprung zwingt den Tracker zum Neu-Akquirieren,
@@ -436,6 +443,15 @@ def seg_confirm(expected_lo: int, expected_hi: int,
         labels, confs, _ = _seg_reader.read_cells(gray)
         kwh_s = "".join(labels[:6])
         if not kwh_s.isdigit():
+            return None
+        if set(kwh_s) == {"8"}:
+            print("Seg-Schiedsrichter: LCD-Segmenttest — schweigt",
+                  file=sys.stderr)
+            return None
+        weakest = min(confs[:6])
+        if weakest < SEG_MIN_CONF:
+            print(f"Seg-Schiedsrichter: unsicher (conf {weakest:.2f} < "
+                  f"{SEG_MIN_CONF}) — schweigt statt zu raten", file=sys.stderr)
             return None
         kwh = int(kwh_s)
         if not (expected_lo <= kwh <= expected_hi):

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.16
+
+- Der Segment-Schiedsrichter darf jetzt schweigen: seine Zell-Konfidenzen
+  wurden bisher gelesen und ignoriert. Auf 403 gelabelten Frames gemessen
+  trennt die schwaechste Zell-Konfidenz die Ghost-Fehllesungen sauber
+  (0.03-0.09) von korrekten Lesungen (3-20x hoeher) — Schwelle
+  SEG_MIN_CONF=0.8 hebt die Treffsicherheit von 76% auf 95% bei 60%
+  Abdeckung. Unsichere Frames und erkannte Segmenttests (alles 8er)
+  fuehren zum Schweigen statt zu einer geratenen Ziffer; der Regler
+  faellt dann auf Re-Baseline/Gemini zurueck wie vorher
+
 ## 1.7.15
 
 - KORREKTUR zu 1.7.14 (das die Fehlerrichtung falsch annahm): Der Zaehler
