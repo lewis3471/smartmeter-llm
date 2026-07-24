@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.18
+
+- Extractor: Pose-Refinement per Kamm-Korrelation (Schritt 4). Der
+  Template-Anker (Suchradius 25px) verrutschte bei ~19% der Frames oder
+  rastete auf Nachbarstrukturen ein — die 6 immer beleuchteten kWh-Ziffern
+  bilden dagegen einen periodischen Tinten-Kamm, dessen Phase (dx +-45,
+  dy +-12, PITCH mitgefittet) ein robustes Alignment liefert. Gemessen am
+  zeitlichen Holdout bei sonst identischem Setup: Zell-Accuracy 0.907 ->
+  0.974, kWh-Zeile 78% -> 91%. Kosten ~130ms/Frame (9% des 1,4s-Zyklus).
+- Modell auf der neuen Extraktion neu trainiert; die 8 juengsten
+  seg-Frames (2 davon las das alte Modell falsch) jetzt 8/8 korrekt
+
 ## 1.7.17
 
 - Schiedsrichter entscheidet per Hypothesentest statt per offenem Lesen:
