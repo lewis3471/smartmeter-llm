@@ -191,7 +191,14 @@ KICK_COOLDOWN_S = float(os.environ.get("KICK_COOLDOWN_S", "180"))
 # Eskalationstreppe statt Verdopplung: Schwelle, ab der der Tracker sich
 # loest, ist unbekannt — wir tasten uns hoch und LOGGEN den loesenden
 # Schritt (ev=kick_result), um die HMS-Schwelle zu vermessen.
-KICK_STEPS_W = (100, 200, 400, 800)
+# Aufwach-Sprung, datenbasiert (160 kick_result-Events, 111 echte
+# Aufwacher): der Inverter schlaeft bei ~157W median und die noetige
+# Sprunghoehe haengt weder am Basis-Limit noch an der Schlaftiefe. +100
+# weckt nur 48%, +400 aber 94% beim ERSTEN Versuch — also gross starten
+# statt langsam eskalieren (spart ~20-30s pro Aufwachen). +800 als
+# Fallback fuer die restlichen 6%. Der kurze Puls (~+380W) ist mit Akku
+# egal; der runter-Pfad holt ihn in Sekunden zurueck.
+KICK_STEPS_W = (400, 800)
 KICK_STEP_HOLD_S = float(os.environ.get("KICK_STEP_HOLD_S", "10"))
 KICK_UNSTUCK_W = 50   # so viel pv-Bewegung gilt als "geloest"
 

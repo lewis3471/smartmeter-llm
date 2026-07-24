@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.20
+
+- MPPT-Kick datenbasiert beschleunigt: Auswertung von 160 kick_result-
+  Events (111 echte Aufwacher) zeigt, dass der Inverter bei ~157W median
+  schlaeft und die noetige Sprunghoehe unabhaengig von Basis-Limit und
+  Schlaftiefe ist. +100W weckt nur 48%, +400W aber 94% beim ersten
+  Versuch. Kick-Treppe von (100,200,400,800) auf (400,800) verkuerzt —
+  spart ~20-30s pro Aufwachen, der kurze Puls ist mit Akku folgenlos
+
 ## 1.7.19
 
 - FIX: config.yaml-Version hing seit 1.7.13 fest (ab 1.7.14 stumm per sed
