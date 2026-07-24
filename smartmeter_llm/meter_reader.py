@@ -162,6 +162,8 @@ LATENCY_S = float(os.environ.get("LATENCY_S", "8"))
 PENDING_THETA_S = float(os.environ.get("PENDING_THETA_S", "4"))
 PENDING_TAU_S = float(os.environ.get("PENDING_TAU_S", "2.5"))
 MIN_STEP_W = int(os.environ.get("MIN_STEP_W", "15"))
+# Max. kWh-Zuwachs pro Lesung — physikalisch 1 (Zaehler zaehlt ganze kWh)
+MAX_KWH_STEP = 1
 # MPPT-Stuck-Kick: der HMS verklemmt sich an der Batterie gelegentlich weit
 # unter dem Limit (z.B. 178W bei Limit 420) und reagiert auf kleine Schritte
 # kaum — ein grosser Limit-Sprung zwingt den Tracker zum Neu-Akquirieren,
@@ -438,24 +440,20 @@ def seg_confirm(expected_lo: int, expected_hi: int,
         kwh = int(kwh_s)
         if not (expected_lo <= kwh <= expected_hi):
             return None
-        # Monotonie-Sperre: der Dekoder verwechselt in der rechten
-        # Schattenzone die letzte Ziffer (24.07. nachts: 35873 -> 35871).
-        # Ein Wert UNTER dem hoechsten kuerzlich gesehenen ist physikalisch
-        # unmoeglich -> Fehllesung. Ohne die Sperre pendelte der Stand und
-        # das falsche Label landete im Korpus (Selbstvergiftung).
+        # "Kein Zuwachs" darf sofort bestaetigt werden — das ist die
+        # konservative Aussage (Stand bleibt, kann nichts vergiften).
+        # Ein ZUWACHS (+1) braucht zwei konsistente Lesungen: eine einzelne
+        # Ghost-Fehllesung (Phantom-Segmente in der Schattenzone) darf den
+        # Stand nie hochziehen — genau das passierte am 24.07. um 00:04.
         now = time.time()
-        if state is not None:
-            top, top_ts, top_n = state.get("seg_top", (0, 0.0, 0))
-            if now - top_ts > 1800:  # 30-min-Fenster
-                top, top_n = 0, 0
-            if kwh < top:
-                print(f"Seg-Schiedsrichter: {kwh} < gesehene {top} — "
-                      f"Fehllesung verworfen", file=sys.stderr)
+        if state is not None and kwh > expected_lo:
+            cand, cand_ts, cand_n = state.get("seg_cand", (0, 0.0, 0))
+            if now - cand_ts > 1800 or cand != kwh:
+                cand, cand_n = kwh, 0
+            cand_n += 1
+            state["seg_cand"] = (cand, now, cand_n)
+            if cand_n < 2:
                 return None
-            top_n = top_n + 1 if kwh == top else 1
-            state["seg_top"] = (kwh, now, top_n)
-            if top_n < 2:
-                return None  # erst die zweite konsistente Lesung zaehlt
         retrain_mark("seg")
         if SAVE_SAMPLES_DIR and now - _last_seg_save >= 60:
             d = Path(SAVE_SAMPLES_DIR) / "seg"
@@ -660,7 +658,12 @@ def plausible(reading: dict, state: dict) -> str | None:
     if state.get("kwh") is not None:
         if kwh < state["kwh"]:
             return f"kWh rückläufig ({state['kwh']} -> {kwh})"
-        if kwh > state["kwh"] + 2:
+        # Bei ~1,4s-Zyklus kann der Zaehler NIE um mehr als 1 steigen. Die
+        # alte Toleranz +2 liess genau die Ghost-Fehllesung durch, die der
+        # Segment-Dekoder in der Schattenzone produziert (letzte Ziffer
+        # 1 -> 3 durch Phantom-Segmente): 24.07. 00:04 wurde 35873
+        # akzeptiert, obwohl kNN UND Gemini 35871 lasen -> 2h Ablehnungen.
+        if kwh > state["kwh"] + MAX_KWH_STEP:
             return f"kWh-Sprung ({state['kwh']} -> {kwh})"
     state.pop("wjump", None)
     return None
@@ -1199,7 +1202,8 @@ def main(once: bool = False):
             reason = plausible(reading, state)
             if (reason and state.get("kwh") is not None
                     and ("rückläufig" in reason or "kWh-Sprung" in reason)):
-                seg_kwh = seg_confirm(state["kwh"], state["kwh"] + 2, state)
+                seg_kwh = seg_confirm(state["kwh"],
+                                      state["kwh"] + MAX_KWH_STEP, state)
                 if seg_kwh is not None:
                     print(f"Seg-Schiedsrichter: kWh {reading['kwh']} "
                           f"verworfen, Segment-Dekoder bestaetigt {seg_kwh}")

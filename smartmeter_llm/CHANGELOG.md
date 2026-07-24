@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.7.15
+
+- KORREKTUR zu 1.7.14 (das die Fehlerrichtung falsch annahm): Der Zaehler
+  kann bei ~1,4-s-Zyklus NIE um mehr als 1 kWh steigen. Die alte Toleranz
+  +2 in plausible() war das Loch, durch das die Ghost-Fehllesung des
+  Segment-Dekoders passte (Phantom-Segmente machen in der rechten
+  Schattenzone aus der letzten "1" eine "3"). 24.07. 00:04 wurde so 35873
+  akzeptiert, obwohl kNN UND Gemini 35871 lasen -> 2 Stunden lang wurde
+  jede korrekte Lesung als "ruecklaeufig" verworfen (das gemeldete
+  Springen), bis die Re-Baseline den Stand heilte
+- MAX_KWH_STEP=1 in plausible() und im Schiedsrichter-Fenster. Der
+  Schiedsrichter bestaetigt "kein Zuwachs" sofort (konservativ, kann
+  nichts vergiften), ein +1 erst nach zwei konsistenten Lesungen. Seg-
+  Lesungen setzen KEINE Untergrenze mehr (sie koennen ghost-inflatiert
+  sein) — Untergrenze ist allein der akzeptierte Stand
+- Label-Korrektur: die drei 35871-Labels waren richtig (in 1.7.14
+  faelschlich quarantaeniert, jetzt zurueck), die drei 35873-Labels sind
+  die Fehllesungen und liegen in quarantine/
+
 ## 1.7.13
 
 - Disk-Diaet: events/ (Diagnose-Frames, 93% des 1,2-GB-Korpus, 71k
