@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.23
+
+- Sustain-Floor entscheidet jetzt zwischen HALTEN und ABSCHALTEN. Speist
+  eine zweite Quelle ein (Deye, viel Sonne), sinkt der Bedarf am HMS unter
+  den Floor — Halten schickt dann Akku-Energie ins Netz. Kosten sind
+  (Floor - Bedarf) beim Halten gegen (Bedarf) beim Abschalten, der
+  Kipppunkt liegt exakt bei Floor/2 (215 W). Darunter wird der Inverter
+  schlafen gelegt, darueber gehalten; Hysterese-Band bis 0,6*Floor gegen
+  Flattern. Bei vollem Akku wird immer gehalten (Ueberschuss waere ohnehin
+  abgeregelt, Einspeisen kostet dann nichts)
+
 ## 1.7.22
 
 - Akku-abhaengiger Netz-Sollwert: das Ziel wandert linear mit der

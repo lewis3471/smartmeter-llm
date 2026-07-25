@@ -45,6 +45,20 @@ liefert weiter. Preis: etwas Überschuss (bei 390 W Nachtlast ~40 W).
 `0` schaltet das ab (dann regelt er wie früher bis `min_limit_w` runter — und
 schläft nachts ständig ein).
 
+**Und wenn eine zweite Quelle einspeist (Deye, viel Sonne)?** Dann sinkt der
+Bedarf am HMS unter den Floor. Halten würde den Überschuss ins Netz schicken,
+Abschalten lässt das Netz die Restlast decken. Der Regler wählt automatisch das
+Günstigere — Kipppunkt ist **Floor/2 (215 W)**:
+
+| gewünschte HMS-Leistung | Entscheidung | warum |
+|---|---|---|
+| über 258 W | Limit auf 430 halten | Überschuss < Ersparnis |
+| unter 215 W | HMS schlafen legen | Fremdquelle deckt es günstiger |
+| dazwischen | bleibt beim Vorherigen | Hysterese gegen Flattern |
+
+Ausnahme: **Bei vollem Akku wird immer gehalten** — der Überschuss wäre sonst
+ohnehin abgeregelt, Einspeisen kostet dann nichts.
+
 ### `min_limit_w` — die Notbremse (50 W, fest verdrahtet)
 
 Tiefstes Limit, das überhaupt gesendet werden darf. Greift nur noch beim

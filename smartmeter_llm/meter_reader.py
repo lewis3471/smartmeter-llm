@@ -1076,19 +1076,6 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     # ENTSCHIEDEN wird auf dem kompensierten Fehler
     error = error_raw - int(round(pending))
     wanted = int(round(max(MIN_LIMIT_W, min(max_limit, pv_w + error_raw))))
-    # Unterhalb des ansteuerbaren Floors nicht weiter runterjagen (s.o.).
-    # Der Akku-Waechter hat Vorrang: haelt er, darf der Floor nicht dagegen
-    # arbeiten — leerer Akku schlaegt Ueberschuss-Einspeisung.
-    if (SUSTAIN_FLOOR_W and wanted < SUSTAIN_FLOOR_W
-            and not state.get("batt_hold")
-            and SUSTAIN_FLOOR_W <= max_limit):
-        if state.get("floor_since") is None:
-            print(f"Sustain-Floor: Ziel {wanted}W unter {SUSTAIN_FLOOR_W}W — "
-                  f"halte Limit, statt den MPPT auszuhebeln")
-            state["floor_since"] = now
-        wanted = SUSTAIN_FLOOR_W
-    else:
-        state["floor_since"] = None
     current = state.get("limit_w")
     ctl_tick(grid_w, pv_w, current)
 
@@ -1108,6 +1095,53 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
             print(f"Limit setzen fehlgeschlagen: {e}", file=sys.stderr)
             return None
 
+    def send_if_needed(value: int):
+        """Limit nur senden, wenn es sich nennenswert aendert."""
+        if current is not None and abs(current - value) < MIN_STEP_W:
+            return current, pv_w
+        return (send(value, "floor-schlaf") or current), pv_w
+
+    # Unterhalb des ansteuerbaren Floors nicht weiter runterjagen (s.o.).
+    # Der Akku-Waechter hat Vorrang: haelt er, darf der Floor nicht dagegen
+    # arbeiten — leerer Akku schlaegt Ueberschuss-Einspeisung.
+    if (SUSTAIN_FLOOR_W and wanted < SUSTAIN_FLOOR_W
+            and not state.get("batt_hold")
+            and SUSTAIN_FLOOR_W <= max_limit):
+        # Unterhalb des Floors gibt es nur zwei ehrliche Optionen: das Limit
+        # HALTEN (dann geht Ueberschuss ins Netz) oder den Inverter GANZ
+        # abschalten (dann deckt das Netz die Restlast). Halten kostet
+        # (Floor - wanted), Abschalten kostet (wanted) — der Kipppunkt liegt
+        # damit bei Floor/2. Relevant, sobald eine zweite Quelle (Deye) oder
+        # viel Sonne die Last schon deckt: dann waere Halten reine
+        # Verschwendung von Akku-Energie ans Netz.
+        # Ausnahme: ist der Akku voll, waere der Ueberschuss ohnehin
+        # abgeregelt — dann ist Einspeisen gratis und Halten immer richtig.
+        v = state.get("batt_v")
+        batt_full = v is not None and v >= BATT_HIGH_V
+        # Hysterese um den KIPPPUNKT (Floor/2), nicht um den Floor: bei
+        # Nachtlast ~390W liegt das Wunsch-Limit unter dem Floor, aber weit
+        # ueber dem Kipppunkt — dort ist Halten klar guenstiger als Schlafen.
+        if state.get("floor_sleep"):
+            if wanted >= int(SUSTAIN_FLOOR_W * 0.6):
+                state["floor_sleep"] = False
+                print(f"Sustain-Floor: Ziel {wanted}W wieder ueber "
+                      f"{int(SUSTAIN_FLOOR_W * 0.6)}W — Inverter aufwecken")
+            else:
+                return send_if_needed(MIN_LIMIT_W)
+        if not batt_full and wanted < SUSTAIN_FLOOR_W // 2:
+            print(f"Sustain-Floor: Ziel {wanted}W < {SUSTAIN_FLOOR_W // 2}W — "
+                  f"Fremdquelle deckt die Last, Inverter schlafen legen "
+                  f"(Halten wuerde {SUSTAIN_FLOOR_W - wanted}W verschenken)")
+            state["floor_sleep"] = True
+            return send_if_needed(MIN_LIMIT_W)
+        if state.get("floor_since") is None:
+            print(f"Sustain-Floor: Ziel {wanted}W unter {SUSTAIN_FLOOR_W}W — "
+                  f"halte Limit, statt den MPPT auszuhebeln")
+            state["floor_since"] = now
+        wanted = SUSTAIN_FLOOR_W
+    else:
+        state["floor_since"] = None
+        state["floor_sleep"] = False
     if current is None:
         return send(wanted, "init"), pv_w
     # MPPT-Stuck-Kick (siehe oben): Eskalationstreppe reisst den Tracker
