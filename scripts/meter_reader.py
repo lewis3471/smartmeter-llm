@@ -128,12 +128,15 @@ BATT_STRINGS = [int(s) for s in os.environ.get("BATT_STRINGS", "").replace(
     " ", "").split(",") if s.strip().isdigit()]
 BATT_LOW_V = float(os.environ.get("BATT_LOW_V", "36"))
 BATT_HIGH_V = float(os.environ.get("BATT_HIGH_V", "38"))
-BATT_MAX_DRAIN_W = int(os.environ.get("BATT_MAX_DRAIN_W", "10"))
+# Entprellung: so lange muss die Spannung unter BATT_LOW_V liegen, bevor
+# abgeschaltet wird (Lastsprung != leerer Akku)
+BATT_TRIP_S = float(os.environ.get("BATT_TRIP_S", "15"))
+# Freigabe-Schwelle liegt knapp UEBER der Ausloese-Schwelle — frueher war es
+# BATT_HIGH_V (Zielspannung "voll"), was den Schutz praktisch nie loeste
+BATT_RECOVER_V = float(os.environ.get("BATT_RECOVER_V", "1.5"))
 # Freigabe erst nach durchgehend gehaltener Spannung: die Victron-LADE-
 # Spannung liegt sonst sofort ueber der Schwelle, obwohl der Akku leer ist
 BATT_RELEASE_S = float(os.environ.get("BATT_RELEASE_S", "300"))
-BATT_PROBE_W = 25       # Sonnen-Probe: Cap-Anhebung pro Minute im Hold
-BATT_PROBE_S = 60
 CAM_SNAPSHOT_URL = os.environ.get("CAM_SNAPSHOT_URL", "")  # Legacy-HTTP-Fallback
 OPENDTU_URL = os.environ["OPENDTU_URL"].rstrip("/")
 OPENDTU_AUTH = (os.environ["OPENDTU_USER"], os.environ["OPENDTU_PASS"])
@@ -817,53 +820,54 @@ def get_inverter_power() -> float:
 
 def battery_guard(state: dict, pv_w: float,
                   dc: dict[int, tuple[float, float]], now: float) -> int:
-    """Liefert das erlaubte Max-Limit. Hysterese: unter BATT_LOW_V wird
-    gehalten (Cap adaptiv auf Solar-only gesenkt), ab BATT_HIGH_V wieder
-    freigegeben. Waehrend des Holds hebt eine Sonnen-Probe das Cap langsam
-    an; zieht der Akku wieder, senkt die Messung es sofort zurueck."""
-    volts = [dc[s][0] for s in BATT_STRINGS if s in dc]
-    batt_w = sum(dc[s][1] for s in BATT_STRINGS if s in dc)
+    """Tiefentladeschutz, simpel und ehrlich.
+
+    Am HMS haengt ausschliesslich der Akku-Bus — jede Ausgangsleistung ist
+    also Akku-Entnahme. Es gibt daher nichts fein zu dosieren: faellt die
+    Bus-Spannung unter BATT_LOW_V, wird der Inverter abgeschaltet; erholt
+    sie sich, wird wieder freigegeben. (Frueher versuchte der Waechter, per
+    "Sonnen-Probe" das Limit tastend anzuheben — das ergab nur Sinn, solange
+    Solar direkt am Inverter haengen sollte, und fuehrte hier zu einem
+    Dauer-Cap von 50 W.)
+
+    Entprellt in beide Richtungen: unter Last sackt der Bus kurz ein (20 A
+    ueber Kabel, BMS und Innenwiderstand), das darf nicht sofort ausloesen.
+    Leere Eingaenge (Spannung ~0) werden ignoriert, sonst wuerde ein
+    unbelegter String den Waechter dauerhaft in den Schutz zwingen."""
+    volts = [dc[s][0] for s in BATT_STRINGS if s in dc and dc[s][0] > 5.0]
     hold = state.get("batt_hold", False)
-    if not volts:
-        return MAX_LIMIT_W if not hold else state.get("batt_cap", MAX_LIMIT_W)
+    if not volts:                      # keine Messwerte -> Zustand halten
+        return MIN_LIMIT_W if hold else MAX_LIMIT_W
     v = min(volts)
     state["batt_v"] = v
-    if not hold and v < BATT_LOW_V:
-        hold = True
-        state["batt_cap"] = max(MIN_LIMIT_W, int(pv_w - batt_w))
-        state["batt_cap_ts"] = now
-        print(f"Akku-Waechter: {v:.1f}V < {BATT_LOW_V}V — halte Limit auf "
-              f"Solar-only (Cap {state['batt_cap']}W, Akku zog {batt_w:.0f}W)")
-    elif hold and v >= BATT_HIGH_V:
-        # Victron haengt mit Solar am selben Bus: beim Laden liegt die
-        # BUS-Spannung sofort ueber der Schwelle, obwohl der Akku noch leer
-        # ist. Erst freigeben, wenn sie BATT_RELEASE_S durchgehend hielt.
-        if "batt_high_since" not in state:
-            state["batt_high_since"] = now
-        if now - state["batt_high_since"] >= BATT_RELEASE_S:
-            hold = False
-            state.pop("batt_cap", None)
-            state.pop("batt_high_since", None)
-            print(f"Akku-Waechter: {v:.1f}V >= {BATT_HIGH_V}V "
-                  f"({BATT_RELEASE_S:.0f}s gehalten) — Akku-Strings "
-                  "wieder freigegeben")
-    elif hold:
-        state.pop("batt_high_since", None)  # Spannung wieder eingebrochen
-    state["batt_hold"] = hold
-    if not hold:
-        return MAX_LIMIT_W
-    cap = state.get("batt_cap", MAX_LIMIT_W)
-    since = now - state.get("batt_cap_ts", 0)
-    if batt_w > BATT_MAX_DRAIN_W and since >= LATENCY_S:
-        cap = max(MIN_LIMIT_W, min(cap, int(pv_w - batt_w)))
-        state["batt_cap_ts"] = now
-        print(f"Akku-Waechter: Akku zieht {batt_w:.0f}W — Cap -> {cap}W")
-    elif since >= BATT_PROBE_S and cap < MAX_LIMIT_W:
-        cap = min(MAX_LIMIT_W, cap + BATT_PROBE_W)  # Sonnen-Probe
-        state["batt_cap_ts"] = now
-    state["batt_cap"] = cap
-    return cap
 
+    if not hold:
+        if v < BATT_LOW_V:
+            if state.get("batt_low_since") is None:
+                state["batt_low_since"] = now
+            elif now - state["batt_low_since"] >= BATT_TRIP_S:
+                state["batt_hold"] = True
+                state.pop("batt_low_since", None)
+                print(f"Akku-Waechter: {v:.1f}V unter {BATT_LOW_V}V "
+                      f"(>{BATT_TRIP_S:.0f}s) — Inverter abgeschaltet")
+                return MIN_LIMIT_W
+        else:
+            state["batt_low_since"] = None
+        return MAX_LIMIT_W
+
+    rel = BATT_LOW_V + BATT_RECOVER_V
+    if v >= rel:
+        if state.get("batt_ok_since") is None:
+            state["batt_ok_since"] = now
+        elif now - state["batt_ok_since"] >= BATT_RELEASE_S:
+            state["batt_hold"] = False
+            state.pop("batt_ok_since", None)
+            print(f"Akku-Waechter: {v:.1f}V >= {rel:.1f}V "
+                  f"({BATT_RELEASE_S:.0f}s gehalten) — wieder freigegeben")
+            return MAX_LIMIT_W
+    else:
+        state.pop("batt_ok_since", None)
+    return MIN_LIMIT_W
 
 def set_limit(watts: int):
     """Nicht-persistentes absolutes Limit setzen (schont den Flash der DTU)."""

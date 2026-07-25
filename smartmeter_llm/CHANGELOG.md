@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.7.24
+
+- KRITISCH: Akku-Waechter klemmte das Limit dauerhaft auf 50 W, waehrend
+  das Haus Netz zog (25.07. 08:43). Zwei Ursachen, beide erst mit dem
+  Voll-Akku-Aufbau wirksam:
+  1. Er loeste ohne Entprellung aus — unter Last (20 A) sackt der Bus
+     kurz ein, das reichte zum Abschalten trotz vollem Akku
+  2. Er kam nie wieder heraus: der Cap wurde als (pv - Akku-Anteil)
+     gerechnet, was bei ausschliesslich akkugespeisten Strings ~0 ergibt,
+     und die Freigabe haing an batt_high_v (54,4 V) — mit gedrosseltem
+     Inverter praktisch unerreichbar
+- Waechter neu geschrieben: Spannung muss BATT_TRIP_S (15 s) unter
+  batt_low_v liegen, dann wird der Inverter abgeschaltet; Freigabe bei
+  batt_low_v + BATT_RECOVER_V (1,5 V), BATT_RELEASE_S gehalten. Die
+  "Sonnen-Probe" ist entfallen — sie ergab nur Sinn, solange Solar direkt
+  am Inverter haengen sollte
+- Leere Inverter-Eingaenge (Spannung ~0) werden ignoriert: stand ein
+  unbelegter String in batt_strings, zwang seine 0,6 V den Waechter
+  dauerhaft in den Schutz
+
 ## 1.7.23
 
 - Sustain-Floor entscheidet jetzt zwischen HALTEN und ABSCHALTEN. Speist
