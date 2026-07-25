@@ -149,7 +149,23 @@ MQTT_AUTH = (
 TOPIC = os.environ.get("MQTT_TOPIC_PREFIX", "smartmeter")
 
 INTERVAL_S = float(os.environ.get("INTERVAL_S", "90"))
-TARGET_GRID_W = int(os.environ.get("TARGET_GRID_W", "50"))
+# Netz-Sollwert. Mit Akku wird er ZUSTANDSABHAENGIG: ist der Speicher voll,
+# darf ruhig etwas ins Netz laufen (der Ueberschuss waere sonst eh
+# abgeregelt) — ist er leer, wollen wir jede Wattstunde selbst behalten und
+# nehmen lieber ein paar Watt Netzbezug in Kauf, statt den Akku zu
+# verheizen. Interpoliert linear ueber die Akku-Spannung zwischen
+# BATT_LOW_V (leer -> TARGET_GRID_W) und BATT_HIGH_V (voll ->
+# TARGET_GRID_FULL_W). Ohne konfigurierten Akku gilt TARGET_GRID_W.
+TARGET_GRID_W = int(os.environ.get("TARGET_GRID_W", "20"))
+TARGET_GRID_FULL_W = int(os.environ.get("TARGET_GRID_FULL_W", "-50"))
+
+
+def target_grid(state: dict) -> int:
+    v = state.get("batt_v")
+    if not BATT_STRINGS or v is None or BATT_HIGH_V <= BATT_LOW_V:
+        return TARGET_GRID_W
+    f = max(0.0, min(1.0, (v - BATT_LOW_V) / (BATT_HIGH_V - BATT_LOW_V)))
+    return int(round(TARGET_GRID_W + f * (TARGET_GRID_FULL_W - TARGET_GRID_W)))
 DEADBAND_W = int(os.environ.get("DEADBAND_W", "15"))
 # Regelkreis-Totzeit Limit->Wirkung (gemessen ~6-8s inkl. MPPT/LCD/Median);
 # gilt nur fuer Abwaerts-Korrekturen — hoch geht immer sofort
@@ -1054,7 +1070,8 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
             if now - ts < horizon]
     state["pending"] = pend
     pending = sum(d * pending_weight(now - ts) for ts, d in pend)
-    error_raw = grid_w - TARGET_GRID_W  # >0: zu viel Bezug
+    target = target_grid(state)
+    error_raw = grid_w - target  # >0: zu viel Bezug
     # wanted bleibt absolut aus Roh-Messwerten (staleness-invariant);
     # ENTSCHIEDEN wird auf dem kompensierten Fehler
     error = error_raw - int(round(pending))

@@ -1,5 +1,5 @@
 name: Smartmeter LLM Nulleinspeisung
-version: "1.7.21"
+version: "1.7.22"
 slug: smartmeter_llm
 description: >-
   ESP32-Cam liest den Stromzähler (lokales OCR + Gemini-Fallback),
@@ -22,7 +22,8 @@ options:
   opendtu_user: admin
   opendtu_pass: ""
   inverter_serial: 1164a00ab8d4
-  target_grid_w: -20
+  target_grid_w: 20
+  target_grid_full_w: -50
   deadband_w: 15
   latency_s: 0
   max_limit_w: 2000
@@ -48,6 +49,7 @@ schema:
   opendtu_pass: password
   inverter_serial: str
   target_grid_w: int(-800,1000)
+  target_grid_full_w: int(-800,1000)
   deadband_w: int(0,500)
   latency_s: float(0,60)
   max_limit_w: int(50,2000)

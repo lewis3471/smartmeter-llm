@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.22
+
+- Akku-abhaengiger Netz-Sollwert: das Ziel wandert linear mit der
+  Akku-Spannung zwischen target_grid_w (leerer Akku, Default +20 W —
+  lieber ein paar Watt ziehen als den Speicher verheizen) und
+  target_grid_full_w (voller Akku, Default -50 W — dann darf ruhig etwas
+  ins Netz laufen, der Ueberschuss waere sonst ohnehin abgeregelt).
+  Stuetzstellen sind batt_low_v/batt_high_v; ohne konfigurierten Akku
+  gilt target_grid_w unveraendert
+
 ## 1.7.21
 
 - Sustain-Floor (sustain_floor_w, Default 430W): Ziele unterhalb der
