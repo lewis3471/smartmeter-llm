@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.7.21
+
+- Sustain-Floor (sustain_floor_w, Default 430W): Ziele unterhalb der
+  ansteuerbaren Grenze werden nicht mehr angesteuert. Messung an 929
+  Limit-Kommandos: der HMS folgt einem Limit unter 500W nur zu 25-90%
+  (ab 500W: 99,7%) — er faellt beim Kommando in einen Attraktor bei
+  ~157W. Halten kann er niedrige Leistung sehr wohl (Plateaus bei 157W,
+  320W, 424W ueber Minuten), er findet nur nicht per Kommando dorthin.
+  Nachts jagte der Regler deshalb ein unerreichbares Ziel (Last ~390W)
+  und warf den Inverter mit 1667 Limitwechseln in 5,2h staendig aus dem
+  Tritt. Simulation ueber die echte Lastkurve: Netzbezug 1,65 -> 0,32
+  kWh/Nacht. Der Akku-Waechter behaelt Vorrang (leerer Akku schlaegt
+  Ueberschuss-Einspeisung); 0 schaltet den Floor ab
+
 ## 1.7.20
 
 - MPPT-Kick datenbasiert beschleunigt: Auswertung von 160 kick_result-

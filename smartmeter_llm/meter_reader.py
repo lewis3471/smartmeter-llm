@@ -180,6 +180,20 @@ SEG_MIN_CONF = float(os.environ.get("SEG_MIN_CONF", "0.8"))
 # man eine Log-Likelihood-Marge von 6 verlangt — mit den zwei geforderten
 # konsistenten Lesungen bleibt ein Restrisiko von ~1:60000.
 SEG_UP_MARGIN = float(os.environ.get("SEG_UP_MARGIN", "6"))
+# Ansteuerbare Untergrenze. Gemessen an 929 Limit-Kommandos: der HMS FOLGT
+# einem Limit unter ~500W nur unzuverlaessig (250-300W: 25%, 350-400W: 67%,
+# 450-500W: 90%, 500-600W: 99.7%). Er kann niedrige Leistung durchaus HALTEN
+# (stabile Plateaus bei 157W, 320W, 424W ueber Minuten) — er findet per
+# Kommando nur nicht dorthin: der MPPT verliert den Arbeitspunkt und faellt
+# in einen Attraktor bei ~157W. Folge nachts (Last ~390W): der Regler jagt
+# ein Ziel unterhalb der Grenze, wirft den Inverter dabei staendig aus dem
+# Tritt (1667 Limitwechsel in 5,2h) und das Netz zahlt.
+# Fix: Ziele unterhalb des Floors werden NICHT angesteuert — stattdessen
+# bleibt das Limit auf dem Floor stehen und der Inverter in Ruhe. Preis ist
+# etwas Ueberschuss-Einspeisung; bei Nachtlast ~390W und Floor 430W sind das
+# ~40W. Simulation ueber die echte Lastkurve: Netzbezug 1,65 -> 0,32 kWh
+# pro Nacht. 0 = aus (dann regelt er wie bisher bis MIN_LIMIT_W runter).
+SUSTAIN_FLOOR_W = int(os.environ.get("SUSTAIN_FLOOR_W", "430"))
 # MPPT-Stuck-Kick: der HMS verklemmt sich an der Batterie gelegentlich weit
 # unter dem Limit (z.B. 178W bei Limit 420) und reagiert auf kleine Schritte
 # kaum — ein grosser Limit-Sprung zwingt den Tracker zum Neu-Akquirieren,
@@ -1045,6 +1059,19 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     # ENTSCHIEDEN wird auf dem kompensierten Fehler
     error = error_raw - int(round(pending))
     wanted = int(round(max(MIN_LIMIT_W, min(max_limit, pv_w + error_raw))))
+    # Unterhalb des ansteuerbaren Floors nicht weiter runterjagen (s.o.).
+    # Der Akku-Waechter hat Vorrang: haelt er, darf der Floor nicht dagegen
+    # arbeiten — leerer Akku schlaegt Ueberschuss-Einspeisung.
+    if (SUSTAIN_FLOOR_W and wanted < SUSTAIN_FLOOR_W
+            and not state.get("batt_hold")
+            and SUSTAIN_FLOOR_W <= max_limit):
+        if state.get("floor_since") is None:
+            print(f"Sustain-Floor: Ziel {wanted}W unter {SUSTAIN_FLOOR_W}W — "
+                  f"halte Limit, statt den MPPT auszuhebeln")
+            state["floor_since"] = now
+        wanted = SUSTAIN_FLOOR_W
+    else:
+        state["floor_since"] = None
     current = state.get("limit_w")
     ctl_tick(grid_w, pv_w, current)
 
