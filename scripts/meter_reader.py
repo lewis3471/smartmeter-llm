@@ -730,7 +730,16 @@ def _event_worth_saving(reason: str) -> bool:
 
 
 def plausible(reading: dict, state: dict) -> str | None:
-    """Gibt Fehlergrund zurück oder None wenn die Lesung plausibel ist."""
+    """Gibt Fehlergrund zurueck oder None wenn die Lesung plausibel ist.
+
+    WICHTIG — die Pruefungen fuer kWh und W sind streng getrennt. Frueher
+    liefen sie in einer linearen Kette mit fruehen returns, und der
+    W-Heilpfad gab bei Erfolg direkt None zurueck. Damit wurde die
+    kWh-Pruefung UEBERSPRUNGEN: am 26.07. flatterte W wegen einer 3->9-
+    Fehllesung (+6000 W), die W-Re-Baseline griff, und im selben Atemzug
+    rutschte ein um 20 kWh zu niedriger Zaehlerstand ungeprueft durch
+    (35881 -> 35861 -> 35801). Ein Heilpfad darf immer nur seinen EIGENEN
+    Kanal freigeben."""
     kwh, w = reading["kwh"], reading["w"]
     if kwh == 888888 or abs(w) in (88888, 888888):
         return "LCD-Segmenttest (alles 8er)"
@@ -738,6 +747,26 @@ def plausible(reading: dict, state: dict) -> str | None:
         return "kwh<=0 — LCD vermutlich dunkel/unlesbar"
     if abs(w) > 20000:
         return f"unplausible Leistung {w} W"
+    return _plausible_kwh(kwh, state) or _plausible_w(w, state)
+
+
+def _plausible_kwh(kwh: int, state: dict) -> str | None:
+    if state.get("kwh") is not None:
+        if kwh < state["kwh"]:
+            return f"kWh rückläufig ({state['kwh']} -> {kwh})"
+        # Bei ~1,4s-Zyklus kann der Zaehler NIE um mehr als 1 steigen. Die
+        # alte Toleranz +2 liess genau die Ghost-Fehllesung durch, die der
+        # Segment-Dekoder in der Schattenzone produziert (letzte Ziffer
+        # 1 -> 3 durch Phantom-Segmente): 24.07. 00:04 wurde 35873
+        # akzeptiert, obwohl kNN UND Gemini 35871 lasen -> 2h Ablehnungen.
+        if kwh > state["kwh"] + MAX_KWH_STEP:
+            return f"kWh-Sprung ({state['kwh']} -> {kwh})"
+    return None
+
+
+def _plausible_w(w: int, state: dict) -> str | None:
+    if state.get("w") is not None and abs(w - state["w"]) <= MAX_JUMP_W:
+        state.pop("wjump", None)   # sauberer Wert -> Heil-Zaehler zuruecksetzen
     if state.get("w") is not None and abs(w - state["w"]) > MAX_JUMP_W:
         # Heilpfad: 4 konsistente Lesungen auf neuem Niveau heissen, dass
         # der GESPEICHERTE Stand vergiftet war (23.07.: Geister-8443 beim
@@ -783,19 +812,7 @@ def plausible(reading: dict, state: dict) -> str | None:
             return f"Vorzeichen-Flip verdächtig ({w_prev:+d} -> {w:+d})"
     else:
         state["signflip"] = 0
-    if state.get("kwh") is not None:
-        if kwh < state["kwh"]:
-            return f"kWh rückläufig ({state['kwh']} -> {kwh})"
-        # Bei ~1,4s-Zyklus kann der Zaehler NIE um mehr als 1 steigen. Die
-        # alte Toleranz +2 liess genau die Ghost-Fehllesung durch, die der
-        # Segment-Dekoder in der Schattenzone produziert (letzte Ziffer
-        # 1 -> 3 durch Phantom-Segmente): 24.07. 00:04 wurde 35873
-        # akzeptiert, obwohl kNN UND Gemini 35871 lasen -> 2h Ablehnungen.
-        if kwh > state["kwh"] + MAX_KWH_STEP:
-            return f"kWh-Sprung ({state['kwh']} -> {kwh})"
-    state.pop("wjump", None)
     return None
-
 
 def w_second_opinion(w: int) -> bool:
     """Unabhaengige Bestaetigung eines neuen W-Niveaus (+-20%).

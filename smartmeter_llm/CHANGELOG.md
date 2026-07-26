@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.7.30
+
+- DAS eigentliche Loch hinter dem 26.07.-Kollaps: die Plausibilitaets-
+  pruefung lief als lineare Kette mit fruehen returns, und der W-Heilpfad
+  gab bei Erfolg direkt None zurueck — womit die kWh-Pruefung schlicht
+  UEBERSPRUNGEN wurde. Ablauf: W flatterte wegen einer 3->9-Fehllesung
+  (+6000 W), nach vier konsistenten Lesungen griff die W-Re-Baseline, und
+  im selben Atemzug rutschte ein um 20 kWh zu niedriger Zaehlerstand
+  ungeprueft durch. In drei Stufen: 35881 -> 35861 -> 35801. Weder die
+  Rueckwaerts-Sperre noch MAX_KWH_STEP wurden dabei je ausgewertet.
+- plausible() ist jetzt in zwei unabhaengige Kanaele getrennt
+  (_plausible_kwh und _plausible_w). Ein Heilpfad kann immer nur seinen
+  EIGENEN Kanal freigeben; beide muessen zustimmen, damit eine Lesung
+  akzeptiert wird
+
 ## 1.7.29
 
 - Akku-Spannung wird pro Regelzyklus in die Telemetrie geschrieben (Feld
