@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.7.26
+
+- Gemini war seit dem Wechsel auf die 3.x-Modelle KOMPLETT TOT (HTTP 400):
+  die neuen Modelle lehnen thinkingConfig/thinkingBudget=0 ab. Damit fehlte
+  der einzige vom lokalen OCR unabhaengige Zeuge — das ist der Grund, warum
+  der falsche Zaehlerstand am 26.07. stundenlang unentdeckt blieb. Ohne den
+  Parameter liest Gemini den Frame sofort korrekt. Zusaetzlich: HTTP 400
+  loest jetzt einen Retry ohne generationConfig aus und rotiert danach,
+  statt den Aufruf hart abzubrechen
+- Die 9000-W-Lesungen aufgeklaert: echte Werte 3075/3143/3078 W, das kNN
+  las die fuehrende 3 als 9 (Gemini und Segment-Dekoder waren sich einig).
+  Frames korrekt gelabelt und nachtrainiert — liest jetzt 3075/3143/3078
+- W-Re-Baseline verlangt eine zweite Meinung: vier konsistente Lesungen
+  allein reichen nicht, denn ein systematischer Lesefehler IST konsistent.
+  Erst Gemini, sonst der Segment-Dekoder muss das neue Niveau bestaetigen
+
 ## 1.7.25
 
 - KRITISCH: Der Zaehlerstand konnte sich still vergiften und NICHT mehr

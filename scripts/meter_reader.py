@@ -633,7 +633,11 @@ def gemini_read(img: bytes) -> dict:
                                  "data": base64.b64encode(img).decode()}},
             ]
         }],
-        "generationConfig": {"temperature": 0, "thinkingConfig": {"thinkingBudget": 0}},
+        # KEIN thinkingConfig: die 3.x-Modelle lehnen thinkingBudget=0 mit
+        # HTTP 400 ab. Das legte am 26.07. den unabhaengigen Zeugen still —
+        # ohne Gemini konnte niemand dem kNN widersprechen, und der falsche
+        # Zaehlerstand hielt sich stundenlang.
+        "generationConfig": {"temperature": 0},
     }
     global _combo_idx, _combo_day
     today = time.strftime("%Y-%m-%d")
@@ -653,7 +657,18 @@ def gemini_read(img: bytes) -> dict:
             json=body,
             timeout=30,
         )
-        if r.status_code in (404, 429, 503):
+        if r.status_code == 400:
+            # Ungueltiges Argument: einmal ohne generationConfig versuchen,
+            # bevor rotiert wird (Modelle unterscheiden sich darin)
+            r2 = requests.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                headers={"Content-Type": "application/json", "X-goog-api-key": key},
+                json={"contents": body["contents"]}, timeout=30)
+            if r2.status_code == 200:
+                print(f"{model}: 400 mit generationConfig — ohne akzeptiert",
+                      file=sys.stderr)
+                r = r2
+        if r.status_code in (400, 404, 429, 503):
             if r.status_code == 404:
                 _dead_models.add(model)  # Modell existiert nicht (mehr)
             _combo_idx += 1
@@ -726,9 +741,17 @@ def plausible(reading: dict, state: dict) -> str | None:
         if cand is not None and abs(w - cand) <= max(100, abs(cand) // 5):
             n += 1
             if n >= 4:
+                # Konsistenz allein reicht NICHT: ein systematischer
+                # Lesefehler ist per Definition konsistent (26.07.: die
+                # fuehrende 3 wurde konstant als 9 gelesen, 3075 -> 9075).
+                # Deshalb muss ein unabhaengiger Zeuge zustimmen.
+                if not w_second_opinion(w):
+                    state["wjump"] = (cand, 0)
+                    return (f"Sprung {w - state['w']:+d} W — zweite Meinung "
+                            f"widerspricht")
                 state.pop("wjump", None)
                 print(f"W-Re-Baseline: {state['w']} W war vergiftet, "
-                      f"4x konsistent ~{w} W -> uebernehme")
+                      f"4x konsistent ~{w} W + bestaetigt -> uebernehme")
                 return None
             state["wjump"] = (cand, n)
         else:
@@ -767,6 +790,45 @@ def plausible(reading: dict, state: dict) -> str | None:
             return f"kWh-Sprung ({state['kwh']} -> {kwh})"
     state.pop("wjump", None)
     return None
+
+
+def w_second_opinion(w: int) -> bool:
+    """Unabhaengige Bestaetigung eines neuen W-Niveaus (+-20%).
+
+    Erst Gemini (bester Zeuge), sonst der Segment-Dekoder. Ohne das wuerde
+    eine systematische Fehllesung sich selbst bestaetigen."""
+    global _last_gemini_call
+    if _last_snapshot is not None and time.time() - _last_gemini_call >= GEMINI_COOLDOWN_S:
+        try:
+            _last_gemini_call = time.time()
+            gem = gemini_read(_last_snapshot)
+            ok = abs(gem["w"] - w) <= max(50, abs(w) // 5)
+            print(f"W-Zweitmeinung Gemini: {gem['w']} W vs {w} W -> "
+                  f"{'bestaetigt' if ok else 'WIDERSPRUCH'}", file=sys.stderr)
+            return ok
+        except Exception as e:
+            print(f"W-Zweitmeinung Gemini nicht verfuegbar: {e}", file=sys.stderr)
+    try:
+        import cv2
+        import numpy as np
+        global _seg_reader
+        if _seg_reader is None and _local_reader is not None:
+            from seg_decoder import SegReader
+            _seg_reader = SegReader(anchor_ref=_local_reader.ex._anchor_ref)
+        if _seg_reader is None or _last_snapshot is None:
+            return False
+        gray = cv2.imdecode(np.frombuffer(_last_snapshot, np.uint8),
+                            cv2.IMREAD_GRAYSCALE)
+        labels, confs, _ = _seg_reader.read_cells(gray)
+        ws = "".join(labels[6:]).replace("_", "")
+        if not ws.lstrip("-").isdigit() or min(confs[6:]) < SEG_MIN_CONF:
+            return False
+        ok = abs(int(ws) - w) <= max(50, abs(w) // 5)
+        print(f"W-Zweitmeinung Segment: {ws} W vs {w} W -> "
+              f"{'bestaetigt' if ok else 'WIDERSPRUCH'}", file=sys.stderr)
+        return ok
+    except Exception:
+        return False
 
 
 def rebaseline(reading: dict, state: dict) -> bool:
