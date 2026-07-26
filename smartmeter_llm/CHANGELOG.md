@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.32
+
+- Beim Start stehen die tatsaechlich wirksamen Akku-Schwellen im Log
+  (Abschalt- und Freigabespannung, auch je Zelle) sowie Netz-Ziel, Floor
+  und Maximallimit. Ohne das war nicht erkennbar, dass batt_low_v noch auf
+  dem Default 51,2 V stand, obwohl 47 V gewollt waren — der Waechter
+  schaltete dadurch schon bei einem normalen Lastsprung ab (26.07. 21:29:
+  781 W Limit, Bus sackt unter 51,2 V, Abschaltung auf 50 W)
+
 ## 1.7.31
 
 - Neuer HA-Sensor "Akku-Ladestand (geschaetzt)": rechnet die Packspannung

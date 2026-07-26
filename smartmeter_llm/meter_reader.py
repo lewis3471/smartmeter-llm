@@ -1529,6 +1529,15 @@ def main(once: bool = False):
             state = {"kwh": json.loads(STATE_FILE.read_text()).get("kwh")}
         except (ValueError, OSError):
             state = {}
+    if BATT_STRINGS:
+        print(f"Akku-Waechter aktiv: Straenge {BATT_STRINGS}, "
+              f"abschalten unter {BATT_LOW_V:.1f}V ({BATT_LOW_V/16:.2f}V/Zelle) "
+              f"fuer {BATT_TRIP_S:.0f}s, Freigabe ab "
+              f"{BATT_LOW_V + BATT_RECOVER_V:.1f}V")
+    else:
+        print("Akku-Waechter AUS (batt_strings leer)")
+    print(f"Netz-Ziel {TARGET_GRID_W:+d}W (leer) .. {TARGET_GRID_FULL_W:+d}W (voll), "
+          f"Floor {SUSTAIN_FLOOR_W}W, max {MAX_LIMIT_W}W")
     publish_discovery()
     w_hist: list[int] = []  # Median-3: einzelner Ausreisser-Frame regelt nicht
     last_written_kwh = state.get("kwh")
