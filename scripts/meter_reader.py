@@ -222,6 +222,9 @@ SUSTAIN_FLOOR_W = int(os.environ.get("SUSTAIN_FLOOR_W", "430"))
 # Deadband + Limit deutlich ueber Ist + keine Bewegung ueber STUCK_S.
 STUCK_S = float(os.environ.get("STUCK_S", "25"))
 STUCK_GAP_W = int(os.environ.get("STUCK_GAP_W", "150"))
+# Schwankungsbreite, unter der die Leistung als "steht" gilt. Im Attraktor
+# liegt sie bei 0,2W, beim echten Nachfuehren bei zig Watt.
+STUCK_FLAT_W = float(os.environ.get("STUCK_FLAT_W", "8"))
 KICK_COOLDOWN_S = float(os.environ.get("KICK_COOLDOWN_S", "180"))
 # Eskalationstreppe statt Verdopplung: Schwelle, ab der der Tracker sich
 # loest, ist unbekannt — wir tasten uns hoch und LOGGEN den loesenden
@@ -1290,33 +1293,29 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
           and max_limit - current >= KICK_STEPS_W[0]):
         # nur wenn Kick-Spielraum existiert — Limit am Anschlag heisst
         # quellenbegrenzt (Wolke/Akku-Cap), nicht verklemmt
-        if "stuck_since" not in state:
-            state["stuck_since"] = now
-            state["stuck_pv0"] = pv_w
-            state["stuck_max"] = pv_w
-        else:
-            state["stuck_max"] = max(state.get("stuck_max", pv_w), pv_w)
-        # Fortschritt relativ zur LUECKE messen, nicht absolut: der
-        # Attraktor wackelt um +-50W, eine feste 25W-Schwelle galt dadurch
-        # als "bewegt sich ja" — der Kick feuerte nie (26.07.: 511s geklemmt
-        # bei Limit 430 und pv 109->174W, null Kicks).
-        luecke = max(current - state.get("stuck_pv0", pv_w), 1.0)
-        fortschritt = state.get("stuck_max", pv_w) - state.get("stuck_pv0", pv_w)
-        if ("stuck_since" in state
-              and now - state["stuck_since"] > STUCK_S
-              and fortschritt < 0.25 * luecke
-              and now - state.get("kick_ts", 0) > KICK_COOLDOWN_S):
-            state.pop("stuck_since", None)
-            state.pop("stuck_max", None)
-            print(f"MPPT-Kick: pv {pv_w:.0f}W klemmt unter Limit {current}W "
+        # Klemmen erkennt man an FLACHHEIT, nicht an fehlendem Fortschritt.
+        # Im Attraktor steht die Leistung wie festgenagelt (26.07. 01:21-01:29:
+        # pv = 178,3 W ueber 7,5 Minuten, Schwankung 0,2 W) — waehrend echtes
+        # Nachfuehren staendig zappelt. Frueher wurde die Bewegung seit
+        # Fensterbeginn gemessen; das Einschwingen VOR dem Klemmen zaehlte als
+        # Fortschritt und der Kick blieb aus.
+        hist = state.setdefault("pv_hist", [])
+        hist.append((now, pv_w))
+        del hist[:max(0, len(hist) - 60)]
+        fenster = [v for t, v in hist if now - t <= STUCK_S]
+        flach = len(fenster) >= 5 and (max(fenster) - min(fenster)) < STUCK_FLAT_W
+        if (flach and now - hist[0][0] >= STUCK_S
+                and now - state.get("kick_ts", 0) > KICK_COOLDOWN_S):
+            state["pv_hist"] = []
+            print(f"MPPT-Kick: pv {pv_w:.0f}W steht seit {STUCK_S:.0f}s "
+                  f"wie festgenagelt unter Limit {current}W "
                   f"— Eskalation startet (+{KICK_STEPS_W[0]}W)")
             state["kick"] = {"base": current, "pv0": pv_w, "step": 1,
                              "ts": now}
             target = int(min(max_limit, current + KICK_STEPS_W[0]))
             return send(target, "kick1") or current, pv_w
     else:
-        state.pop("stuck_since", None)
-        state.pop("stuck_max", None)
+        state["pv_hist"] = []
     # Akku-Hold: Limit ueber dem Cap SOFORT senken — die normale
     # runter-Bedingung greift nicht, solange der Akku das Netz auf Ziel haelt
     if current > max_limit and now - state.get("limit_sent_ts", 0) >= LATENCY_S:

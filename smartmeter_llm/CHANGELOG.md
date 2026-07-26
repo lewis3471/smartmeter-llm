@@ -1,14 +1,21 @@
 # Changelog
 
+## 1.7.28
+
+- Klemm-Erkennung richtig gestellt: 1.7.27 ging von einem wackelnden
+  Attraktor aus — die Rohdaten zeigen das Gegenteil. Im Attraktor steht
+  die Leistung wie festgenagelt (26.07. 01:21-01:29: pv = 178,3 W ueber
+  7,5 Minuten, Schwankung 0,2 W), waehrend echtes Nachfuehren staendig
+  zappelt. Erkannt wird jetzt genau das: bleibt die Leistung STUCK_S lang
+  innerhalb von 8 W und mehr als STUCK_GAP_W unter dem Limit, ist er
+  geklemmt. Die alte Logik (Fortschritt seit Fensterbeginn) verrechnete
+  das Einschwingen VOR dem Klemmen als Fortschritt und feuerte deshalb
+  nie. Replay der echten Episode: Kick nach 27 s; normales Nachfuehren
+  loest keinen Fehlalarm aus
+
 ## 1.7.27
 
-- Klemm-Erkennung war praktisch blind: sie verlangte, dass sich die
-  Leistung um weniger als 25 W bewegt. Der Attraktor wackelt aber um
-  +-50 W, also galt der Inverter als "in Bewegung" und der Kick feuerte
-  nie — in der Nacht 25./26.07. hing er 511 s am Stueck bei 109-174 W
-  unter einem Limit von 430 W, ohne einen einzigen Kick. Fortschritt wird
-  jetzt relativ zur Luecke gemessen (weniger als ein Viertel geschlossen =
-  geklemmt). Diese Klemmer waren 30% des naechtlichen Netzbezugs
+- Klemm-Erkennung angefasst (Annahme war falsch, siehe 1.7.28)
 
 ## 1.7.26
 
