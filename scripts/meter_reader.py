@@ -1293,10 +1293,21 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
         if "stuck_since" not in state:
             state["stuck_since"] = now
             state["stuck_pv0"] = pv_w
-        elif (now - state["stuck_since"] > STUCK_S
-              and pv_w - state.get("stuck_pv0", 0) < 25
+            state["stuck_max"] = pv_w
+        else:
+            state["stuck_max"] = max(state.get("stuck_max", pv_w), pv_w)
+        # Fortschritt relativ zur LUECKE messen, nicht absolut: der
+        # Attraktor wackelt um +-50W, eine feste 25W-Schwelle galt dadurch
+        # als "bewegt sich ja" — der Kick feuerte nie (26.07.: 511s geklemmt
+        # bei Limit 430 und pv 109->174W, null Kicks).
+        luecke = max(current - state.get("stuck_pv0", pv_w), 1.0)
+        fortschritt = state.get("stuck_max", pv_w) - state.get("stuck_pv0", pv_w)
+        if ("stuck_since" in state
+              and now - state["stuck_since"] > STUCK_S
+              and fortschritt < 0.25 * luecke
               and now - state.get("kick_ts", 0) > KICK_COOLDOWN_S):
             state.pop("stuck_since", None)
+            state.pop("stuck_max", None)
             print(f"MPPT-Kick: pv {pv_w:.0f}W klemmt unter Limit {current}W "
                   f"— Eskalation startet (+{KICK_STEPS_W[0]}W)")
             state["kick"] = {"base": current, "pv0": pv_w, "step": 1,
@@ -1305,6 +1316,7 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
             return send(target, "kick1") or current, pv_w
     else:
         state.pop("stuck_since", None)
+        state.pop("stuck_max", None)
     # Akku-Hold: Limit ueber dem Cap SOFORT senken — die normale
     # runter-Bedingung greift nicht, solange der Akku das Netz auf Ziel haelt
     if current > max_limit and now - state.get("limit_sent_ts", 0) >= LATENCY_S:

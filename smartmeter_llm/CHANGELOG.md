@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.27
+
+- Klemm-Erkennung war praktisch blind: sie verlangte, dass sich die
+  Leistung um weniger als 25 W bewegt. Der Attraktor wackelt aber um
+  +-50 W, also galt der Inverter als "in Bewegung" und der Kick feuerte
+  nie — in der Nacht 25./26.07. hing er 511 s am Stueck bei 109-174 W
+  unter einem Limit von 430 W, ohne einen einzigen Kick. Fortschritt wird
+  jetzt relativ zur Luecke gemessen (weniger als ein Viertel geschlossen =
+  geklemmt). Diese Klemmer waren 30% des naechtlichen Netzbezugs
+
 ## 1.7.26
 
 - Gemini war seit dem Wechsel auf die 3.x-Modelle KOMPLETT TOT (HTTP 400):
