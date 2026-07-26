@@ -187,6 +187,12 @@ class SegReader:
     """Volles Bild -> 11 Zell-Labels (6 kWh + 5 W) via Segment-Dekoder."""
 
     MARG = 6
+    # Liegt der beste Kandidat um mehr als das hinter der ungebundenen
+    # Lesung, passt keiner von beiden -> schweigen statt raten.
+    # An 180 gelabelten Frames kalibriert: richtiges Fenster hat median 0.00
+    # (p99 0.76), falsches Fenster median 14.1 (p10 1.79). Bei 0.8 werden
+    # 99,4% der falschen Fenster abgelehnt und 0,6% der richtigen.
+    REJECT_MARGIN = 0.8
 
     def __init__(self, anchor_ref=None, config=None):
         self.ex = Extractor(config)
@@ -292,8 +298,6 @@ class SegReader:
         if len({len(c) for c in cands}) != 1 or any(len(c) != 6 for c in cands):
             return None, 0.0
         diff = [i for i in range(6) if len({c[i] for c in cands}) > 1]
-        if not diff:
-            return candidates[0], float("inf")
         dx, dy = self.ex._drift(gray)
         dx, dy, pfit = self._refine_pose(gray, dx, dy)
         pats = self._raw_patches(gray, dx, dy, pitch=pfit)[:6]
@@ -301,7 +305,12 @@ class SegReader:
         scale = max(float(np.percentile(np.concatenate(
             [d.ravel() for d in diffs]), 98)), 8.0)
         totals = [0.0] * len(cands)
-        for i in diff:
+        free = 0.0          # beste erreichbare Log-Likelihood ohne Vorgabe
+        # ALLE sechs Stellen pruefen, nicht nur die abweichenden: Kandidaten
+        # wie 35801/35802 unterscheiden sich nur in der letzten Ziffer — ein
+        # falscher gemeinsamer Praefix (35801 statt 35881) waere sonst
+        # unsichtbar, und genau daran haing sich das System am 26.07. auf.
+        for i in range(6):
             d = np.clip(diffs[i] / scale, 0, 1)
             ds = self.dec.deslant(d)
             best = {}
@@ -312,10 +321,20 @@ class SegReader:
                 for c, ll in self.dec._loglik(acts).items():
                     if c not in best or ll > best[c]:
                         best[c] = ll
+            free += max(best.values())
             for j, cand in enumerate(cands):
                 totals[j] += best.get(cand[i], -1e9)
         order = sorted(range(len(cands)), key=lambda j: -totals[j])
-        margin = totals[order[0]] - totals[order[1]]
+        margin = (totals[order[0]] - totals[order[1]]) if len(cands) > 1 \
+            else float("inf")
+        # "Keiner von beiden" muss moeglich sein! Sonst zwingt ein vergifteter
+        # Zaehlerstand den Schiedsrichter, immer einen der falschen Kandidaten
+        # zu bestaetigen — und das System kann sich nie wieder heilen
+        # (26.07.: Stand stand auf 35801, real 35881; jede Anfrage bekam
+        # brav "35801" zurueck). Vergleich gegen die UNGEBUNDENE Lesung:
+        # passt eine ganz andere Ziffer deutlich besser, schweigen wir.
+        if free - totals[order[0]] > self.REJECT_MARGIN:
+            return None, 0.0
         return candidates[order[0]], float(margin)
 
     def read_cells(self, gray):

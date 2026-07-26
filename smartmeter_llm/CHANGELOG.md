@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.7.25
+
+- KRITISCH: Der Zaehlerstand konnte sich still vergiften und NICHT mehr
+  heilen (26.07.): das kNN las 35881 konstant als 35801 (Ziffer 8 -> 0 an
+  Slot 4) mit Confidence 0,91 — also ohne Gemini-Rueckfrage. Weil die
+  Fehllesung konsistent war, gab es kein Fehlersignal.
+- Der Schiedsrichter machte es schlimmer: score_candidates konnte nur
+  zwischen den vorgelegten Kandidaten waehlen und hatte kein "keiner von
+  beiden". Auf die Frage [35801, 35802] antwortete er brav 35801 und
+  zementierte damit den falschen Stand. Zusaetzlich verglich er nur die
+  ABWEICHENDEN Stellen — bei 35801/35802 also nur die letzte Ziffer,
+  waehrend der falsche gemeinsame Praefix unsichtbar blieb.
+  Jetzt: alle sechs Stellen werden geprueft und gegen die ungebundene
+  Lesung gehalten; passt keiner der Kandidaten (Abstand > 0,8 in
+  Log-Likelihood), wird abgelehnt. An 180 Frames kalibriert: 99,4% der
+  falschen Fenster abgelehnt, 0,6% Fehlalarm.
+- Lokaler Heilpfad ohne Cloud: widerlegt der Segment-Dekoder den
+  gespeicherten Stand UND bestaetigt den neuen, wird re-baselined — auch
+  wenn Gemini ausfaellt (was am 26.07. gleichzeitig passierte)
+- Segment-Watchdog: alle 200 Zyklen prueft der unabhaengige Dekoder, ob
+  das Bild den akzeptierten Stand ueberhaupt stuetzt. Drei Widersprueche
+  in Folge geben den Stand frei — gegen genau den stillen Dauerfehler
+- Modell auf den korrigierten Frames nachtrainiert; 3 vergiftete Labels
+  (35801) quarantaeniert
+
 ## 1.7.24
 
 - KRITISCH: Akku-Waechter klemmte das Limit dauerhaft auf 50 W, waehrend

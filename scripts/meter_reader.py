@@ -199,6 +199,8 @@ SEG_MIN_CONF = float(os.environ.get("SEG_MIN_CONF", "0.8"))
 # man eine Log-Likelihood-Marge von 6 verlangt — mit den zwei geforderten
 # konsistenten Lesungen bleibt ein Restrisiko von ~1:60000.
 SEG_UP_MARGIN = float(os.environ.get("SEG_UP_MARGIN", "6"))
+# Wie oft der unabhaengige Segment-Dekoder den akzeptierten Stand prueft
+SEG_WATCH_EVERY = int(os.environ.get("SEG_WATCH_EVERY", "200"))
 # Ansteuerbare Untergrenze. Gemessen an 929 Limit-Kommandos: der HMS FOLGT
 # einem Limit unter ~500W nur unzuverlaessig (250-300W: 25%, 350-400W: 67%,
 # 450-500W: 90%, 500-600W: 99.7%). Er kann niedrige Leistung durchaus HALTEN
@@ -467,6 +469,29 @@ def retrain_due() -> str:
             reasons.append(f"{kind}={len(q)}")
     return ", ".join(reasons)
 
+
+
+def seg_decide(*candidates: int) -> tuple[int | None, float]:
+    """Hypothesentest des Segment-Dekoders zwischen mehreren kWh-Kandidaten.
+
+    Unabhaengig vom kNN (geometrische Segment-Abtastung) und ohne Cloud.
+    Liefert (None, 0) wenn KEINER der Kandidaten zum Bild passt — genau das
+    ist die Selbstkontrolle, die am 26.07. fehlte."""
+    global _seg_reader
+    if _last_snapshot is None or _local_reader is None:
+        return None, 0.0
+    try:
+        import cv2
+        import numpy as np
+        if _seg_reader is None:
+            from seg_decoder import SegReader
+            _seg_reader = SegReader(anchor_ref=_local_reader.ex._anchor_ref)
+        gray = cv2.imdecode(np.frombuffer(_last_snapshot, np.uint8),
+                            cv2.IMREAD_GRAYSCALE)
+        return _seg_reader.score_candidates(gray, list(candidates))
+    except Exception as e:
+        print(f"Seg-Hypothesentest: {e}", file=sys.stderr)
+        return None, 0.0
 
 
 def seg_confirm(expected_lo: int, expected_hi: int,
@@ -757,6 +782,26 @@ def rebaseline(reading: dict, state: dict) -> bool:
         state["rb_counts"] = counts = {kwh: counts[kwh]}
     if counts[kwh] < 4:
         return False
+    # Lokaler Heilpfad: bestaetigt der Segment-Dekoder unabhaengig dieselbe
+    # kWh, sind sich zwei voellig verschiedene Leseverfahren einig — das
+    # reicht und braucht keine Cloud. Ohne diesen Pfad haing das System am
+    # 26.07. fest, weil ein vergifteter Stand (35801 statt 35881) vom kNN
+    # konsistent gelesen wurde und Gemini gleichzeitig ausfiel.
+    alt = state.get("kwh")
+    if alt is not None and alt != kwh:
+        # Zwei getrennte Fragen ans Bild, beide muessen JA sagen:
+        #   1. Wird der alte Stand widerlegt? (Hypothesentest liefert None)
+        #   2. Wird der neue gestuetzt?
+        # Der blosse Vergleich alt-gegen-neu reicht nicht — die Marge
+        # zwischen zwei Kandidaten sagt nichts darueber, ob ueberhaupt
+        # einer davon zum Bild passt.
+        alt_ok, _ = seg_decide(alt, alt + 1)
+        neu, _ = seg_decide(kwh, kwh + 1)
+        if alt_ok is None and neu == kwh:
+            state["rb_counts"] = {}
+            print(f"Re-Baseline: Segment-Dekoder widerlegt {alt} und "
+                  f"bestaetigt {kwh} -> akzeptiert (ohne Cloud)")
+            return True
     # Gemini-Cooldown gilt auch hier — aber der Zaehler bleibt stehen,
     # damit der naechste freie Slot sofort verifiziert
     global _last_gemini_call
@@ -1323,6 +1368,28 @@ def main(once: bool = False):
         try:
             state["cycle"] = state.get("cycle", 0) + 1
             reading, source = read_meter(state["cycle"])
+            # Watchdog gegen den STILLEN Fehler: liest das kNN dauerhaft
+            # falsch, passt alles zusammen und nichts loest aus. Alle
+            # SEG_WATCH_EVERY Zyklen prueft der unabhaengige Segment-Dekoder
+            # den akzeptierten Stand gegen. Widerspricht er mehrfach, wird
+            # der Stand verworfen statt still weiterzulaufen.
+            if (state.get("kwh") is not None
+                    and state["cycle"] % SEG_WATCH_EVERY == 0):
+                best, _ = seg_decide(state["kwh"], state["kwh"] + 1)
+                if best is None:      # Bild stuetzt den Stand ueberhaupt nicht
+                    state["seg_warn"] = state.get("seg_warn", 0) + 1
+                    print(f"Segment-Watchdog: Bild stuetzt Stand "
+                          f"{state['kwh']} nicht ({state['seg_warn']}x)",
+                          file=sys.stderr)
+                    if state["seg_warn"] >= 3:
+                        print(f"Segment-Watchdog: Stand {state['kwh']} "
+                              f"freigegeben — naechste Lesung setzt neu",
+                              file=sys.stderr)
+                        state["kwh"] = None
+                        state["seg_warn"] = 0
+                        state["rb_counts"] = {}
+                else:
+                    state["seg_warn"] = 0
             reason = plausible(reading, state)
             if (reason and state.get("kwh") is not None
                     and ("rückläufig" in reason or "kWh-Sprung" in reason)):
