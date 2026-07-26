@@ -215,6 +215,8 @@ SEG_WATCH_EVERY = int(os.environ.get("SEG_WATCH_EVERY", "200"))
 # ~40W. Simulation ueber die echte Lastkurve: Netzbezug 1,65 -> 0,32 kWh
 # pro Nacht. 0 = aus (dann regelt er wie bisher bis MIN_LIMIT_W runter).
 SUSTAIN_FLOOR_W = int(os.environ.get("SUSTAIN_FLOOR_W", "430"))
+# Glaettungsfenster fuer die Schlafen/Halten-Entscheidung am Floor
+FLOOR_SMOOTH_S = float(os.environ.get("FLOOR_SMOOTH_S", "12"))
 # MPPT-Stuck-Kick: der HMS verklemmt sich an der Batterie gelegentlich weit
 # unter dem Limit (z.B. 178W bei Limit 420) und reagiert auf kleine Schritte
 # kaum — ein grosser Limit-Sprung zwingt den Tracker zum Neu-Akquirieren,
@@ -1136,9 +1138,11 @@ def _ctl_write(rec: dict):
         pass
 
 
-def ctl_tick(grid_w: int, pv_w: float, limit):
+def ctl_tick(grid_w: int, pv_w: float, limit, batt_v=None):
     rec = {"t": round(time.time(), 2), "ev": "tick", "grid": grid_w,
            "pv": round(pv_w, 1), "limit": limit}
+    if batt_v is not None:
+        rec["bv"] = round(batt_v, 2)
     if time.time() < _ctl_until:
         _ctl_write(rec)
     else:
@@ -1179,6 +1183,10 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     max_limit = MAX_LIMIT_W
     if BATT_STRINGS:
         max_limit = battery_guard(state, pv_w, dc, now)
+    elif dc:   # ohne Waechter trotzdem mitschreiben, fuer die Auswertung
+        v = [x[0] for x in dc.values() if x[0] > 5.0]
+        if v:
+            state["batt_v"] = min(v)
     horizon = PENDING_THETA_S + 4 * PENDING_TAU_S
     pend = [(ts, d) for ts, d in state.get("pending", [])
             if now - ts < horizon]
@@ -1191,7 +1199,7 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     error = error_raw - int(round(pending))
     wanted = int(round(max(MIN_LIMIT_W, min(max_limit, pv_w + error_raw))))
     current = state.get("limit_w")
-    ctl_tick(grid_w, pv_w, current)
+    ctl_tick(grid_w, pv_w, current, state.get("batt_v"))
 
     def send(value: int, tag: str):
         if now - state.get("limit_sent_ts", 0) < 2.0:
@@ -1232,18 +1240,29 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
         # abgeregelt — dann ist Einspeisen gratis und Halten immer richtig.
         v = state.get("batt_v")
         batt_full = v is not None and v >= BATT_HIGH_V
+        # Die Schlafen/Halten-Entscheidung auf einem GEGLAETTETEN Wunschwert
+        # faellen. Die Hauslast zappelt (26.07. 03:48-03:49: 180 W <-> 266 W
+        # im Sekundentakt) und lief dabei staendig ueber beide Schwellen —
+        # daraus wurden drei Limit-Wechsel in 25 Sekunden. Median ueber
+        # FLOOR_SMOOTH_S ist unempfindlich gegen einzelne Ausreisser,
+        # reagiert aber auf echte Lastwechsel.
+        wh = state.setdefault("want_hist", [])
+        wh.append((now, wanted))
+        del wh[:max(0, len(wh) - 40)]
+        fenster = sorted(w for t, w in wh if now - t <= FLOOR_SMOOTH_S)
+        wanted_s = fenster[len(fenster) // 2] if fenster else wanted
         # Hysterese um den KIPPPUNKT (Floor/2), nicht um den Floor: bei
         # Nachtlast ~390W liegt das Wunsch-Limit unter dem Floor, aber weit
         # ueber dem Kipppunkt — dort ist Halten klar guenstiger als Schlafen.
         if state.get("floor_sleep"):
-            if wanted >= int(SUSTAIN_FLOOR_W * 0.6):
+            if wanted_s >= int(SUSTAIN_FLOOR_W * 0.6):
                 state["floor_sleep"] = False
-                print(f"Sustain-Floor: Ziel {wanted}W wieder ueber "
+                print(f"Sustain-Floor: Ziel {wanted_s}W wieder ueber "
                       f"{int(SUSTAIN_FLOOR_W * 0.6)}W — Inverter aufwecken")
             else:
                 return send_if_needed(MIN_LIMIT_W)
-        if not batt_full and wanted < SUSTAIN_FLOOR_W // 2:
-            print(f"Sustain-Floor: Ziel {wanted}W < {SUSTAIN_FLOOR_W // 2}W — "
+        if not batt_full and wanted_s < SUSTAIN_FLOOR_W // 2:
+            print(f"Sustain-Floor: Ziel {wanted_s}W < {SUSTAIN_FLOOR_W // 2}W — "
                   f"Fremdquelle deckt die Last, Inverter schlafen legen "
                   f"(Halten wuerde {SUSTAIN_FLOOR_W - wanted}W verschenken)")
             state["floor_sleep"] = True

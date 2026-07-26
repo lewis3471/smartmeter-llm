@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.29
+
+- Akku-Spannung wird pro Regelzyklus in die Telemetrie geschrieben (Feld
+  "bv"), auch ohne aktiven Waechter. Damit laesst sich die Entladekurve
+  einer Nacht auswerten und unterscheiden, ob der Speicher schlicht nicht
+  voll war oder eine Zelle einbricht
+- Floor-Entscheidung geglaettet: Schlafen/Halten wird jetzt am Median der
+  letzten 12 s entschieden statt am Momentanwert. Die Hauslast zappelt
+  (26.07. 03:48-03:49: 180 W <-> 266 W im Sekundentakt) und lief dabei
+  staendig ueber beide Schwellen — daraus wurden drei Limit-Wechsel in 25
+  Sekunden. Replay derselben Lastfolge: 1 statt 6 Wechsel
+
 ## 1.7.28
 
 - Klemm-Erkennung richtig gestellt: 1.7.27 ging von einem wackelnden
