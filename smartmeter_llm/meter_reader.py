@@ -947,6 +947,44 @@ def get_inverter_power() -> float:
     return get_livedata()[0]
 
 
+# Ruhespannungskennlinie LiFePO4 (V je Zelle -> Ladestand %), digitalisiert
+# aus veroeffentlichten LFP/C-Messreihen. Entlade-Richtung; die Ladekurve
+# liegt ~25 mV hoeher, was im flachen Bereich ~20 Prozentpunkten entspricht —
+# deshalb ist der Wert eine SCHAETZUNG und heisst auch so.
+# Interaktive Fassung: docs/lifepo4-soc.html
+_OCV = [(2.600, 0), (3.040, 5), (3.168, 10), (3.233, 20), (3.262, 30),
+        (3.281, 40), (3.294, 50), (3.303, 60), (3.309, 65), (3.320, 70),
+        (3.339, 76), (3.342, 80), (3.346, 85), (3.350, 90), (3.357, 95),
+        (3.375, 98), (3.460, 100)]
+# Innenwiderstand des gesamten Packs inkl. Verkabelung (Ohm) fuer die
+# Lastkorrektur: unter Entnahme liegt die Klemmenspannung unter der Ruhelage
+BATT_RI = float(os.environ.get("BATT_RI_MOHM", "10")) / 1000
+BATT_CAPACITY_KWH = float(os.environ.get("BATT_CAPACITY_KWH", "0"))
+
+
+def soc_estimate(v_pack: float, pv_w: float) -> float | None:
+    """Geschaetzter Ladestand in % aus der Packspannung.
+
+    Der Entladestrom wird aus der Inverter-Leistung abgeleitet (alle
+    Straenge haengen am Akku-Bus) und ueber BATT_RI auf Ruhespannung
+    zurueckgerechnet. Im flachen Kurvenbereich ist das prinzipbedingt
+    grob — dafuer braucht es den Coulomb-Zaehler des BMS."""
+    if not v_pack or v_pack < 20:
+        return None
+    cells = len(BATT_STRINGS) and 16 or 16      # 16S
+    amps = (pv_w / 0.96) / v_pack if pv_w and v_pack > 1 else 0.0
+    cell = (v_pack + amps * BATT_RI) / cells
+    if cell <= _OCV[0][0]:
+        return 0.0
+    if cell >= _OCV[-1][0]:
+        return 100.0
+    for i in range(1, len(_OCV)):
+        if cell <= _OCV[i][0]:
+            (v0, s0), (v1, s1) = _OCV[i - 1], _OCV[i]
+            return round(s0 + (cell - v0) / (v1 - v0) * (s1 - s0), 1)
+    return 100.0
+
+
 def battery_guard(state: dict, pv_w: float,
                   dc: dict[int, tuple[float, float]], now: float) -> int:
     """Tiefentladeschutz, simpel und ehrlich.
@@ -1061,6 +1099,12 @@ def publish(reading: dict | None, status: str, limit: int | None,
         msgs += [(f"{TOPIC}/batt_v", f"{state['batt_v']:.1f}"),
                  (f"{TOPIC}/batt_hold",
                   "ON" if state.get("batt_hold") else "OFF")]
+        soc = soc_estimate(state["batt_v"], state.get("batt_pv", 0.0))
+        if soc is not None:
+            msgs.append((f"{TOPIC}/batt_soc", f"{soc:.0f}"))
+            if BATT_CAPACITY_KWH > 0:
+                msgs.append((f"{TOPIC}/batt_kwh",
+                             f"{soc / 100 * BATT_CAPACITY_KWH:.1f}"))
     due = retrain_due()
     msgs += [(f"{TOPIC}/retrain_due", "ON" if due else "OFF"),
              (f"{TOPIC}/retrain_reason", due or "-")]
@@ -1104,6 +1148,17 @@ def publish_discovery():
                              "icon": "mdi:battery-outline"}
         sensors["batt_hold"] = {"name": "Akku-Schutz aktiv",
                                 "icon": "mdi:battery-lock"}
+        sensors["batt_soc"] = {"name": "Akku-Ladestand (geschaetzt)",
+                               "unit_of_measurement": "%",
+                               "device_class": "battery",
+                               "state_class": "measurement",
+                               "icon": "mdi:battery-50"}
+        if BATT_CAPACITY_KWH > 0:
+            sensors["batt_kwh"] = {"name": "Akku-Energie (geschaetzt)",
+                                   "unit_of_measurement": "kWh",
+                                   "device_class": "energy_storage",
+                                   "state_class": "measurement",
+                                   "icon": "mdi:battery-charging-medium"}
     msgs = [("homeassistant/binary_sensor/smartmeter_llm/retrain_due/config",
              json.dumps({"name": "OCR Retrain f\u00e4llig",
                          "unique_id": "smartmeter_llm_retrain_due",
@@ -1200,6 +1255,11 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     max_limit = MAX_LIMIT_W
     if BATT_STRINGS:
         max_limit = battery_guard(state, pv_w, dc, now)
+    state["batt_pv"] = pv_w
+    if BATT_STRINGS and dc:
+        v = [x[0] for x in dc.values() if x[0] > 5.0]
+        if v:
+            state["batt_v"] = min(v)
     elif dc:   # ohne Waechter trotzdem mitschreiben, fuer die Auswertung
         v = [x[0] for x in dc.values() if x[0] > 5.0]
         if v:

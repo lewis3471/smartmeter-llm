@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.31
+
+- Neuer HA-Sensor "Akku-Ladestand (geschaetzt)": rechnet die Packspannung
+  ueber die LiFePO4-Ruhespannungskennlinie in Prozent um und korrigiert
+  dabei den Spannungsabfall unter Last (Strom aus der Inverter-Leistung,
+  Innenwiderstand ueber BATT_RI_MOHM, Default 10 mOhm). Mit
+  batt_capacity_kwh kommt zusaetzlich ein kWh-Sensor dazu
+- Der Wert ist ausdruecklich eine Schaetzung: zwischen 20 und 90 % ist die
+  Kennlinie fast flach, dort liegen 50 % der Kapazitaet in rund 1,3 V
+  Packspannung. Exakt wird es erst mit dem Coulomb-Zaehler des BMS.
+  Interaktive Kennlinie: docs/lifepo4-soc.html
+
 ## 1.7.30
 
 - DAS eigentliche Loch hinter dem 26.07.-Kollaps: die Plausibilitaets-
