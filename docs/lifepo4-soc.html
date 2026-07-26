@@ -127,9 +127,9 @@
       <div class="hint" id="vhint">= 3,269 V pro Zelle</div>
     </div>
     <div class="field">
-      <label for="i">Strom beim Messen</label>
+      <label for="i">Batteriestrom</label>
       <div class="inp"><input id="i" type="number" value="0" step="1" min="-100" max="100"><span class="unit">A</span></div>
-      <div class="hint">positiv = Entladen, negativ = Laden</div>
+      <div class="hint">positiv = Laden (wie im JK&#8209;BMS), negativ = Entladen</div>
     </div>
     <div class="field">
       <label for="r">Innenwiderstand Pack</label>
@@ -178,7 +178,8 @@
     <div class="note">
       <h3>Ruhespannung heißt wirklich Ruhe</h3>
       <p>Die Werte gelten nach etwa 30 Minuten ohne Last und ohne Laden. Direkt nach einer
-        Entnahme liest man zu wenig, direkt nach dem Laden zu viel — dafür ist oben das Stromfeld.</p>
+        Entnahme liest man zu wenig, direkt nach dem Laden zu viel — dafür ist oben das Stromfeld.
+        Das Vorzeichen folgt dem JK&#8209;BMS: Laden positiv.</p>
     </div>
     <div class="note">
       <h3>Die Hysterese ist echt</h3>
@@ -252,7 +253,9 @@
   var $v=document.getElementById("v"),$i=document.getElementById("i"),$r=document.getElementById("r");
   function calc(){
     var v=parseFloat($v.value)||0, cur=parseFloat($i.value)||0, ri=(parseFloat($r.value)||0)/1000;
-    var corr=cur*ri;                       // Entladen: Ruhespannung liegt höher
+    // Vorzeichen wie im JK-BMS: positiv = Laden. Beim Laden liegt die
+    // Klemmenspannung UEBER der Ruhelage, beim Entladen darunter.
+    var corr=-cur*ri;
     var vr=v+corr, cell=vr/PACK;
     document.getElementById("vhint").textContent="= "+fmt(v/PACK,3)+" V pro Zelle";
     document.getElementById("rhint").textContent="Korrektur "+(corr>=0?"+":"")+fmt(corr,2)+" V";
