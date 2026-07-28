@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.7.33
+
+- MONOTONIE-INVARIANTE, endgueltig: Der Zaehlerstand kann nie wieder um
+  mehr als KWH_HEAL_MAX (2 kWh) sinken — egal wie viele Zeugen das Bild
+  bestaetigen. Am 28.07. 07:04 fiel der Stand von 35890 auf 35850: der
+  Morgenschatten loescht Segment B der 9 physisch aus, kNN UND Segment-
+  Dekoder lasen deshalb uebereinstimmend 35850, und der Seg-Heilpfad aus
+  1.7.25 oeffnete die Tuer. Lehre: dieselbe Optik ist kein unabhaengiger
+  Zeuge; der einzige unbestechliche Zeuge ist die Physik.
+- Vier Schichten: (1) Senkungen > 2 kWh sind in rebaseline hart verboten
+  (monotonic_veto-Event); (2) Senkungen <= 2 kWh brauchen zwingend Gemini
+  als bild-fremden Zeugen — der Segment-Dekoder darf Senkungen nicht mehr
+  allein freigeben; (3) die Watchdog-Freigabe hinterlaesst einen Boden,
+  unter dem keine neue Basis akzeptiert wird; (4) Notbremse direkt vor dem
+  State-Update, falls je wieder ein Pfad an der Plausibilitaet vorbeifuehrt.
+- Aufwaerts-Heilung bleibt voll funktionsfaehig: der aktuell vergiftete
+  Stand (35850) korrigiert sich nach dem Update binnen Sekunden selbst
+  auf den echten Zaehlerstand. 6 Szenarien getestet, inkl. "Gemini luegt mit".
+
 ## 1.7.32
 
 - Beim Start stehen die tatsaechlich wirksamen Akku-Schwellen im Log

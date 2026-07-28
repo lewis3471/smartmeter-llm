@@ -183,6 +183,16 @@ PENDING_TAU_S = float(os.environ.get("PENDING_TAU_S", "2.5"))
 MIN_STEP_W = int(os.environ.get("MIN_STEP_W", "15"))
 # Max. kWh-Zuwachs pro Lesung — physikalisch 1 (Zaehler zaehlt ganze kWh)
 MAX_KWH_STEP = 1
+# DIE MONOTONIE-INVARIANTE: Der Zaehler laeuft physikalisch NIE rueckwaerts.
+# Ein zu HOHER Stand kann nur durch akzeptierte +1-Schritte entstehen (jeder
+# doppelt bestaetigt), also ist er hoechstens um wenige kWh zu hoch — mehr
+# als KWH_HEAL_MAX nach unten zu "heilen" ist in JEDEM Fall ein Lesefehler,
+# egal wie viele Zeugen das Bild bestaetigen (28.07.: Morgenschatten loescht
+# Segment B der 9, kNN UND Segment-Dekoder lasen uebereinstimmend 35850
+# statt 35890 — dieselbe Optik ist kein unabhaengiger Zeuge). Senkungen
+# innerhalb von KWH_HEAL_MAX brauchen zwingend Gemini als bild-fremden
+# Zeugen; groessere Senkungen sind verboten. Punkt.
+KWH_HEAL_MAX = int(os.environ.get("KWH_HEAL_MAX", "2"))
 # Der Schiedsrichter darf RATEN VERWEIGERN: der Segment-Dekoder liefert pro
 # Zelle einen Log-Likelihood-Abstand zum zweitbesten Muster. Bei Ghost-
 # Fehllesungen (Phantom-Segmente in der Schattenzone) faellt der auf 0.03-0.09,
@@ -857,6 +867,7 @@ def rebaseline(reading: dict, state: dict) -> bool:
     """Kommt dieselbe 'unplausible' kWh-Lesung mehrfach in Folge, wird sie
     per Gemini verifiziert und bei Bestaetigung als neuer Stand akzeptiert.
     Verhindert, dass eine einmal akzeptierte Fehl-Lesung alles blockiert."""
+    global _last_gemini_call
     kwh = reading["kwh"]
     # Zaehler JE KANDIDAT: eingestreute Dunkel-Fehl-Lesungen (500, 3570...)
     # duerfen den Konsens fuer den echten Stand nicht mehr zuruecksetzen
@@ -872,6 +883,38 @@ def rebaseline(reading: dict, state: dict) -> bool:
     # 26.07. fest, weil ein vergifteter Stand (35801 statt 35881) vom kNN
     # konsistent gelesen wurde und Gemini gleichzeitig ausfiel.
     alt = state.get("kwh")
+    if alt is not None and kwh < alt - KWH_HEAL_MAX:
+        # Monotonie-Invariante: so weit runter geht NIE. Kein Zeuge der Welt
+        # macht aus einem Zaehler ein Geraet, das rueckwaerts laeuft.
+        print(f"Re-Baseline VERBOTEN: {kwh} laege {alt - kwh} kWh unter dem "
+              f"Stand {alt} (max. Heilung {KWH_HEAL_MAX}) — Lesefehler",
+              file=sys.stderr)
+        state["rb_counts"] = {}
+        if SAVE_SAMPLES_DIR and time.time() - state.get("mono_veto_ts", 0) > 60:
+            state["mono_veto_ts"] = time.time()
+            save_event(SAVE_SAMPLES_DIR, _last_snapshot, "monotonic_veto",
+                       stored=alt, rejected=kwh)
+        return False
+    if alt is not None and kwh < alt:
+        # Kleine Senkung (<= KWH_HEAL_MAX): NUR mit Gemini als bild-fremdem
+        # Zeugen. Der Segment-Dekoder reicht hier nicht — er sieht dieselbe
+        # Optik wie das kNN und irrt im Schatten identisch.
+        if time.time() - _last_gemini_call < GEMINI_COOLDOWN_S:
+            return False
+        state["rb_counts"] = {}
+        _last_gemini_call = time.time()
+        try:
+            gem = gemini_read(get_snapshot())
+            if gem["kwh"] == kwh:
+                print(f"Re-Baseline (Senkung um {alt - kwh}): Gemini "
+                      f"bestaetigt {kwh} -> akzeptiert")
+                return True
+            print(f"Re-Baseline-Senkung abgelehnt: Gemini liest "
+                  f"{gem['kwh']}, nicht {kwh}", file=sys.stderr)
+        except Exception as e:
+            print(f"Re-Baseline-Senkung: Gemini nicht verfuegbar ({e}) — "
+                  f"Stand bleibt", file=sys.stderr)
+        return False
     if alt is not None and alt != kwh:
         # Zwei getrennte Fragen ans Bild, beide muessen JA sagen:
         #   1. Wird der alte Stand widerlegt? (Hypothesentest liefert None)
@@ -888,7 +931,6 @@ def rebaseline(reading: dict, state: dict) -> bool:
             return True
     # Gemini-Cooldown gilt auch hier — aber der Zaehler bleibt stehen,
     # damit der naechste freie Slot sofort verifiziert
-    global _last_gemini_call
     if time.time() - _last_gemini_call < GEMINI_COOLDOWN_S:
         return False
     state["rb_counts"] = {}
@@ -1563,6 +1605,7 @@ def main(once: bool = False):
                         print(f"Segment-Watchdog: Stand {state['kwh']} "
                               f"freigegeben — naechste Lesung setzt neu",
                               file=sys.stderr)
+                        state["kwh_floor"] = state["kwh"] - KWH_HEAL_MAX
                         state["kwh"] = None
                         state["seg_warn"] = 0
                         state["rb_counts"] = {}
@@ -1600,6 +1643,19 @@ def main(once: bool = False):
                 else:
                     state.pop("kwh_pend", None)
                     state.pop("kwh_pend_n", None)
+            floor = state.get("kwh_floor")
+            if (state.get("kwh") is None and floor is not None
+                    and reading["kwh"] < floor):
+                raise ValueError(f"verworfen: Basis {reading['kwh']} unter "
+                                 f"Monotonie-Boden {floor}")
+            if (state.get("kwh") is not None
+                    and reading["kwh"] < state["kwh"] - KWH_HEAL_MAX):
+                # Darf hier nie ankommen — Notbremse, falls je wieder ein
+                # Heilpfad an der Plausibilitaet vorbeifuehrt
+                raise ValueError(f"verworfen: Monotonie-Notbremse "
+                                 f"({state['kwh']} -> {reading['kwh']})")
+            if reading["kwh"] >= (floor or 0):
+                state.pop("kwh_floor", None)
             state.update(reading)
             state["failures"] = 0
             w_hist.append(reading["w"])
