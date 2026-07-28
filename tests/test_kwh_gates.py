@@ -76,6 +76,8 @@ class World:
         self.gemini_calls = 0
         mr._gemini_err_since = None
         mr._gemini_ok_ts = None
+        mr._gemini_err_n = 0
+        mr._local_reader = _HYBRID    # Zeugen-Trennung aktiv (Hybrid)
 
     def gemini_read(self, img):
         self.gemini_calls += 1
@@ -87,6 +89,7 @@ class World:
         return dict(g)
 
 
+_HYBRID = object()                     # Platzhalter: lokales OCR vorhanden
 W = World()
 mr.gemini_read = W.gemini_read
 mr.get_snapshot = lambda: b"img"
@@ -532,6 +535,7 @@ def angriff_deadlock_hat_notausweg():
     st = {"kwh_floor": 58587, "kwh_floor_ts": FT.now}
     W.gemini = None
     mr._gemini_err_since = FT.now                       # Ausfall beginnt
+    mr._gemini_err_n = 99
     W.seg_decide = lambda *c: ((35891, 2.0) if 35891 in c else (None, 0.0))
     t0 = FT.now
     accepted_at = None
@@ -776,6 +780,7 @@ def notausweg_kennt_grenzen():
     st = fresh_state(35891)
     watchdog_free(st)
     mr._gemini_err_since = FT.now - 8 * 3600            # Gemini lange tot
+    mr._gemini_err_n = 99
     W.gemini = None
     W.seg_decide = lambda *c: (c[0], 9.9)               # boesartig
     for ziel in (35091, 3589, 39891, 95891):            # tief & hoch
@@ -842,6 +847,7 @@ def notausweg_uhr_ueberlebt_neustart():
     st = {"kwh_floor": 58587, "kwh_floor_ts": FT.now}
     W.gemini = None
     mr._gemini_err_since = FT.now - 7 * 3600            # lange tot
+    mr._gemini_err_n = 99
     W.seg_decide = lambda *c: ((35891, 2.0) if 35891 in c else (None, 0.0))
     st = restart(st)                                    # Neustart!
     assert mr._gemini_err_since is not None, "Uhr im Neustart verloren"
@@ -914,20 +920,125 @@ def zukunfts_hist_blockiert_nicht():
 
 @test
 def ausfall_ohne_gemini_heilt_ueber_fenster():
-    """Runde 4 #10: das Basis-Fenster rechnete nur ab der Watchdog-
-    Freigabe — ein echter 72h-Ausfall davor war vergessen (Heilung hing
-    4,2 h). Jetzt zaehlt die aeltere Uhr: Heilung in Minuten."""
+    """Runde 4 #10 + Runde 5 #4: echter 72h-Ausfall, Quota-Tag. Die
+    breite Basis (+90 ueber Boden) braucht jetzt einen Zeugen — bei
+    totem Gemini reicht der Segment-Dekoder mit kalibrierter Marge
+    plus 4 Lesungen ueber >= 5 min. Heilung in Minuten, nicht Stunden."""
     W.reset()
     st = fresh_state(35891, kwh_ts=FT.now - 72 * 3600)  # 72h blind
     W.gemini = None                                     # Quota-Tag
+    W.seg_decide = lambda *c: ((35981, 2.0) if 35981 in c else (None, 0.0))
     for _ in range(20):
         ok, _ = step(st, 35981)                         # +90 real
         assert not ok
     watchdog_free(st)                                   # nach ~15 min
-    ok1, _ = step(st, 35981)
-    ok2, _ = step(st, 35981)
-    assert ok2 and st["kwh"] == 35981, (
+    t0 = FT.now
+    healed = False
+    for _ in range(200):
+        ok, _ = step(st, 35981, dt=10)
+        if ok:
+            healed = True
+            break
+    assert healed and st["kwh"] == 35981, (
         "Ausfall-Heilung haengt trotz aelterer Uhr")
+    assert FT.now - t0 < 1800, "Heilung dauerte > 30 min"
+
+
+@test
+def ankerloser_rebase_hat_aufwaerts_anker():
+    """Runde 5 #0/#5: der ankerlose Re-Baseline (Stand verloren) hatte
+    KEINEN Aufwaerts-Deckel — nach >= 6 h ohne akzeptierte Lesung setzten
+    2 Gemini-Bestaetigungen jeden Stand bis 99999 (+64108). Jetzt gilt
+    derselbe Anker wie im Notausweg."""
+    W.reset()
+    st = fresh_state(35891)
+    step(st, 35891)                                     # Anker
+    FT.now += 6.5 * 3600                                # Fenster leer
+    st = restart(st)
+    watchdog_free(st)
+    for ghost in (99999, 95891):
+        W.gemini = {"kwh": ghost, "w": 400}             # bestaetigt 2x
+        for _ in range(800):
+            ok, _ = step(st, ghost)
+            assert not ok, f"ankerloser Sprung auf {ghost} akzeptiert"
+    assert st.get("kwh") is None
+    W.gemini = {"kwh": 35891, "w": 400}                 # Wahrheit heilt
+    ok1, _ = step(st, 35891)
+    ok2, _ = step(st, 35891)
+    assert ok2 and st["kwh"] == 35891
+
+
+@test
+def basis_breit_ohne_zeugen_nie():
+    """Runde 5 #4: das Basis-Fenster kann nach 72h Blindflug 1800 kWh
+    breit sein — zwei zeugenlose Frames setzen darin keinen Stand mehr.
+    Ohne Gemini UND ohne Segment-Stuetze: nie."""
+    W.reset()
+    st = fresh_state(35891, kwh_ts=FT.now - 72 * 3600)
+    W.gemini = None
+    watchdog_free(st)
+    for _ in range(400):                                # Geist im Fenster
+        ok, _ = step(st, 37000, dt=10)
+        assert not ok, "breite Basis ohne jeden Zeugen gesetzt"
+    assert st.get("kwh") is None
+
+
+@test
+def basis_senkung_nur_mit_lokalem_kandidaten():
+    """Runde 5 #1: der Basis-Senkungszweig war der einzige Heilpfad ohne
+    Zeugen-Trennung — Gemini-Kandidat, von Gemini bestaetigt. Zu."""
+    W.reset()
+    st = fresh_state(35891)
+    watchdog_free(st)
+    W.gemini = {"kwh": 35890, "w": 400}                 # bestaetigt sich
+    for _ in range(400):
+        ok, _ = step(st, 35890, source="gemini")
+        assert not ok, "Gemini-Kandidat von Gemini bestaetigt (-1)"
+    ok, _ = step(st, 35890)                             # lokal + Zeuge: ok
+    ok, _ = step(st, 35890)
+    assert ok and st["kwh"] == 35890
+
+
+@test
+def senkungs_budget_deckelt_ratsche():
+    """Runde 5 #3: -1 je 3-min-Runde summierte sich unbegrenzt (-30 in
+    1,75 h). Jetzt: hoechstens 3 kWh Heilung nach unten je 24 h — auch
+    mit einem Zeugen, der jede Sprosse bestaetigt."""
+    W.reset()
+    start = 35891
+    st = fresh_state(start)
+    W.gemini = lambda: {"kwh": st["kwh"] - 1, "w": 400}
+    for _ in range(int(6 * 3600 / 10)):                 # 6 h Dauerangriff
+        step(st, st["kwh"] - 1, dt=10)
+    assert st["kwh"] >= start - mr.KWH_DOWN_MAX_24H, (
+        f"Senkungs-Ratsche: {start} -> {st['kwh']}")
+    FT.now += 24 * 3600                                 # Budget erneuert
+    healed = False
+    for _ in range(600):
+        ok, _ = step(st, st["kwh"] - 1)
+        if ok and st["kwh"] == start - mr.KWH_DOWN_MAX_24H - 1:
+            healed = True
+            break
+    assert healed, "legitime -1 nach Budget-Reset blockiert"
+
+
+@test
+def gemini_only_betrieb_bleibt_heilbar():
+    """Runde 5 #9: im reinen Gemini-Betrieb (kein lokales OCR) ist
+    Gemini zwangslaeufig Kandidat und Zeuge — die harte Zeugen-Trennung
+    fror dort jede Luecke >= 2 kWh permanent ein."""
+    W.reset()
+    mr._local_reader = None                             # Gemini-only
+    st = fresh_state(35891)
+    W.gemini = {"kwh": 35893, "w": 400}
+    healed = False
+    for _ in range(600):
+        ok, _ = step(st, 35893, source="gemini")
+        if ok and st["kwh"] == 35893:
+            healed = True
+            break
+    assert healed, "Gemini-only: Luecke +2 fror den Kanal ein"
+    mr._local_reader = _HYBRID
 
 
 @test

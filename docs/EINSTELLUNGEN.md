@@ -93,5 +93,25 @@ Nachts dagegen: Ziel +20 W, Wechselrichter liefert 430 W, Zähler zeigt −10 W.
 | `save_samples` (true) | Bilder + Labels sammeln (Grundlage fürs Retraining) |
 | `git_*` | Evidence-Sync ins Repo |
 
+## Zählerwechsel oder festgefahrener Zählerstand
+
+Der Zählerstand darf sich konstruktionsbedingt **nie** nennenswert senken —
+das schützt vor Fehllesungen, blockiert aber auch zwei legitime Fälle:
+der Netzbetreiber tauscht den Zähler (neuer Stand beginnt niedriger),
+oder ein alter, falsch zu hoher Stand hat sich festgefahren.
+
+Der **einzige** vorgesehene Weg in beiden Fällen:
+
+1. Add-on stoppen
+2. Die Datei `/data/state.json` im Add-on-Container löschen
+   (Terminal-Add-on: `rm /addon_configs/*_smartmeter_llm/state.json`
+   bzw. über den Datei-Pfad, den das Log beim Start als STATE_FILE nennt)
+3. Add-on starten — die Kamera setzt den Stand neu
+   (braucht 4 übereinstimmende Lesungen über ≥ 60 s)
+
+Danach in Home Assistant die Langzeitstatistik des Sensors korrigieren
+(Entwicklerwerkzeuge → Statistiken → Ausreißer anpassen), sonst verbucht
+`total_increasing` den Sprung als Verbrauch.
+
 Alles Weitere (Kamera, OCR-Schwellen, Regler-Feinheiten wie Kick und
 Smith-Predictor) ist im Code fest verdrahtet und braucht keine Pflege.

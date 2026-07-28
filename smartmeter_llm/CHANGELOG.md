@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.7.39
+
+- LETZTE ANGRIFFSRUNDE (5, gegen 1.7.38): 16 Befunde, 12 real — alle
+  gefixt bzw. dokumentiert. Die Gutfall-Matrix meldet: alle 11
+  Standard-Szenarien unter 1 h, keine Invarianten-Verletzung.
+- Ankerloser Re-Baseline (Stand verloren) bekam den fehlenden
+  AUFWAERTS-Anker: nach >= 6 h ohne akzeptierte Lesung (leeres
+  Physik-Fenster) setzten 2 Gemini-Bestaetigungen jeden Stand bis
+  99999 (+64108 im Repro) — jetzt gilt derselbe Deckel wie im
+  Notausweg (letzter Stand/Boden + Physik seit der aelteren Uhr).
+- Breite Aufwaerts-Basis (> 25 kWh ueberm Boden) braucht einen
+  Zeugen: Gemini exakt, oder bei totem Gemini Segment-Marge >= 0,8
+  plus 4 Lesungen ueber >= 5 min (statt 2 zeugenloser Frames in
+  einem bis zu 1800 kWh breiten Fenster).
+- Basis-Senkungszweig hat jetzt Zeugen-Trennung (war der einzige
+  Heilpfad, in dem Gemini seinen eigenen Kandidaten bestaetigen
+  konnte: -1 je Watchdog-Freigabe, -40 kWh in 10 h).
+- SENKUNGS-BUDGET: hoechstens 3 kWh Heilung nach unten je 24 h —
+  auch ein systematisch mitluegender Zeuge kann keine -1-Ratsche
+  mehr fahren (-30 kWh in 1,75 h im Repro).
+- Gemini-only-Betrieb (kein lokales OCR) bleibt heilbar: die
+  Zeugen-Trennung gilt nur, wenn es zwei Quellen gibt — sonst fror
+  jede Luecke >= 2 kWh den Kanal permanent ein.
+- Notausweg-Uhr gegen Uhrenspruenge gehaertet (zusaetzlich >= 20
+  reale Fehlversuche noetig); Korruptur-Heilung behaelt kwh_hist
+  und kwh_ts; Plateau-Anker alle 5 min statt 20; Warnung bei
+  INTERVAL_S > 60 s (Dauerlast > 20 kWh/h ueberholt sonst den Leser).
+- Dokumentiert (EINSTELLUNGEN.md): Zaehlerwechsel / festgefahrener
+  Stand — state.json loeschen ist der einzige vorgesehene Weg nach
+  unten; HA-Statistik danach manuell korrigieren.
+- Tests: 42 gruen (5 neue Runde-5-Replays), 48h-Fuzz ueber 9 Seeds.
+  Damit sind ueber 5 Runden 52 verifizierte Befunde geschlossen und
+  als Regressionstests verewigt.
+
 ## 1.7.38
 
 - FINALE KONVERGENZ-RUNDE (gegen 1.7.37): 18 Befunde, 13 real — alle
