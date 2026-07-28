@@ -794,6 +794,143 @@ def notausweg_kennt_grenzen():
 
 
 @test
+def plateau_und_alter_ts_oeffnen_deckel_nicht():
+    """Runde 4 #0: auf einem Zaehler-Plateau alterte der einzige
+    kwh_hist-Eintrag aus dem 6h-Fenster, und ein stale Platten-ts
+    oeffnete den Deckel (+100 kWh). Jetzt setzt kwh_hist alle 20 min
+    einen frischen Anker — der Angriff prallt am Fenster ab, egal wie
+    alt kwh_ts behauptet zu sein."""
+    W.reset()
+    st = fresh_state(35891)
+    for _ in range(int(4 * 3600 / 10)):                 # 4 h Plateau
+        ok, _ = step(st, 35891, dt=10)
+        assert ok
+    st["kwh_ts"] = FT.now - 4 * 3600                    # stale wie nach Neustart
+    W.gemini = {"kwh": 35941, "w": 400}                 # bestaetigt +50
+    for _ in range(600):
+        ok, _ = step(st, 35941)
+        assert not ok, "Plateau-Angriff: +50 trotz frischer Anker"
+    assert st["kwh"] == 35891
+
+
+@test
+def senkung_unter_lost_trotz_doppel_gemini_nie():
+    """Runde 4 #1/#9: die kwh_lost-Schranke gilt jetzt fuer BEIDE Pfade.
+    kNN und Gemini verlieren dieselbe letzte Ziffer (35891 -> 3589) —
+    zwei Gemini-Bestaetigungen aendern nichts: unter den letzten echten
+    Stand minus 1 geht es NIE."""
+    W.reset()
+    st = fresh_state(35891)
+    watchdog_free(st)
+    for ziel in (3589, 35850, 35091, 1):
+        W.gemini = {"kwh": ziel, "w": 400}              # bestaetigt den Geist
+        for _ in range(600):
+            ok, _ = step(st, ziel, dt=10)
+            assert not ok, f"Senkung auf {ziel} trotz kwh_lost"
+    W.gemini = {"kwh": 35891, "w": 400}
+    ok1, _ = step(st, 35891)
+    ok2, _ = step(st, 35891)
+    assert ok2 and st["kwh"] == 35891
+
+
+@test
+def notausweg_uhr_ueberlebt_neustart():
+    """Runde 4 #2/#5: die 6h-Notausweg-Uhr war prozesslokal — jeder
+    Neustart < 6 h schloss den Deadlock-Ausweg fuer immer. Jetzt wird
+    sie persistiert."""
+    W.reset()
+    st = {"kwh_floor": 58587, "kwh_floor_ts": FT.now}
+    W.gemini = None
+    mr._gemini_err_since = FT.now - 7 * 3600            # lange tot
+    W.seg_decide = lambda *c: ((35891, 2.0) if 35891 in c else (None, 0.0))
+    st = restart(st)                                    # Neustart!
+    assert mr._gemini_err_since is not None, "Uhr im Neustart verloren"
+    healed = False
+    for _ in range(200):
+        ok, _ = step(st, 35891, dt=10)
+        if ok:
+            healed = True
+            break
+    assert healed and st["kwh"] == 35891, (
+        "Notausweg nach Neustart wieder bei Null")
+
+
+@test
+def quota_tag_sporadische_erfolge_heilen():
+    """Runde 4 #6: Gemini-Erfolge > 30 min auseinander setzten got auf 0
+    zurueck — sporadischer Gemini heilte NIE. Jetzt akkumulieren die
+    2 Bestaetigungen in einem 6h-Fenster."""
+    W.reset()
+    st = {"kwh_floor": 58587, "kwh_floor_ts": FT.now}
+    calls = {"n": 0}
+
+    def sparse():                                       # Erfolg alle ~45 min
+        calls["n"] += 1
+        if calls["n"] % 270 == 0:
+            return {"kwh": 35891, "w": 400}
+        raise RuntimeError("429 quota")
+
+    W.gemini = sparse
+    healed_at = None
+    t0 = FT.now
+    for _ in range(2000):
+        ok, _ = step(st, 35891, dt=10)
+        if ok:
+            healed_at = FT.now
+            break
+    assert healed_at is not None, "sporadischer Gemini heilte nie"
+    assert healed_at - t0 < 4 * 3600
+    assert st["kwh"] == 35891
+
+
+@test
+def riesensprung_braucht_doppelzeugen():
+    """Runde 4 #8: der 72h-Blindflug-Deckel erlaubt bis +1800 in einem
+    Schritt — so ein Schritt verlangt jetzt ZWEI exakte Bestaetigungen."""
+    W.reset()
+    st = fresh_state(35891, kwh_ts=FT.now - 72 * 3600)
+    W.gemini = {"kwh": 36891, "w": 400}                 # +1000, exakt
+    healed = False
+    for _ in range(600):
+        ok, _ = step(st, 36891)
+        if ok:
+            healed = True
+            break
+    assert healed and st["kwh"] == 36891
+    assert W.gemini_calls >= 2, "Riesensprung mit nur einem Zeugen"
+
+
+@test
+def zukunfts_hist_blockiert_nicht():
+    """Runde 4 #4: kwh_hist-Eintraege aus der Zukunft (NTP rueckwaerts)
+    verfielen nie und froren den Kanal auf +1 ein. Jetzt fliegen sie."""
+    W.reset()
+    st = fresh_state(35891)
+    st["kwh_hist"] = [[FT.now + 2 * 3600, 35891]]       # Zukunfts-Anker
+    ok, _ = step(st, 35892)
+    ok, _ = step(st, 35892)
+    assert ok and st["kwh"] == 35892, "Zukunfts-Anker blockierte +1"
+
+
+@test
+def ausfall_ohne_gemini_heilt_ueber_fenster():
+    """Runde 4 #10: das Basis-Fenster rechnete nur ab der Watchdog-
+    Freigabe — ein echter 72h-Ausfall davor war vergessen (Heilung hing
+    4,2 h). Jetzt zaehlt die aeltere Uhr: Heilung in Minuten."""
+    W.reset()
+    st = fresh_state(35891, kwh_ts=FT.now - 72 * 3600)  # 72h blind
+    W.gemini = None                                     # Quota-Tag
+    for _ in range(20):
+        ok, _ = step(st, 35981)                         # +90 real
+        assert not ok
+    watchdog_free(st)                                   # nach ~15 min
+    ok1, _ = step(st, 35981)
+    ok2, _ = step(st, 35981)
+    assert ok2 and st["kwh"] == 35981, (
+        "Ausfall-Heilung haengt trotz aelterer Uhr")
+
+
+@test
 def ausfall_heilung_bleibt_moeglich():
     """3 Tage Addon aus, Zaehler real +90 kWh: Heilung MUSS durchgehen."""
     W.reset()

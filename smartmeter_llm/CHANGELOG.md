@@ -1,5 +1,45 @@
 # Changelog
 
+## 1.7.38
+
+- FINALE KONVERGENZ-RUNDE (gegen 1.7.37): 18 Befunde, 13 real — alle
+  gefixt. Gemeinsame Wurzel fast aller Treffer: ZEIT-ANKER UND UHREN,
+  DIE NEUSTARTS NICHT UEBERLEBEN.
+- kwh_lost bindet jetzt BEIDE Pfade: der ankerlose Re-Baseline kannte
+  die Monotonie-Schranke nicht — kNN und Gemini verlieren im Schatten
+  dieselbe letzte Ziffer (35891 -> 3589), zwei Gemini-Bestaetigungen
+  desselben Fehlers senkten den Stand um -32302. Unter den letzten
+  echten Stand minus 1 geht es NIE, mit keinem Zeugen der Welt.
+- Plateau-Anker: kwh_hist setzt auch bei unveraendertem Wert alle
+  20 min einen frischen Eintrag; die erste Schleife persistiert sofort
+  (last_write_ts=0) und SIGTERM sichert den State. Vorher alterte auf
+  einem Zaehler-Plateau (Sonnentag) + Neustart-Sturm der Platten-ts
+  unbegrenzt und oeffnete den Deckel (+100 kWh nach 4 h Sturm).
+- Notausweg-Uhr (_gemini_err_since/_gemini_ok_ts), cycle und seg_warn
+  werden persistiert: jeder Neustart < 6 h schloss sonst den Deadlock-
+  Ausweg fuer immer, und die Watchdog-Reifung (~14 min Laufzeit)
+  begann je Prozess bei Null.
+- Zeugen-Bestaetigungsfenster 30 min -> 6 h: Quota-Tage liefern
+  Gemini-Erfolge > 30 min auseinander — die 2. Bestaetigung kam nie
+  ins Fenster, ein sporadischer Gemini heilte weiterhin nie. Der
+  Kandidat muss dank neuem Zaehler-Verfall trotzdem durchgehend
+  gelesen sein: rb_counts und kwh_pend verfallen jetzt (15/10 min) —
+  4 ueber Tage verstreute Geisterframes sind kein Konsens mehr.
+- Riesenspruenge (> 25 kWh = 1 h Physik) brauchen ZWEI exakte
+  Bestaetigungen — der 72h-Blindflug-Deckel erlaubt bis +1800 in
+  einem Schritt, so ein Schritt bekommt keinen Einzel-Zeugen mehr.
+- Basis-Fenster/Notausweg rechnen ab der AELTEREN Uhr (Freigabe ODER
+  letzte akzeptierte Lesung): ein echter 72h-Ausfall vor der Freigabe
+  war vergessen, die Heilung hing 4,2 h — jetzt Minuten.
+- Notausweg-Segment-Marge 1,0 -> 0,8 (die kalibrierte REJECT_MARGIN):
+  eine schwache, aber richtige Stuetze blockierte die Heilung ewig.
+- Zukunfts-Eintraege in kwh_hist (NTP-Rueckwaertskorrektur) verfallen
+  jetzt; Physik-Fenster prueft vor dem Re-Baseline (keine verbrannte
+  Quota fuer Kandidaten, die das Fenster ohnehin verwirft); stale
+  Konsens-Reste werden aufgeraeumt (kein ewiger 30s-Persist-Takt).
+- Tests: 37 gruen, alle Runde-4-Angriffe und -Gutfaelle als Replays,
+  48h-Fuzz mit Neustarts ueber 9 Seeds.
+
 ## 1.7.37
 
 - 2. ANGRIFFSRUNDE (gegen 1.7.36, inkl. "Anwalt des Gutfalls"): 16

@@ -971,6 +971,10 @@ def kwh_rate_ok(state: dict, new_kwh: int) -> bool:
     hist = state.setdefault("kwh_hist", [])
     while hist and now - hist[0][0] > KWH_RATE_WINDOW_S:
         hist.pop(0)
+    # Eintraege AUS DER ZUKUNFT (NTP-Rueckwaertskorrektur) fliegen raus:
+    # sie verfielen nie und froren den Kanal auf +1 ein, bis die Uhr sie
+    # eingeholt hatte (Runde 4, #4).
+    hist[:] = [e for e in hist if e[0] <= now + 60]
     for ts0, k0 in hist:
         # dt-Klemme: Eintraege "aus der Zukunft" (Uhrensprung rueckwaerts)
         # zaehlen als gleichzeitig -> strengster Fall, loest sich mit der
@@ -984,7 +988,13 @@ def kwh_rate_ok(state: dict, new_kwh: int) -> bool:
 
 def kwh_hist_push(state: dict, kwh: int) -> None:
     hist = state.setdefault("kwh_hist", [])
-    if not hist or hist[-1][1] != kwh:
+    # Auch bei UNVERAENDERTEM Wert alle 20 min einen Anker setzen: auf
+    # einem Zaehler-Plateau (Nulleinspeisung am Sonnentag) alterte sonst
+    # der einzige Eintrag aus dem Fenster heraus und der letzte
+    # Persist-Zeitpunkt wurde zum Physik-Anker (Runde 4: Neustart-Sturm
+    # + Plateau -> +100 kWh als EIN Sprung).
+    if (not hist or hist[-1][1] != kwh
+            or time.time() - hist[-1][0] > 1200):
         hist.append([time.time(), kwh])
         del hist[:-100]
 
@@ -1015,8 +1025,11 @@ def local_escape(reading: dict, state: dict, source: str) -> bool:
     if lost is not None and kwh < lost - KWH_HEAL_MAX:
         return False
     anker = lost if lost is not None else state.get("kwh_floor")
-    el_h = min(KWH_ELAPSED_MAX_H, max(
-        0.0, now - state.get("kwh_floor_ts", now)) / 3600)
+    # Blindflug-Anker: die aeltere der beiden Uhren. el_h nur ab der
+    # Watchdog-FREIGABE zu rechnen vergass einen echten 72h-Ausfall
+    # davor — die Heilung hing dann Stunden (Runde 4, #10).
+    ts0 = min(state.get("kwh_floor_ts", now), state.get("kwh_ts", now))
+    el_h = min(KWH_ELAPSED_MAX_H, max(0.0, now - ts0) / 3600)
     if anker is not None and kwh > anker + max(
             MAX_KWH_STEP, KWH_MAX_RATE_KWH_H * el_h):
         return False
@@ -1041,7 +1054,11 @@ def local_escape(reading: dict, state: dict, source: str) -> bool:
     if n < REBASE_MIN_COUNT or now - first < 600:
         return False
     best, margin = seg_decide(kwh, kwh + 1)
-    if best != kwh or margin < 1.0:
+    # 0.8 = die kalibrierte REJECT_MARGIN des Dekoders (99,4 % Ghost-
+    # Abweisung). Die alte harte 1.0 war willkuerlich: eine schwache,
+    # aber RICHTIGE Segment-Stuetze blockierte die Heilung fuer immer
+    # (Runde 4, #3: Marge 0,9 -> nie geheilt, auch nach 48 h nicht).
+    if best != kwh or margin < 0.8:
         return False
     print(f"NOTAUSWEG: Gemini seit "
           f"{(time.time() - _gemini_err_since) / 3600:.1f}h tot, lokal 4x "
@@ -1073,12 +1090,18 @@ def rebaseline(reading: dict, state: dict, source: str = "local") -> bool:
     # der Kandidat muss ueber REBASE_MIN_SPAN_S konsistent bleiben — ein
     # Re-Baseline korrigiert den STAND, das darf Minuten dauern.
     counts = state.setdefault("rb_counts", {})
-    n, first = counts.get(kwh, (0, time.time()))
-    counts[kwh] = (n + 1, first)
+    now = time.time()
+    ent = counts.get(kwh, (0, now, now))
+    n, first, last = ent if len(ent) >= 3 else (ent[0], ent[1], ent[1])
+    if now - last > 900:
+        # KONSISTENZ verfaellt: 4 Geisterframes ueber Tage verstreut sind
+        # kein Konsens (Runde 4, #7 — dieselbe Regel wie bei esc_counts).
+        n, first = 0, now
+    counts[kwh] = (n + 1, first, now)
     if len(counts) > 20:
         state["rb_counts"] = counts = {kwh: counts[kwh]}
-    n, first = counts[kwh]
-    if n < REBASE_MIN_COUNT or time.time() - first < REBASE_MIN_SPAN_S:
+    n, first, last = counts[kwh]
+    if n < REBASE_MIN_COUNT or now - first < REBASE_MIN_SPAN_S:
         return False
     # Lokaler Heilpfad: bestaetigt der Segment-Dekoder unabhaengig dieselbe
     # kWh, sind sich zwei voellig verschiedene Leseverfahren einig — das
@@ -1173,9 +1196,16 @@ def rebaseline(reading: dict, state: dict, source: str = "local") -> bool:
     # sonst nie 2 Treffer am Stueck und heilte NIE — schlechter als ein
     # ganz toter. Zeugen-FEHLER lassen Konsens und Teil-Bestaetigung
     # stehen; nur ein WIDERSPRUCH setzt beides zurueck.
-    need = 2 if alt is None else 1
+    # Doppel-Zeuge auch fuer RIESEN-Spruenge mit Anker (> 1 h Physik,
+    # 25 kWh): der 72h-Blindflug-Deckel erlaubt bis +1800 in einem
+    # Schritt — so ein Schritt braucht zwei exakte Bestaetigungen.
+    need = 2 if (alt is None or kwh > alt + KWH_MAX_RATE_KWH_H) else 1
     ck, got, cts = state.get("rb_confirm", (None, 0, 0.0))
-    if ck != kwh or time.time() - cts > 1800:
+    # 6h-Frische statt 30-min-Klippe: an einem Quota-Tag kommen Gemini-
+    # Erfolge > 30 min auseinander — got fiel dann ewig auf 0 zurueck
+    # und ein SPORADISCHER Gemini heilte nie (Runde 4, #6). Der Kandidat
+    # selbst muss dank Zaehler-Verfall trotzdem DURCHGEHEND gelesen sein.
+    if ck != kwh or time.time() - cts > 6 * 3600:
         got = 0
     try:
         gem = gemini_read(get_snapshot())
@@ -1226,6 +1256,13 @@ def guard_kwh(reading: dict, source: str, state: dict) -> tuple[dict, str]:
             reading = {**reading, "kwh": seg_kwh}
             reason = _plausible_w(reading["w"], state)
             source += " (seg)"
+    if (reason and "kWh-Sprung" in reason
+            and not kwh_rate_ok(state, reading["kwh"])):
+        # Physik-Fenster VOR dem Re-Baseline: sonst wird ein Kandidat
+        # erst teuer per Gemini bestaetigt und dann doch vom Fenster
+        # verworfen — verbrannte Quota und geleerte Konsens-Zaehler.
+        raise ValueError(f"verworfen: Physik-Fenster verletzt "
+                         f"({reading['kwh']} zu schnell gestiegen)")
     if reason and ("rückläufig" in reason or "kWh-Sprung" in reason):
         # NUR kWh-Gruende duerfen den kWh-Re-Baseline anstossen. Der blosse
         # Teilstring "Sprung" matchte auch die W-Kanal-Gruende ("Sprung
@@ -1245,10 +1282,16 @@ def guard_kwh(reading: dict, source: str, state: dict) -> tuple[dict, str]:
     # danach alles als "rueckläufig" (21.07.: 50min Failsafe)
     if (state.get("kwh") is not None and reading["kwh"] > state["kwh"]
             and "re-baseline" not in source and "(seg)" not in source):
+        # Bestaetigung VERFAELLT nach 10 min: zwei gleiche Geisterframes
+        # im Abstand von Stunden sind keine Doppelbestaetigung (Runde 4).
+        if time.time() - state.get("kwh_pend_ts", 0) > 600:
+            state.pop("kwh_pend", None)
+            state.pop("kwh_pend_n", None)
         if state.get("kwh_pend") == reading["kwh"]:
             state["kwh_pend_n"] = state.get("kwh_pend_n", 1) + 1
         else:
             state["kwh_pend"], state["kwh_pend_n"] = reading["kwh"], 1
+        state["kwh_pend_ts"] = time.time()
         if state["kwh_pend_n"] < 2:
             reading = {**reading, "kwh": state["kwh"]}
         else:
@@ -1272,10 +1315,33 @@ def guard_kwh(reading: dict, source: str, state: dict) -> tuple[dict, str]:
         # konsistent ueber 3 Minuten + Gemini doppelt-exakt) — bzw. bei
         # lange totem Gemini der enge Notausweg. KEIN konstanter Schlupf:
         # frisches Fenster ist [alter Stand - 1, alter Stand + 1].
-        el_h = min(KWH_ELAPSED_MAX_H, max(
-            0.0, time.time() - state.get("kwh_floor_ts", time.time())) / 3600)
+        # Blindflug-Anker = die AELTERE Uhr: nur ab der Watchdog-Freigabe
+        # zu rechnen vergass einen echten Ausfall davor (Runde 4, #10 —
+        # 72h-Ausfall + Quota heilte erst nach 4,2 h statt Minuten).
+        ts0 = min(state.get("kwh_floor_ts", time.time()),
+                  state.get("kwh_ts", time.time()))
+        el_h = min(KWH_ELAPSED_MAX_H, max(0.0, time.time() - ts0) / 3600)
         cap = floor + KWH_HEAL_MAX + max(MAX_KWH_STEP,
                                          KWH_MAX_RATE_KWH_H * el_h)
+        lost = state.get("kwh_lost")
+        if (lost is not None
+                and reading["kwh"] < lost - KWH_HEAL_MAX):
+            # DIE MONOTONIE-SCHRANKE GILT FUER BEIDE PFADE: der Notausweg
+            # hatte sie (1.7.37), der Schwester-Pfad rebaseline nicht —
+            # mit alt=None fielen dort alle Monotonie-Zweige weg, und
+            # zwei Gemini-Bestaetigungen desselben optischen Fehlers
+            # (letzte Ziffer verloren: 35891 -> 3589) senkten den Stand
+            # um -32302 (Runde 4, #1). Unter den letzten echten Stand
+            # minus Heilung geht es NIE, mit keinem Zeugen der Welt.
+            state["rb_counts"] = {}
+            if SAVE_SAMPLES_DIR and time.time() - state.get(
+                    "mono_veto_ts", 0) > 60:
+                state["mono_veto_ts"] = time.time()
+                save_event(SAVE_SAMPLES_DIR, _last_snapshot,
+                           "monotonic_veto", stored=lost,
+                           rejected=reading["kwh"])
+            raise ValueError(f"verworfen: Basis {reading['kwh']} unter "
+                             f"letztem Stand {lost} — Monotonie")
         if not (floor <= reading["kwh"] <= cap):
             if (rebaseline(reading, state, source)
                     or local_escape(reading, state, source)):
@@ -1343,6 +1409,20 @@ def guard_kwh(reading: dict, source: str, state: dict) -> tuple[dict, str]:
         state.pop("kwh_floor", None)
         state.pop("kwh_floor_ts", None)
         state.pop("kwh_lost", None)
+    # Abgestandene Konsens-Reste aufraeumen — sonst hielten sie das
+    # "pending"-Flag im Persist-Takt fuer immer auf 30 s.
+    for key in ("rb_counts", "base_pend", "esc_counts"):
+        c = state.get(key)
+        if c:
+            fresh = {k: v for k, v in c.items()
+                     if time.time() - v[-1] < 3600}
+            if fresh:
+                state[key] = fresh
+            else:
+                state.pop(key, None)
+    rbc = state.get("rb_confirm")
+    if rbc and time.time() - rbc[2] > 6 * 3600:
+        state.pop("rb_confirm", None)
     return reading, source
 
 
@@ -1385,6 +1465,12 @@ def save_state(state: dict) -> None:
         "bp": {str(k): list(v) for k, v in state.get("base_pend", {}).items()},
         "esc": {str(k): list(v) for k, v in state.get("esc_counts", {}).items()},
         "rbc": state.get("rb_confirm"),
+        # Auch die UHREN muessen Neustarts ueberleben (Runde 4, #2/#5/#12):
+        # die 6h-Notausweg-Uhr und der Watchdog-Fortschritt starteten
+        # sonst je Prozess bei Null — ein Neustart-Sturm hielt jeden
+        # Deadlock fuer immer offen.
+        "gerr": _gemini_err_since, "gok": _gemini_ok_ts,
+        "cycle": state.get("cycle"), "segw": state.get("seg_warn"),
     }
     tmp = STATE_FILE.with_suffix(".tmp")
     with open(tmp, "w") as fh:
@@ -1443,14 +1529,19 @@ def load_state() -> dict:
             out = {}
             for ks, v in (raw.get(key) or {}).items():
                 try:
-                    if (isinstance(v, list) and len(v) == arity
+                    if (isinstance(v, list) and len(v) in (2, 3)
                             and isinstance(v[0], int)):
-                        out[int(ks)] = tuple(v)
+                        t = tuple(v)
+                        if arity == 3 and len(t) == 2:
+                            t = (t[0], t[1], t[1])   # Altformat auffuellen
+                        elif arity == 2 and len(t) == 3:
+                            t = (t[0], t[1])
+                        out[int(ks)] = t
                 except (ValueError, TypeError):
                     pass
             return out
 
-        for skey, dkey, arity in (("rb", "rb_counts", 2),
+        for skey, dkey, arity in (("rb", "rb_counts", 3),
                                   ("bp", "base_pend", 2),
                                   ("esc", "esc_counts", 3)):
             c = _counts(skey, arity)
@@ -1459,6 +1550,15 @@ def load_state() -> dict:
         rbc = raw.get("rbc")
         if isinstance(rbc, list) and len(rbc) == 3:
             state["rb_confirm"] = (rbc[0], rbc[1], rbc[2])
+        global _gemini_err_since, _gemini_ok_ts
+        if isinstance(raw.get("gerr"), (int, float)):
+            _gemini_err_since = raw["gerr"]
+        if isinstance(raw.get("gok"), (int, float)):
+            _gemini_ok_ts = raw["gok"]
+        if isinstance(raw.get("cycle"), int):
+            state["cycle"] = raw["cycle"]
+        if isinstance(raw.get("segw"), int):
+            state["seg_warn"] = raw["segw"]
     k = state.get("kwh")
     if k is not None and k > KWH_ABS_MAX:
         heal = k
@@ -2083,6 +2183,10 @@ def main(once: bool = False):
     import signal
 
     def _bye(*_):  # LED nicht brennen lassen (continuous-Modus)
+        try:
+            save_state(state)   # Uhren/Zaehler sichern (atomar)
+        except Exception:
+            pass
         if _cam is not None:
             _cam.shutdown()
         raise SystemExit(0)
@@ -2108,7 +2212,11 @@ def main(once: bool = False):
     publish_discovery()
     w_hist: list[int] = []  # Median-3: einzelner Ausreisser-Frame regelt nicht
     last_written_kwh = (state.get("kwh"), state.get("kwh_floor"))
-    last_write_ts = time.time()
+    # 0 = die erste Schleife schreibt SOFORT: die 900s-Uhr startete sonst
+    # je Prozess neu, und bei Zaehler-Plateau + Neustart-Sturm wurde
+    # state.json nie geschrieben — der Platten-ts alterte unbegrenzt und
+    # oeffnete den Physik-Deckel (Runde 4, #0: 4h Sturm -> +100 kWh).
+    last_write_ts = 0.0
     while True:
         limit = None
         reading = None
