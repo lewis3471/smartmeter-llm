@@ -1,5 +1,47 @@
 # Changelog
 
+## 1.7.35
+
+- DER 358914-VORFALL (28.07. ~09:40): Der Stand sprang von 35891 auf
+  358914 (+323.023 kWh). Ursache-Forensik: Gemini liest die
+  NACHKOMMASTELLE der kWh-Zeile mit (35891.4 -> "358914", im Takt der
+  Zehntel hochtickend: 358911/358913/358914). Wenn das lokale OCR kurz
+  unlesbar war, wurde Geminis Fehllesung selbst zum Kandidaten — und im
+  Re-Baseline hat dann GEMINI GEMINI bestaetigt. Aufwaerts gab es keine
+  Schranke ("Ausfall-Heilung"), also wurde +323.023 akzeptiert.
+- STRUKTUR-DECKEL (KWH_ABS_MAX=99999): Das Display hat 6 Vorkomma-
+  Stellen mit fuehrender Null — ein Stand > 99999 ist strukturell
+  unmoeglich und wird ueberall verworfen, egal wie viele Zeugen ihn
+  bestaetigen. Faengt die ganze Klasse (358914, 585870, 880080).
+- ZEUGEN-TRENNUNG: Nur lokale OCR-Lesungen duerfen Re-Baseline-
+  Kandidaten werden; Gemini bleibt reiner Zeuge und bestaetigt nie
+  wieder sich selbst. Bei OCR-Abweichung gewinnt ausserdem die
+  KONFIDENTE lokale Lesung — Gemini ueberstimmt sie nicht mehr.
+- PHYSIK-DECKEL AUFWAERTS: Re-Baseline nach oben ist auf (Zeit seit
+  letzter akzeptierter Lesung) x 5 kWh/h begrenzt (gemessen p99:
+  2,2 kWh/h). Echte Ausfall-Heilung skaliert mit (10 h -> +52 kWh
+  erlaubt), ein Geistersprung nie. Dafuer wird der Zeitstempel jetzt
+  in state.json mitpersistiert.
+- WIR HABEN ZEIT: Re-Baseline-Kandidaten muessen >= 4x konsistent UEBER
+  >= 3 MINUTEN gelesen werden, bevor ueberhaupt ein Zeuge gefragt wird.
+  Gemini-Bestaetigung nur noch EXAKT (vorher +-2). Ohne Anker (Stand
+  verloren) braucht es ZWEI exakte Bestaetigungen auf frischen Snapshots.
+  Frische Basis nach Stand-Verlust: Fenster [Boden, Physik-Deckel] und
+  zwei uebereinstimmende Lesungen.
+- SELBSTHEILUNG DES VERGIFTETEN STANDS: Beim Start wird ein strukturell
+  unmoeglicher state.json-Stand (358914) verworfen und 35891 als Boden
+  gesetzt — die Kamera stellt den echten Stand nach dem Update
+  automatisch wieder her. Kein Handgriff noetig.
+- Gemini-Nachkommastellen-Fix (358914 -> 35891) + Prompt-Verbot der
+  Nachkommastelle; 8er-Segmenttest bleibt als 888888 erkennbar.
+- ALLE kWh-Tore in guard_kwh() gebuendelt und mit tests/test_kwh_gates.py
+  abgedeckt: Replays aller Vorfaelle (26.07., 28.07. frueh, 28.07.
+  358914) + 48h-Adversarial-Fuzz ueber 9 Seeds, in dem Gemini und
+  Segment-Dekoder JEDEN Muell bestaetigen — die Invarianten (nie -1
+  ohne exakten Gemini, nie mehr als +1 bzw. Physik-Deckel, nie >99999,
+  nie Selbstbestaetigung, nie ohne 3-Minuten-Konsistenz) halten.
+- 226 vergiftete 35850-Segmentlabels (07:00-09:11) in Quarantaene.
+
 ## 1.7.34
 
 - Heilspielraum von 2 auf 1 kWh verengt (KWH_HEAL_MAX=1). Begruendung:

@@ -114,7 +114,10 @@ GEMINI_PROMPT = os.environ.get("GEMINI_PROMPT", (
     'Foto eines EasyMeter-Stromzaehler-LCDs mit zwei Zeilen. '
     'Zeile 1 = Zaehlerstand in kWh: IMMER exakt 6 Ziffern, ggf. mit '
     'fuehrender Null (z.B. 035774) — gib ALLE 6 Ziffern an, lass niemals '
-    'die letzte Ziffer weg. Zeile 2 = aktuelle Leistung in W (1-5 Ziffern), '
+    'die letzte Ziffer weg. Rechts der 6 Ziffern kann eine NACHKOMMASTELLE '
+    'stehen (z.B. 035891.4) — haenge sie NIEMALS an, gib ausschliesslich '
+    'die 6 Vorkomma-Ziffern als Zahl an (035891.4 -> 35891). '
+    'Zeile 2 = aktuelle Leistung in W (1-5 Ziffern), '
     'KANN NEGATIV sein: pruefe genau, ob links ein Minuszeichen steht. '
     'Sonderfaelle: LCD-Segmenttest (beide Zeilen zeigen nur 8er) -> '
     '{"kwh":888888,"w":888888}; Display dunkel oder unlesbar -> '
@@ -199,6 +202,26 @@ MAX_KWH_STEP = 1
 # die -1-Heilung je faelschlich, steht der echte Zaehler sofort +1 ueber
 # dem Stand und der normale +1-Pfad korrigiert binnen Minuten.
 KWH_HEAL_MAX = int(os.environ.get("KWH_HEAL_MAX", "1"))
+# STRUKTUR-DECKEL: Das Display hat 6 Vorkomma-Stellen MIT fuehrender Null
+# (035891) — ein Zaehlerstand > 99999 ist strukturell unmoeglich, egal wie
+# viele Leser ihn bestaetigen. 28.07. ~09:40: Gemini las die Nachkommastelle
+# mit (35891.4 -> "358914") und bestaetigte im Re-Baseline seinen eigenen
+# Fehler -> Stand sprang auf 358914 (+323023 kWh). Nie wieder.
+KWH_ABS_MAX = int(os.environ.get("KWH_ABS_MAX", "99999"))
+# PHYSIK-DECKEL fuer Aufwaerts-Heilungen: schneller als der Hausanschluss
+# kann der Zaehler nicht steigen. Gemessen p99: 2,2 kWh/h — 5 laesst Luft
+# fuer Herd+Trockner+Ladung gleichzeitig. Ein Re-Baseline nach oben darf
+# hoechstens (vergangene Zeit seit letzter akzeptierter Lesung) x diese
+# Rate springen. Nach einem 10h-Ausfall sind das grosszuegige +52 kWh —
+# echte Ausfall-Heilung bleibt moeglich, ein Geistersprung nicht.
+KWH_MAX_RATE_KWH_H = float(os.environ.get("KWH_MAX_RATE_KWH_H", "5.0"))
+# WIR HABEN ZEIT: Der Zaehler tickt ~1 kWh pro 20-30 min. Ein Re-Baseline
+# (= Korrektur des gespeicherten Stands!) muss nicht in Sekunden fallen —
+# der Kandidat muss mindestens diese Spanne lang konsistent gelesen werden,
+# BEVOR ueberhaupt ein Zeuge gefragt wird. Einzelne Fehl-Frames und kurze
+# Stoerungen (Schattenwanderung, Reflexe) ueberleben keine 3 Minuten.
+REBASE_MIN_SPAN_S = float(os.environ.get("REBASE_MIN_SPAN_S", "180"))
+REBASE_MIN_COUNT = 4
 # Der Schiedsrichter darf RATEN VERWEIGERN: der Segment-Dekoder liefert pro
 # Zelle einen Log-Likelihood-Abstand zum zweitbesten Muster. Bei Ghost-
 # Fehllesungen (Phantom-Segmente in der Schattenzone) faellt der auf 0.03-0.09,
@@ -640,8 +663,30 @@ def read_meter(cycle: int = 0) -> tuple[dict, str]:
             print(f"OCR-Abweichung: local={local} (c={conf:.2f})"
                   f" vs gemini={gem} -> gespeichert", file=sys.stderr)
             retrain_mark("disagree")
+        if local is not None and conf >= OCR_MIN_CONF:
+            # Bei Abweichung gewinnt die KONFIDENTE lokale Lesung. Am 28.07.
+            # ueberschrieb hier Geminis Nachkommastellen-Fehler (358914) im
+            # Kreuz-Check die korrekte lokale 35891 — und bestaetigte sich
+            # spaeter im Re-Baseline selbst. Gemini bleibt Zeuge und
+            # Fallback, aber nie Ueberstimmer einer konfidenten Lesung.
+            return local, f"local c={conf:.2f} (cross-check)"
         return gem, "gemini" + (" (cross-check)" if cross_check else "")
     return gemini_read(img), "gemini"
+
+
+def gemini_normalize(reading: dict) -> dict:
+    """Bekannten systematischen Gemini-Fehler reparieren: die kWh-Zeile hat
+    eine Nachkommastelle, die Gemini trotz Prompt-Verbot gern anhaengt
+    (28.07.: 35891.4 -> 358911/358913/358914 im Takt der Zehntel). Eine
+    7. Stelle wird abgeschnitten — ausser beim 8er-Segmenttest, der als
+    888888 erkennbar bleiben muss."""
+    kwh = reading["kwh"]
+    if (kwh > KWH_ABS_MAX and set(str(kwh)) != {"8"}
+            and kwh // 10 <= KWH_ABS_MAX):
+        print(f"Gemini-Nachkommastellen-Fix: {kwh} -> {kwh // 10}",
+              file=sys.stderr)
+        return {**reading, "kwh": kwh // 10}
+    return reading
 
 
 def gemini_read(img: bytes) -> dict:
@@ -717,7 +762,7 @@ def gemini_read(img: bytes) -> dict:
         data.get("w"), (int, float)
     ):
         raise ValueError(f"Gemini-Antwort unvollstaendig: {data}")
-    reading = {"kwh": int(data["kwh"]), "w": int(data["w"])}
+    reading = gemini_normalize({"kwh": int(data["kwh"]), "w": int(data["w"])})
     if SAVE_SAMPLES_DIR:
         d = Path(SAVE_SAMPLES_DIR) / time.strftime("%Y%m%d")
         d.mkdir(parents=True, exist_ok=True)
@@ -759,6 +804,13 @@ def plausible(reading: dict, state: dict) -> str | None:
     kwh, w = reading["kwh"], reading["w"]
     if kwh == 888888 or abs(w) in (88888, 888888):
         return "LCD-Segmenttest (alles 8er)"
+    if kwh > KWH_ABS_MAX:
+        # Struktur-Deckel: 6 Stellen mit fuehrender Null -> mehr als 5
+        # signifikante Ziffern KANN das Display nicht zeigen. Faengt die
+        # ganze Fehlerklasse "Nachkommastelle/Geisterziffer angehaengt"
+        # (358914, 585870, 880080), bevor sie ueberhaupt Kandidat wird.
+        return (f"kWh {kwh} > {KWH_ABS_MAX} strukturell unmoeglich "
+                f"(Display: 6 Stellen mit fuehrender Null)")
     if kwh <= 0:
         return "kwh<=0 — LCD vermutlich dunkel/unlesbar"
     if abs(w) > 20000:
@@ -869,19 +921,31 @@ def w_second_opinion(w: int) -> bool:
         return False
 
 
-def rebaseline(reading: dict, state: dict) -> bool:
+def rebaseline(reading: dict, state: dict, source: str = "local") -> bool:
     """Kommt dieselbe 'unplausible' kWh-Lesung mehrfach in Folge, wird sie
     per Gemini verifiziert und bei Bestaetigung als neuer Stand akzeptiert.
     Verhindert, dass eine einmal akzeptierte Fehl-Lesung alles blockiert."""
     global _last_gemini_call
     kwh = reading["kwh"]
-    # Zaehler JE KANDIDAT: eingestreute Dunkel-Fehl-Lesungen (500, 3570...)
-    # duerfen den Konsens fuer den echten Stand nicht mehr zuruecksetzen
+    if kwh > KWH_ABS_MAX or kwh <= 0:
+        return False   # strukturell unmoeglich — zaehlt nicht mal als Kandidat
+    if not source.startswith("local"):
+        # ZEUGEN-TRENNUNG: Kandidat und Bestaetiger muessen verschiedene
+        # Quellen sein. Am 28.07. wurde Geminis Fehllesung (358914) zum
+        # Kandidaten, und Gemini "bestaetigte" dann sich selbst. Nur das
+        # lokale OCR darf Kandidaten liefern; Gemini bleibt reiner Zeuge.
+        return False
+    # Zaehler JE KANDIDAT mit Erst-Zeitstempel: eingestreute Dunkel-Fehl-
+    # Lesungen (500, 3570...) duerfen den Konsens nicht zuruecksetzen, und
+    # der Kandidat muss ueber REBASE_MIN_SPAN_S konsistent bleiben — ein
+    # Re-Baseline korrigiert den STAND, das darf Minuten dauern.
     counts = state.setdefault("rb_counts", {})
-    counts[kwh] = counts.get(kwh, 0) + 1
+    n, first = counts.get(kwh, (0, time.time()))
+    counts[kwh] = (n + 1, first)
     if len(counts) > 20:
         state["rb_counts"] = counts = {kwh: counts[kwh]}
-    if counts[kwh] < 4:
+    n, first = counts[kwh]
+    if n < REBASE_MIN_COUNT or time.time() - first < REBASE_MIN_SPAN_S:
         return False
     # Lokaler Heilpfad: bestaetigt der Segment-Dekoder unabhaengig dieselbe
     # kWh, sind sich zwei voellig verschiedene Leseverfahren einig — das
@@ -921,6 +985,24 @@ def rebaseline(reading: dict, state: dict) -> bool:
             print(f"Re-Baseline-Senkung: Gemini nicht verfuegbar ({e}) — "
                   f"Stand bleibt", file=sys.stderr)
         return False
+    if alt is not None and kwh > alt:
+        # PHYSIK-DECKEL: Aufwaerts war bis 1.7.34 unbegrenzt ("Ausfall-
+        # Heilung") — genau da kam 358914 durch. Der Zaehler kann seit der
+        # letzten akzeptierten Lesung hoechstens Zeit x Hausanschluss
+        # gestiegen sein. Echte Ausfall-Heilung skaliert mit — ein
+        # 10h-Ausfall erlaubt +52 kWh, ein Geistersprung nie.
+        elapsed_h = max(0.0, time.time() - state.get("kwh_ts", time.time())) / 3600
+        cap = alt + MAX_KWH_STEP + KWH_MAX_RATE_KWH_H * elapsed_h + 2
+        if kwh > cap:
+            print(f"Re-Baseline VERBOTEN: {kwh} laege {kwh - alt} kWh ueber "
+                  f"Stand {alt} — physikalisch unmoeglich in {elapsed_h:.1f}h "
+                  f"(Deckel {cap:.0f})", file=sys.stderr)
+            state["rb_counts"] = {}
+            if SAVE_SAMPLES_DIR and time.time() - state.get("rate_veto_ts", 0) > 60:
+                state["rate_veto_ts"] = time.time()
+                save_event(SAVE_SAMPLES_DIR, _last_snapshot, "rate_veto",
+                           stored=alt, rejected=kwh, elapsed_h=round(elapsed_h, 2))
+            return False
     if alt is not None and alt != kwh:
         # Zwei getrennte Fragen ans Bild, beide muessen JA sagen:
         #   1. Wird der alte Stand widerlegt? (Hypothesentest liefert None)
@@ -941,19 +1023,140 @@ def rebaseline(reading: dict, state: dict) -> bool:
         return False
     state["rb_counts"] = {}
     _last_gemini_call = time.time()
-    for attempt in (1, 2):
+    # EXAKTER Match noetig (frueher +-2): der Zeuge soll den Kandidaten
+    # bestaetigen, nicht "so ungefaehr". Tickt der Zaehler waehrend der
+    # Bestaetigung, schlaegt der naechste Versuch in 3 Minuten fehlerfrei
+    # erneut auf — wir haben Zeit. Ohne Anker (Stand verloren, alt=None)
+    # braucht es ZWEI exakte Bestaetigungen auf frischen Snapshots: das
+    # ist der maechtigste Pfad im System, er darf am teuersten sein.
+    need = 2 if alt is None else 1
+    got = 0
+    for attempt in (1, 2, 3):
         try:
             gem = gemini_read(get_snapshot())
-            if abs(gem["kwh"] - kwh) <= 2:
-                print(f"Re-Baseline: Gemini bestätigt kWh={gem['kwh']} "
-                      f"(alter Stand {state.get('kwh')}) -> akzeptiert")
-                return True
+        except Exception as e:
+            print(f"Re-Baseline Versuch {attempt}: {e}", file=sys.stderr)
+            continue
+        if gem["kwh"] != kwh:
             print(f"Re-Baseline abgelehnt: Gemini liest {gem['kwh']}, "
                   f"nicht {kwh}", file=sys.stderr)
             return False
-        except Exception as e:
-            print(f"Re-Baseline Versuch {attempt}: {e}", file=sys.stderr)
+        got += 1
+        if got >= need:
+            print(f"Re-Baseline: Gemini bestätigt kWh={gem['kwh']} "
+                  f"{got}x (alter Stand {state.get('kwh')}) -> akzeptiert")
+            return True
     return False
+
+
+def guard_kwh(reading: dict, source: str, state: dict) -> tuple[dict, str]:
+    """ALLE kWh-Tore in einer Funktion — vom Hauptloop und von
+    tests/test_kwh_gates.py identisch durchlaufen. Wirft ValueError, wenn
+    die Lesung verworfen wird; sonst kommt die (ggf. korrigierte) Lesung
+    plus Quelle zurueck. Torfolge: Plausibilitaet (Struktur-Deckel,
+    Monotonie, Sprung) -> Seg-Schiedsrichter -> Re-Baseline (Zeugen-
+    Trennung, Zeitspanne, Physik-Deckel) -> +1-Doppelbestaetigung ->
+    Basis-Fenster nach Stand-Verlust -> Monotonie-Notbremse."""
+    reason = plausible(reading, state)
+    if (reason and state.get("kwh") is not None
+            and ("rückläufig" in reason or "kWh-Sprung" in reason)):
+        seg_kwh = seg_confirm(state["kwh"],
+                              state["kwh"] + MAX_KWH_STEP, state)
+        if seg_kwh is not None:
+            print(f"Seg-Schiedsrichter: kWh {reading['kwh']} "
+                  f"verworfen, Segment-Dekoder bestaetigt {seg_kwh}")
+            reading = {**reading, "kwh": seg_kwh}
+            reason = None
+            source += " (seg)"
+    if reason and ("rückläufig" in reason or "Sprung" in reason):
+        if rebaseline(reading, state, source):
+            reason = None
+            source += " (re-baseline)"
+    if reason:
+        raise ValueError(f"verworfen: {reason}")
+    # kWh-ERHOEHUNGEN erst nach 2 uebereinstimmenden Lesungen
+    # uebernehmen: eine einzelne Fehl-Lesung an der Toleranzgrenze
+    # (1->3: 35851->35853) vergiftete sonst den Stand und blockte
+    # danach alles als "rueckläufig" (21.07.: 50min Failsafe)
+    if (state.get("kwh") is not None and reading["kwh"] > state["kwh"]
+            and "re-baseline" not in source and "(seg)" not in source):
+        if state.get("kwh_pend") == reading["kwh"]:
+            state["kwh_pend_n"] = state.get("kwh_pend_n", 1) + 1
+        else:
+            state["kwh_pend"], state["kwh_pend_n"] = reading["kwh"], 1
+        if state["kwh_pend_n"] < 2:
+            reading = {**reading, "kwh": state["kwh"]}
+        else:
+            state.pop("kwh_pend", None)
+            state.pop("kwh_pend_n", None)
+    floor = state.get("kwh_floor")
+    if state.get("kwh") is None and floor is not None:
+        # BASIS-FENSTER nach Stand-Verlust (Watchdog / korrupter State):
+        # die neue Basis muss zwischen Monotonie-Boden und Physik-Deckel
+        # liegen. Ausserhalb bleibt nur der volle Re-Baseline-Weg (4x
+        # konsistent ueber 3 Minuten + Gemini exakt) — der einzige Ausweg
+        # aus einem je vergifteten Boden, bewusst teuer.
+        el_h = max(0.0, time.time() - state.get("kwh_floor_ts",
+                                                time.time())) / 3600
+        cap = floor + KWH_HEAL_MAX + KWH_MAX_RATE_KWH_H * el_h + 2
+        if not (floor <= reading["kwh"] <= cap):
+            if rebaseline(reading, state, source):
+                source += " (re-baseline)"
+            else:
+                raise ValueError(f"verworfen: Basis {reading['kwh']} "
+                                 f"ausserhalb [{floor}, {cap:.0f}]")
+    if state.get("kwh") is None and "re-baseline" not in source:
+        # Auch die frische Basis braucht ZWEI uebereinstimmende Lesungen —
+        # ein einzelner Geister-Frame direkt nach Stand-Verlust setzte
+        # sonst den Anker (23.07.: 8443 statt 443 beim Erststart).
+        if state.get("base_pend") == reading["kwh"]:
+            state["base_pend_n"] = state.get("base_pend_n", 1) + 1
+        else:
+            state["base_pend"], state["base_pend_n"] = reading["kwh"], 1
+        if state["base_pend_n"] < 2:
+            raise ValueError(f"Basis {reading['kwh']} braucht zweite Lesung")
+        state.pop("base_pend", None)
+        state.pop("base_pend_n", None)
+    if (state.get("kwh") is not None
+            and reading["kwh"] < state["kwh"] - KWH_HEAL_MAX):
+        # Darf hier nie ankommen — Notbremse, falls je wieder ein
+        # Heilpfad an der Plausibilitaet vorbeifuehrt
+        raise ValueError(f"verworfen: Monotonie-Notbremse "
+                         f"({state['kwh']} -> {reading['kwh']})")
+    if reading["kwh"] >= (state.get("kwh_floor") or 0):
+        state.pop("kwh_floor", None)
+        state.pop("kwh_floor_ts", None)
+    return reading, source
+
+
+def load_state() -> dict:
+    """State laden und strukturell heilen. Ein Stand > KWH_ABS_MAX in
+    state.json (28.07.: 358914) ist Korruption — er wird verworfen und die
+    plausibelste Ableitung (Ziffern von rechts abschneiden) als BODEN
+    gesetzt: die Kamera setzt den exakten Stand neu, aber nie darunter."""
+    state: dict = {}
+    if STATE_FILE.exists():
+        try:
+            raw = json.loads(STATE_FILE.read_text())
+            if isinstance(raw.get("kwh"), int):
+                state = {"kwh": raw["kwh"],
+                         "kwh_ts": raw.get("ts") or time.time()}
+        except (ValueError, OSError):
+            state = {}
+    k = state.get("kwh")
+    if k is not None and k > KWH_ABS_MAX:
+        heal = k
+        while heal > KWH_ABS_MAX:
+            heal //= 10
+        print(f"KRITISCH: state.json enthaelt strukturell unmoeglichen "
+              f"Stand {k} (> {KWH_ABS_MAX}) — verworfen. Boden {heal}, "
+              f"die Kamera setzt den Stand neu.", file=sys.stderr)
+        if SAVE_SAMPLES_DIR:
+            save_event(SAVE_SAMPLES_DIR, None, "state_corrupt_healed",
+                       stored=k, floor=heal)
+        state = {"kwh": None, "kwh_floor": heal,
+                 "kwh_floor_ts": time.time()}
+    return state
 
 
 _livedata_cache: tuple[float, tuple] | None = None
@@ -1571,12 +1774,12 @@ def main(once: bool = False):
     signal.signal(signal.SIGTERM, _bye)
     atexit.register(lambda: _cam is not None and _cam.shutdown())
 
-    state = {}
-    if STATE_FILE.exists():
-        try:
-            state = {"kwh": json.loads(STATE_FILE.read_text()).get("kwh")}
-        except (ValueError, OSError):
-            state = {}
+    state = load_state()
+    print(f"kWh-Tore: Schritt +{MAX_KWH_STEP} (2x bestaetigt), Heilung "
+          f"-{KWH_HEAL_MAX} (nur mit Gemini), Struktur-Deckel {KWH_ABS_MAX}, "
+          f"Aufwaerts-Physik {KWH_MAX_RATE_KWH_H} kWh/h, Re-Baseline "
+          f"{REBASE_MIN_COUNT}x ueber {REBASE_MIN_SPAN_S:.0f}s, "
+          f"Stand: {state.get('kwh')}")
     if BATT_STRINGS:
         print(f"Akku-Waechter aktiv: Straenge {BATT_STRINGS}, "
               f"abschalten unter {BATT_LOW_V:.1f}V ({BATT_LOW_V/16:.2f}V/Zelle) "
@@ -1612,57 +1815,15 @@ def main(once: bool = False):
                               f"freigegeben — naechste Lesung setzt neu",
                               file=sys.stderr)
                         state["kwh_floor"] = state["kwh"] - KWH_HEAL_MAX
+                        state["kwh_floor_ts"] = time.time()
                         state["kwh"] = None
                         state["seg_warn"] = 0
                         state["rb_counts"] = {}
                 else:
                     state["seg_warn"] = 0
-            reason = plausible(reading, state)
-            if (reason and state.get("kwh") is not None
-                    and ("rückläufig" in reason or "kWh-Sprung" in reason)):
-                seg_kwh = seg_confirm(state["kwh"],
-                                      state["kwh"] + MAX_KWH_STEP, state)
-                if seg_kwh is not None:
-                    print(f"Seg-Schiedsrichter: kWh {reading['kwh']} "
-                          f"verworfen, Segment-Dekoder bestaetigt {seg_kwh}")
-                    reading = {**reading, "kwh": seg_kwh}
-                    reason = None
-                    source += " (seg)"
-            if reason and ("rückläufig" in reason or "Sprung" in reason):
-                if rebaseline(reading, state):
-                    reason = None
-                    source += " (re-baseline)"
-            if reason:
-                raise ValueError(f"verworfen: {reason}")
-            # kWh-ERHOEHUNGEN erst nach 2 uebereinstimmenden Lesungen
-            # uebernehmen: eine einzelne Fehl-Lesung an der Toleranzgrenze
-            # (1->3: 35851->35853) vergiftete sonst den Stand und blockte
-            # danach alles als "rueckläufig" (21.07.: 50min Failsafe)
-            if (state.get("kwh") is not None and reading["kwh"] > state["kwh"]
-                    and "re-baseline" not in source and "(seg)" not in source):
-                if state.get("kwh_pend") == reading["kwh"]:
-                    state["kwh_pend_n"] = state.get("kwh_pend_n", 1) + 1
-                else:
-                    state["kwh_pend"], state["kwh_pend_n"] = reading["kwh"], 1
-                if state["kwh_pend_n"] < 2:
-                    reading = {**reading, "kwh": state["kwh"]}
-                else:
-                    state.pop("kwh_pend", None)
-                    state.pop("kwh_pend_n", None)
-            floor = state.get("kwh_floor")
-            if (state.get("kwh") is None and floor is not None
-                    and reading["kwh"] < floor):
-                raise ValueError(f"verworfen: Basis {reading['kwh']} unter "
-                                 f"Monotonie-Boden {floor}")
-            if (state.get("kwh") is not None
-                    and reading["kwh"] < state["kwh"] - KWH_HEAL_MAX):
-                # Darf hier nie ankommen — Notbremse, falls je wieder ein
-                # Heilpfad an der Plausibilitaet vorbeifuehrt
-                raise ValueError(f"verworfen: Monotonie-Notbremse "
-                                 f"({state['kwh']} -> {reading['kwh']})")
-            if reading["kwh"] >= (floor or 0):
-                state.pop("kwh_floor", None)
+            reading, source = guard_kwh(reading, source, state)
             state.update(reading)
+            state["kwh_ts"] = time.time()
             state["failures"] = 0
             w_hist.append(reading["w"])
             del w_hist[:-3]
@@ -1705,9 +1866,11 @@ def main(once: bool = False):
                 # normal — erst anhaltende Fehler als "retry" melden
                 publish(None, "retry", None)
         if state.get("kwh") != last_written_kwh:
-            # Nur das kWh-Feld persistieren (einziger Wert, der einen
-            # Neustart ueberleben muss) — wenige Winz-Writes pro Tag
-            STATE_FILE.write_text(json.dumps({"kwh": state.get("kwh")}))
+            # kWh + Zeitstempel persistieren: der Stempel macht den
+            # Physik-Deckel ueber Neustarts hinweg wirksam (ohne ihn
+            # waere "wie lange waren wir blind" nach Restart unbekannt)
+            STATE_FILE.write_text(json.dumps(
+                {"kwh": state.get("kwh"), "ts": state.get("kwh_ts")}))
             last_written_kwh = state.get("kwh")
         maybe_retrain(state)
         if state["cycle"] % 100 == 0:  # ~alle 1-2min nach neuem Modell schauen
