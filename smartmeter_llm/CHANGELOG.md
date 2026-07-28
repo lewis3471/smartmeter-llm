@@ -1,5 +1,47 @@
 # Changelog
 
+## 1.7.36
+
+- ADVERSARIALER ANGRIFF AUF 1.7.35 (32 Agenten, 3 Angreifer + Einzel-
+  Verifikation): 29 Befunde, 14 real bestaetigt — alle 14 gefixt:
+- Boden ueberlebt Neustarts: state.json persistiert jetzt Boden,
+  verlorenen Stand (kwh_lost) und das 6h-Physik-Fenster. Vorher
+  loeschte ein Neustart nach Watchdog-Freigabe den Boden ({"kwh": null}
+  -> leerer State) und der Stand war mit ZWEI Lesungen frei waehlbar.
+- Kumulatives 6h-Physik-Fenster (kwh_hist): jeder Anstieg muss gegen
+  JEDEN akzeptierten Stand der letzten 6 h unter Rate x Zeit + 1
+  bleiben. Toetet die +3-Ratsche (60 kWh/h trotz Einzel-Deckel) und
+  die Watchdog-Pumpe. Einzel-Deckel ohne konstanten Schlupf (+2 weg);
+  Seg-Heilpfad ohne Cloud nur noch fuer +1.
+- Zeugen-Reinheit: gemini_normalize ENTFERNT — es wusch 6-stelligen
+  Geistermuell in gueltige Staende (585870 -> 58587) und entzog dem
+  Struktur-Deckel seine Faelle. Die Nachkomma-Signatur zaehlt nur noch
+  beim Zeugen-VERGLEICH (witness_match: 358914 bestaetigt exakt 35891).
+- Kanaltrennung dicht: W-Gruende ("Sprung +8675 W") stossen den
+  kWh-Re-Baseline nicht mehr an (Teilstring-Falle); nach Seg-Arbiter
+  und Re-Baseline wird die W-Pruefung des Frames NACHGEHOLT (der
+  kWh-Kurzschluss in plausible() hatte sie verdeckt).
+- Seg-Arbiter respektiert den Struktur-Deckel (bei Stand 99999 kein
+  100000 mehr moeglich — war der einzige I3-Bypass).
+- Watchdog-Tuer: Senkungen unter den verlorenen Stand brauchen auch
+  im Basis-Fenster den Gemini-Zeugen; Fenster ohne +2-Schlupf
+  ([Stand-1, Stand+1] frisch). Watchdog laeuft nicht mehr ohne
+  lokalen Leser (gab sonst im Gemini-Modus alle 600 Zyklen frei).
+- Deadlock geloest: vergifteter Boden + Gemini >= 6 h DURCHGEHEND
+  ausgefallen (Widerspruch zaehlt nicht) -> enger lokaler Notausweg
+  (4x ueber 10 min + deutliche Segment-Marge, local_escape-Event).
+  Vorher: 72 h Failsafe trotz einiger lokaler Verfahren.
+- Zeitstempel plausibilisiert: Zukunft -> geklemmt, Blindflug-Deckel
+  72 h, Persist alle 15 min (ts war sonst der letzte ZAEHLER-TICK und
+  blaehte den Deckel nach Neustart um Stunden auf).
+- Kaltstart (kein Anker): 4 Lesungen ueber 60 s je Kandidat;
+  Basis-/Kandidaten-Zaehler je Wert (strenge Alternation 35891/35892
+  blockierte sonst fuer immer).
+- Tests: 24 Tests, ALLE 14 Angriffe als Replays, strikte Invarianten
+  (I2 ohne Nachbildung der Produktiv-Formel — die alte Assertion hatte
+  den +2-Fehler geerbt und war blind), 48h-Fuzz mit Neustarts ueber
+  9 Seeds, Legitimitaets-Regression (echtes Ticken blockiert nie).
+
 ## 1.7.35
 
 - DER 358914-VORFALL (28.07. ~09:40): Der Stand sprang von 35891 auf

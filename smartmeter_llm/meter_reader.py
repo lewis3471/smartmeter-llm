@@ -222,6 +222,20 @@ KWH_MAX_RATE_KWH_H = float(os.environ.get("KWH_MAX_RATE_KWH_H", "5.0"))
 # Stoerungen (Schattenwanderung, Reflexe) ueberleben keine 3 Minuten.
 REBASE_MIN_SPAN_S = float(os.environ.get("REBASE_MIN_SPAN_S", "180"))
 REBASE_MIN_COUNT = 4
+# KUMULATIVES PHYSIK-FENSTER: der Einzel-Deckel allein liess sich ratschen
+# (+1 je Re-Baseline alle 3 min = 20 kWh/h). Deshalb merkt sich kwh_hist
+# die akzeptierten Staende der letzten 6 h, und JEDER Anstieg muss auch
+# gegen jeden dieser Punkte unter Rate x Zeit + 1 bleiben.
+KWH_RATE_WINDOW_S = float(os.environ.get("KWH_RATE_WINDOW_S", str(6 * 3600)))
+# Blindflug-Deckel: aeltere Zeitstempel (RTC-Sprung, Uhr ohne NTP) duerfen
+# den Physik-Deckel nicht ins Unendliche oeffnen.
+KWH_ELAPSED_MAX_H = float(os.environ.get("KWH_ELAPSED_MAX_H", "72"))
+# LETZTER AUSWEG bei totem Gemini: ist der Stand verloren, der Boden
+# vergiftet und Gemini seit so vielen Stunden DURCHGEHEND ausgefallen
+# (nie widersprochen!), darf eine 4x ueber >=10 min konsistente lokale
+# Lesung mit deutlicher Segment-Bestaetigung die Basis setzen. Bewusst
+# laenger als die laengste beobachtete Schattenphase (~2 h am Morgen).
+GEMINI_DEAD_GRACE_H = float(os.environ.get("GEMINI_DEAD_GRACE_H", "6"))
 # Der Schiedsrichter darf RATEN VERWEIGERN: der Segment-Dekoder liefert pro
 # Zelle einen Log-Likelihood-Abstand zum zweitbesten Muster. Bei Ghost-
 # Fehllesungen (Phantom-Segmente in der Schattenzone) faellt der auf 0.03-0.09,
@@ -674,22 +688,47 @@ def read_meter(cycle: int = 0) -> tuple[dict, str]:
     return gemini_read(img), "gemini"
 
 
-def gemini_normalize(reading: dict) -> dict:
-    """Bekannten systematischen Gemini-Fehler reparieren: die kWh-Zeile hat
-    eine Nachkommastelle, die Gemini trotz Prompt-Verbot gern anhaengt
-    (28.07.: 35891.4 -> 358911/358913/358914 im Takt der Zehntel). Eine
-    7. Stelle wird abgeschnitten — ausser beim 8er-Segmenttest, der als
-    888888 erkennbar bleiben muss."""
-    kwh = reading["kwh"]
-    if (kwh > KWH_ABS_MAX and set(str(kwh)) != {"8"}
-            and kwh // 10 <= KWH_ABS_MAX):
-        print(f"Gemini-Nachkommastellen-Fix: {kwh} -> {kwh // 10}",
-              file=sys.stderr)
-        return {**reading, "kwh": kwh // 10}
-    return reading
+def witness_match(gem_kwh: int, kwh: int) -> bool:
+    """Zaehlt eine Gemini-Aussage als EXAKTE Bestaetigung des Kandidaten?
+
+    Frueher stand hier eine Normalisierung (kwh//10) direkt in
+    gemini_read — die wusch aber JEDEN 6-stelligen Geistermuell in
+    gueltige Staende (999999 -> 99999, 585870 -> 58587) und entzog dem
+    Struktur-Deckel genau die Faelle, fuer die er gebaut wurde. Deshalb:
+    Gemini-Lesungen bleiben ROH (der Struktur-Deckel verwirft sie als
+    Messung), und nur hier, beim Zeugen-Vergleich, wird die exakte
+    Nachkomma-Signatur anerkannt: 35891.4 -> "358914" bestaetigt den
+    Kandidaten 35891, weil gem == kandidat*10 + zehntel. Jede andere
+    Beziehung ist keine Bestaetigung."""
+    if gem_kwh == kwh:
+        return True
+    if (gem_kwh > KWH_ABS_MAX and set(str(gem_kwh)) != {"8"}
+            and gem_kwh // 10 == kwh):
+        print(f"Gemini-Zeuge per Nachkomma-Signatur: {gem_kwh} "
+              f"bestaetigt {kwh}", file=sys.stderr)
+        return True
+    return False
+
+
+_gemini_err_since: float | None = None
 
 
 def gemini_read(img: bytes) -> dict:
+    """Bild von Gemini lesen lassen; protokolliert Dauer-Ausfaelle.
+    Wirft Exception bei Fehler. WICHTIG: ein WIDERSPRUCH (andere Zahl)
+    ist kein Ausfall — nur echte Fehler zaehlen fuer den Notausweg."""
+    global _gemini_err_since
+    try:
+        r = _gemini_read_raw(img)
+        _gemini_err_since = None
+        return r
+    except Exception:
+        if _gemini_err_since is None:
+            _gemini_err_since = time.time()
+        raise
+
+
+def _gemini_read_raw(img: bytes) -> dict:
     """Bild von Gemini lesen lassen. Wirft Exception bei Fehler."""
     body = {
         "contents": [{
@@ -762,7 +801,7 @@ def gemini_read(img: bytes) -> dict:
         data.get("w"), (int, float)
     ):
         raise ValueError(f"Gemini-Antwort unvollstaendig: {data}")
-    reading = gemini_normalize({"kwh": int(data["kwh"]), "w": int(data["w"])})
+    reading = {"kwh": int(data["kwh"]), "w": int(data["w"])}
     if SAVE_SAMPLES_DIR:
         d = Path(SAVE_SAMPLES_DIR) / time.strftime("%Y%m%d")
         d.mkdir(parents=True, exist_ok=True)
@@ -921,6 +960,67 @@ def w_second_opinion(w: int) -> bool:
         return False
 
 
+def kwh_rate_ok(state: dict, new_kwh: int) -> bool:
+    """KUMULATIVES Physik-Fenster: new_kwh muss gegen JEDEN akzeptierten
+    Stand der letzten 6 h unter Rate x Zeit + 1 bleiben. Der Einzel-Deckel
+    in rebaseline liess sich sonst ratschen (+1 alle 3 min = 20 kWh/h)."""
+    now = time.time()
+    hist = state.setdefault("kwh_hist", [])
+    while hist and now - hist[0][0] > KWH_RATE_WINDOW_S:
+        hist.pop(0)
+    for ts0, k0 in hist:
+        if new_kwh - k0 > KWH_MAX_RATE_KWH_H * (now - ts0) / 3600 + 1:
+            return False
+    return True
+
+
+def kwh_hist_push(state: dict, kwh: int) -> None:
+    hist = state.setdefault("kwh_hist", [])
+    if not hist or hist[-1][1] != kwh:
+        hist.append([time.time(), kwh])
+        del hist[:-100]
+
+
+def local_escape(reading: dict, state: dict, source: str) -> bool:
+    """LETZTER Ausweg aus einem vergifteten Boden (Stand verloren, Basis-
+    Fenster passt nicht, Gemini als Zeuge nicht verfuegbar): NUR wenn
+    Gemini seit >= GEMINI_DEAD_GRACE_H durchgehend AUSGEFALLEN ist (ein
+    Widerspruch zaehlt nicht als Ausfall!), das lokale kNN den Kandidaten
+    4x ueber >= 10 min konsistent liest UND der Segment-Dekoder ihn mit
+    deutlicher Marge stuetzt. Ohne diesen Pfad stand das System im
+    Deadlock-Szenario 72 h simuliert im Failsafe, obwohl beide lokalen
+    Verfahren sich einig waren. Die Grace-Zeit liegt bewusst ueber der
+    laengsten beobachteten Schattenphase (~2 h) — waehrend des Morgen-
+    schattens antwortet Gemini ausserdem (Widerspruch), was den Pfad
+    sofort schliesst."""
+    kwh = reading["kwh"]
+    if kwh > KWH_ABS_MAX or kwh <= 0 or not source.startswith("local"):
+        return False
+    if (_gemini_err_since is None
+            or time.time() - _gemini_err_since < GEMINI_DEAD_GRACE_H * 3600):
+        return False
+    esc = state.setdefault("esc_counts", {})
+    n, first = esc.get(kwh, (0, time.time()))
+    esc[kwh] = (n + 1, first)
+    if len(esc) > 20:
+        state["esc_counts"] = esc = {kwh: esc[kwh]}
+    n, first = esc[kwh]
+    if n < REBASE_MIN_COUNT or time.time() - first < 600:
+        return False
+    best, margin = seg_decide(kwh, kwh + 1)
+    if best != kwh or margin < 1.0:
+        return False
+    print(f"NOTAUSWEG: Gemini seit "
+          f"{(time.time() - _gemini_err_since) / 3600:.1f}h tot, lokal 4x "
+          f"konsistent {kwh} + Segment-Marge {margin:.2f} -> Basis gesetzt",
+          file=sys.stderr)
+    if SAVE_SAMPLES_DIR:
+        save_event(SAVE_SAMPLES_DIR, _last_snapshot, "local_escape",
+                   kwh=kwh, floor=state.get("kwh_floor"))
+    state["esc_counts"] = {}
+    return True
+
+
 def rebaseline(reading: dict, state: dict, source: str = "local") -> bool:
     """Kommt dieselbe 'unplausible' kWh-Lesung mehrfach in Folge, wird sie
     per Gemini verifiziert und bei Bestaetigung als neuer Stand akzeptiert.
@@ -975,7 +1075,7 @@ def rebaseline(reading: dict, state: dict, source: str = "local") -> bool:
         _last_gemini_call = time.time()
         try:
             gem = gemini_read(get_snapshot())
-            if gem["kwh"] == kwh:
+            if witness_match(gem["kwh"], kwh):
                 print(f"Re-Baseline (Senkung um {alt - kwh}): Gemini "
                       f"bestaetigt {kwh} -> akzeptiert")
                 return True
@@ -991,8 +1091,13 @@ def rebaseline(reading: dict, state: dict, source: str = "local") -> bool:
         # letzten akzeptierten Lesung hoechstens Zeit x Hausanschluss
         # gestiegen sein. Echte Ausfall-Heilung skaliert mit — ein
         # 10h-Ausfall erlaubt +52 kWh, ein Geistersprung nie.
-        elapsed_h = max(0.0, time.time() - state.get("kwh_ts", time.time())) / 3600
-        cap = alt + MAX_KWH_STEP + KWH_MAX_RATE_KWH_H * elapsed_h + 2
+        elapsed_h = min(KWH_ELAPSED_MAX_H, max(
+            0.0, time.time() - state.get("kwh_ts", time.time())) / 3600)
+        # KEIN konstanter Schlupf (+2 war ein Konstruktionsfehler: er
+        # dominierte den Deckel im Normalbetrieb und erlaubte eine
+        # +3-Ratsche alle 3 min = 60 kWh/h). Im laufenden Betrieb ist
+        # elapsed winzig -> Deckel = alt+1; nur echter Blindflug oeffnet ihn.
+        cap = alt + max(MAX_KWH_STEP, KWH_MAX_RATE_KWH_H * elapsed_h)
         if kwh > cap:
             print(f"Re-Baseline VERBOTEN: {kwh} laege {kwh - alt} kWh ueber "
                   f"Stand {alt} — physikalisch unmoeglich in {elapsed_h:.1f}h "
@@ -1003,13 +1108,15 @@ def rebaseline(reading: dict, state: dict, source: str = "local") -> bool:
                 save_event(SAVE_SAMPLES_DIR, _last_snapshot, "rate_veto",
                            stored=alt, rejected=kwh, elapsed_h=round(elapsed_h, 2))
             return False
-    if alt is not None and alt != kwh:
+    if alt is not None and alt != kwh and kwh <= alt + MAX_KWH_STEP:
         # Zwei getrennte Fragen ans Bild, beide muessen JA sagen:
         #   1. Wird der alte Stand widerlegt? (Hypothesentest liefert None)
         #   2. Wird der neue gestuetzt?
         # Der blosse Vergleich alt-gegen-neu reicht nicht — die Marge
         # zwischen zwei Kandidaten sagt nichts darueber, ob ueberhaupt
-        # einer davon zum Bild passt.
+        # einer davon zum Bild passt. NUR fuer +1: groessere Sprunge
+        # brauchen IMMER den bild-fremden Zeugen (Gemini) — der Segment-
+        # Dekoder teilt die Optik des kNN und irrt mit ihm gemeinsam.
         alt_ok, _ = seg_decide(alt, alt + 1)
         neu, _ = seg_decide(kwh, kwh + 1)
         if alt_ok is None and neu == kwh:
@@ -1037,7 +1144,7 @@ def rebaseline(reading: dict, state: dict, source: str = "local") -> bool:
         except Exception as e:
             print(f"Re-Baseline Versuch {attempt}: {e}", file=sys.stderr)
             continue
-        if gem["kwh"] != kwh:
+        if not witness_match(gem["kwh"], kwh):
             print(f"Re-Baseline abgelehnt: Gemini liest {gem['kwh']}, "
                   f"nicht {kwh}", file=sys.stderr)
             return False
@@ -1062,15 +1169,27 @@ def guard_kwh(reading: dict, source: str, state: dict) -> tuple[dict, str]:
             and ("rückläufig" in reason or "kWh-Sprung" in reason)):
         seg_kwh = seg_confirm(state["kwh"],
                               state["kwh"] + MAX_KWH_STEP, state)
-        if seg_kwh is not None:
+        if seg_kwh is not None and seg_kwh <= KWH_ABS_MAX:
+            # seg_kwh <= Deckel: bei Stand 99999 darf der Schiedsrichter
+            # kein 100000 hineinreichen (einziger Pfad, der den Struktur-
+            # Deckel umgehen konnte). Und der ersetzte Wert entbindet
+            # NICHT von der W-Pruefung — plausible() hatte wegen des
+            # kWh-Kurzschlusses den W-Kanal noch nie gesehen.
             print(f"Seg-Schiedsrichter: kWh {reading['kwh']} "
                   f"verworfen, Segment-Dekoder bestaetigt {seg_kwh}")
             reading = {**reading, "kwh": seg_kwh}
-            reason = None
+            reason = _plausible_w(reading["w"], state)
             source += " (seg)"
-    if reason and ("rückläufig" in reason or "Sprung" in reason):
+    if reason and ("rückläufig" in reason or "kWh-Sprung" in reason):
+        # NUR kWh-Gruende duerfen den kWh-Re-Baseline anstossen. Der blosse
+        # Teilstring "Sprung" matchte auch die W-Kanal-Gruende ("Sprung
+        # +8675 W > 5000 W") — dann bestaetigte Gemini den (korrekten,
+        # unveraenderten) kWh-Stand und gab damit den GEISTER-W frei:
+        # exakt die Kanaltrennungs-Luecke vom 26.07., andere Richtung.
         if rebaseline(reading, state, source):
-            reason = None
+            # Auch hier: der kWh-Kurzschluss in plausible() hat den
+            # W-Kanal dieses Frames nie geprueft — nachholen.
+            reason = _plausible_w(reading["w"], state)
             source += " (re-baseline)"
     if reason:
         raise ValueError(f"verworfen: {reason}")
@@ -1089,60 +1208,121 @@ def guard_kwh(reading: dict, source: str, state: dict) -> tuple[dict, str]:
         else:
             state.pop("kwh_pend", None)
             state.pop("kwh_pend_n", None)
+    global _last_gemini_call
     floor = state.get("kwh_floor")
     if state.get("kwh") is None and floor is not None:
         # BASIS-FENSTER nach Stand-Verlust (Watchdog / korrupter State):
         # die neue Basis muss zwischen Monotonie-Boden und Physik-Deckel
-        # liegen. Ausserhalb bleibt nur der volle Re-Baseline-Weg (4x
-        # konsistent ueber 3 Minuten + Gemini exakt) — der einzige Ausweg
-        # aus einem je vergifteten Boden, bewusst teuer.
-        el_h = max(0.0, time.time() - state.get("kwh_floor_ts",
-                                                time.time())) / 3600
-        cap = floor + KWH_HEAL_MAX + KWH_MAX_RATE_KWH_H * el_h + 2
+        # liegen. Ausserhalb bleibt der volle Re-Baseline-Weg (4x
+        # konsistent ueber 3 Minuten + Gemini doppelt-exakt) — bzw. bei
+        # lange totem Gemini der enge Notausweg. KEIN konstanter Schlupf:
+        # frisches Fenster ist [alter Stand - 1, alter Stand + 1].
+        el_h = min(KWH_ELAPSED_MAX_H, max(
+            0.0, time.time() - state.get("kwh_floor_ts", time.time())) / 3600)
+        cap = floor + KWH_HEAL_MAX + max(MAX_KWH_STEP,
+                                         KWH_MAX_RATE_KWH_H * el_h)
         if not (floor <= reading["kwh"] <= cap):
-            if rebaseline(reading, state, source):
+            if (rebaseline(reading, state, source)
+                    or local_escape(reading, state, source)):
                 source += " (re-baseline)"
+                state.pop("kwh_floor", None)   # Boden war falsch — weg,
+                state.pop("kwh_floor_ts", None)  # auch wenn Basis darunter
+                state.pop("kwh_lost", None)
             else:
                 raise ValueError(f"verworfen: Basis {reading['kwh']} "
                                  f"ausserhalb [{floor}, {cap:.0f}]")
+        elif (state.get("kwh_lost") is not None
+                and reading["kwh"] < state["kwh_lost"]):
+            # Unter dem letzten ECHTEN Stand (kwh_lost, vom Watchdog beim
+            # Freigeben gemerkt): das ist eine SENKUNG und braucht wie
+            # ueberall den bild-fremden Zeugen. Der Watchdog-Umweg
+            # (Freigabe -> Basis) war sonst eine -1-Tuer ohne Gemini —
+            # I1 gilt auch hier. Nach einer Korruptur-Heilung gibt es
+            # keinen echten alten Stand (kwh_lost fehlt) — dort ist der
+            # Boden selbst die beste Schaetzung und Lesungen darauf sind
+            # keine Senkung.
+            if time.time() - _last_gemini_call < GEMINI_COOLDOWN_S:
+                raise ValueError(f"Basis {reading['kwh']} unter altem "
+                                 f"Stand — warte auf Gemini-Zeugen")
+            _last_gemini_call = time.time()
+            gem = gemini_read(get_snapshot())   # Fehler -> Frame verworfen
+            if not witness_match(gem["kwh"], reading["kwh"]):
+                raise ValueError(f"Basis-Senkung {reading['kwh']}: Gemini "
+                                 f"liest {gem['kwh']} — verworfen")
     if state.get("kwh") is None and "re-baseline" not in source:
-        # Auch die frische Basis braucht ZWEI uebereinstimmende Lesungen —
-        # ein einzelner Geister-Frame direkt nach Stand-Verlust setzte
-        # sonst den Anker (23.07.: 8443 statt 443 beim Erststart).
-        if state.get("base_pend") == reading["kwh"]:
-            state["base_pend_n"] = state.get("base_pend_n", 1) + 1
-        else:
-            state["base_pend"], state["base_pend_n"] = reading["kwh"], 1
-        if state["base_pend_n"] < 2:
-            raise ValueError(f"Basis {reading['kwh']} braucht zweite Lesung")
+        # Frische Basis braucht uebereinstimmende Lesungen JE KANDIDAT
+        # (der alte Direktvergleich blockierte bei strenger Alternation
+        # 35891/35892 fuer immer). Mit Boden: 2 Lesungen im gedeckelten
+        # Fenster. OHNE Boden (echter Erststart, kein Anker): 4 Lesungen
+        # ueber >= 60 s — ein einzelner Geister-Frame setzte sonst den
+        # Anker (23.07.: 8443 statt 443).
+        pend = state.setdefault("base_pend", {})
+        n, first = pend.get(reading["kwh"], (0, time.time()))
+        pend[reading["kwh"]] = (n + 1, first)
+        if len(pend) > 20:
+            state["base_pend"] = pend = {reading["kwh"]: pend[reading["kwh"]]}
+        n, first = pend[reading["kwh"]]
+        need_n, need_s = (2, 0.0) if floor is not None else (4, 60.0)
+        if n < need_n or time.time() - first < need_s:
+            raise ValueError(f"Basis {reading['kwh']} braucht "
+                             f"Bestaetigung ({n}/{need_n})")
         state.pop("base_pend", None)
-        state.pop("base_pend_n", None)
     if (state.get("kwh") is not None
             and reading["kwh"] < state["kwh"] - KWH_HEAL_MAX):
         # Darf hier nie ankommen — Notbremse, falls je wieder ein
         # Heilpfad an der Plausibilitaet vorbeifuehrt
         raise ValueError(f"verworfen: Monotonie-Notbremse "
                          f"({state['kwh']} -> {reading['kwh']})")
+    if not kwh_rate_ok(state, reading["kwh"]):
+        # Kumulatives 6h-Fenster: faengt Ratschen, die jeden Einzel-
+        # Deckel einzeln unterlaufen (Re-Baseline-Ketten, Watchdog-Pumpe)
+        raise ValueError(f"verworfen: Physik-Fenster verletzt "
+                         f"({reading['kwh']} zu schnell gestiegen)")
+    kwh_hist_push(state, reading["kwh"])
     if reading["kwh"] >= (state.get("kwh_floor") or 0):
         state.pop("kwh_floor", None)
         state.pop("kwh_floor_ts", None)
+        state.pop("kwh_lost", None)
     return reading, source
 
 
 def load_state() -> dict:
-    """State laden und strukturell heilen. Ein Stand > KWH_ABS_MAX in
-    state.json (28.07.: 358914) ist Korruption — er wird verworfen und die
-    plausibelste Ableitung (Ziffern von rechts abschneiden) als BODEN
-    gesetzt: die Kamera setzt den exakten Stand neu, aber nie darunter."""
+    """State laden und strukturell heilen.
+
+    Persistiert wird ALLES, was die Monotonie schuetzt: Stand, Zeitstempel,
+    Monotonie-Boden und das 6h-Physik-Fenster. Bis 1.7.35 ueberlebte der
+    Boden keinen Neustart ({"kwh": null} -> leerer State) — danach war der
+    Stand mit zwei Lesungen frei waehlbar. Zeitstempel aus der Zukunft
+    werden verworfen (RTC-Sprung/NTP), sonst degradiert der Physik-Deckel.
+
+    Ein Stand > KWH_ABS_MAX (28.07.: 358914) ist Korruption — er wird
+    verworfen und die plausibelste Ableitung (Ziffern von rechts
+    abschneiden) als BODEN gesetzt: die Kamera setzt den exakten Stand
+    neu, aber nie darunter."""
     state: dict = {}
     if STATE_FILE.exists():
         try:
             raw = json.loads(STATE_FILE.read_text())
-            if isinstance(raw.get("kwh"), int):
-                state = {"kwh": raw["kwh"],
-                         "kwh_ts": raw.get("ts") or time.time()}
         except (ValueError, OSError):
-            state = {}
+            raw = {}
+        now = time.time()
+
+        def _ts(v):
+            return v if isinstance(v, (int, float)) and v <= now else now
+
+        if isinstance(raw.get("kwh"), int):
+            state = {"kwh": raw["kwh"], "kwh_ts": _ts(raw.get("ts"))}
+        if isinstance(raw.get("floor"), int) and raw["floor"] <= KWH_ABS_MAX:
+            state["kwh_floor"] = raw["floor"]
+            state["kwh_floor_ts"] = _ts(raw.get("floor_ts"))
+            if isinstance(raw.get("lost"), int):
+                state["kwh_lost"] = raw["lost"]
+        hist = raw.get("hist")
+        if isinstance(hist, list):
+            state["kwh_hist"] = [
+                [_ts(t), k] for t, k in hist
+                if isinstance(t, (int, float)) and isinstance(k, int)
+                and 0 < k <= KWH_ABS_MAX][-100:]
     k = state.get("kwh")
     if k is not None and k > KWH_ABS_MAX:
         heal = k
@@ -1791,7 +1971,8 @@ def main(once: bool = False):
           f"Floor {SUSTAIN_FLOOR_W}W, max {MAX_LIMIT_W}W")
     publish_discovery()
     w_hist: list[int] = []  # Median-3: einzelner Ausreisser-Frame regelt nicht
-    last_written_kwh = state.get("kwh")
+    last_written_kwh = (state.get("kwh"), state.get("kwh_floor"))
+    last_write_ts = time.time()
     while True:
         limit = None
         try:
@@ -1802,8 +1983,11 @@ def main(once: bool = False):
             # SEG_WATCH_EVERY Zyklen prueft der unabhaengige Segment-Dekoder
             # den akzeptierten Stand gegen. Widerspricht er mehrfach, wird
             # der Stand verworfen statt still weiterzulaufen.
-            if (state.get("kwh") is not None
+            if (state.get("kwh") is not None and _local_reader is not None
                     and state["cycle"] % SEG_WATCH_EVERY == 0):
+                # _local_reader-Check: ohne lokalen Leser liefert seg_decide
+                # bedingungslos (None, 0.0) — der Watchdog haette dann im
+                # Gemini-Modus alle 600 Zyklen grundlos den Stand freigegeben
                 best, _ = seg_decide(state["kwh"], state["kwh"] + 1)
                 if best is None:      # Bild stuetzt den Stand ueberhaupt nicht
                     state["seg_warn"] = state.get("seg_warn", 0) + 1
@@ -1816,6 +2000,7 @@ def main(once: bool = False):
                               file=sys.stderr)
                         state["kwh_floor"] = state["kwh"] - KWH_HEAL_MAX
                         state["kwh_floor_ts"] = time.time()
+                        state["kwh_lost"] = state["kwh"]
                         state["kwh"] = None
                         state["seg_warn"] = 0
                         state["rb_counts"] = {}
@@ -1865,13 +2050,20 @@ def main(once: bool = False):
                 # Einzelne verworfene Frames (Segmenttest-Rotation) sind
                 # normal — erst anhaltende Fehler als "retry" melden
                 publish(None, "retry", None)
-        if state.get("kwh") != last_written_kwh:
-            # kWh + Zeitstempel persistieren: der Stempel macht den
-            # Physik-Deckel ueber Neustarts hinweg wirksam (ohne ihn
-            # waere "wie lange waren wir blind" nach Restart unbekannt)
+        # Persistiert wird alles Monotonie-Relevante — bei Aenderung von
+        # Stand ODER Boden, und sonst alle 15 min, damit der Zeitstempel
+        # frisch bleibt (ein ts von der letzten AENDERUNG blaehte den
+        # Physik-Deckel nach Neustart um Stunden auf).
+        written = (state.get("kwh"), state.get("kwh_floor"))
+        if written != last_written_kwh or time.time() - last_write_ts > 900:
             STATE_FILE.write_text(json.dumps(
-                {"kwh": state.get("kwh"), "ts": state.get("kwh_ts")}))
-            last_written_kwh = state.get("kwh")
+                {"kwh": state.get("kwh"), "ts": state.get("kwh_ts"),
+                 "floor": state.get("kwh_floor"),
+                 "floor_ts": state.get("kwh_floor_ts"),
+                 "lost": state.get("kwh_lost"),
+                 "hist": state.get("kwh_hist", [])}))
+            last_written_kwh = written
+            last_write_ts = time.time()
         maybe_retrain(state)
         if state["cycle"] % 100 == 0:  # ~alle 1-2min nach neuem Modell schauen
             maybe_reload_model()
