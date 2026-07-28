@@ -75,6 +75,7 @@ class World:
         self.seg_confirm = lambda lo, hi, st: None
         self.gemini_calls = 0
         mr._gemini_err_since = None
+        mr._gemini_ok_ts = None
 
     def gemini_read(self, img):
         self.gemini_calls += 1
@@ -133,17 +134,9 @@ def step(state, kwh, w=400, source="local c=0.97", dt=1.5):
     return True, src
 
 
-def persist(state):
-    """Exakt das Persist-Format des Hauptloops."""
-    _state_tmp.write_text(json.dumps(
-        {"kwh": state.get("kwh"), "ts": state.get("kwh_ts"),
-         "floor": state.get("kwh_floor"),
-         "floor_ts": state.get("kwh_floor_ts"),
-         "hist": state.get("kwh_hist", [])}))
-
-
 def restart(state):
-    persist(state)
+    """Genau der Produktiv-Weg: save_state (atomar) + load_state."""
+    mr.save_state(state)
     return mr.load_state()
 
 
@@ -378,26 +371,27 @@ def legit_ticken_wird_nie_blockiert():
 
 @test
 def angriff_plus1_ratsche_wird_gedeckelt():
-    """Angriff #1/#8: die +3-Ratsche ist tot (Seg-Pfad nur noch +1, kein
-    +2-Schlupf). Und selbst eine perfekte +1-Geister-Ratsche alle 3 min
-    (20 kWh/h) laeuft ins kumulative 6h-Fenster: mehr als Rate x Zeit + 1
-    geht nicht — egal wie boesartig die Zeugen sind."""
+    """Angriff #1/#8: OHNE bild-fremden Zeugen geht ueber +1 hinaus GAR
+    NICHTS (Seg-Pfad ist auf +1 begrenzt). Und selbst mit maximal
+    boesartigen Zeugen bleibt jede Ratsche im kumulativen Physik-Fenster
+    (Rate x Zeit + 1) — I2k wird in step() bei jedem Akzept geprueft."""
     W.reset()
     start = 35891
     st = fresh_state(start)
+    # Phase 1: Gemini TOT, boesartiger Seg-Dekoder -> +3 darf NIE durch
+    W.gemini = None
     W.seg_decide = lambda *c: ((c[0], 9.9) if c and c[0] != st.get("kwh")
                                else (None, 0.0))
-    W.gemini = lambda: {"kwh": (st.get("kwh") or 0) + 3, "w": 400}
-    for _ in range(1200):                               # +3-Ratsche: nie
+    for _ in range(1200):
         ok, _ = step(st, st["kwh"] + 3)
-        assert not ok
+        assert not ok, "+3 ohne bild-fremden Zeugen akzeptiert"
     assert st["kwh"] == start
-    # +1-Ratsche: einzeln nicht unterscheidbar von echtem Tick, aber
-    # kumulativ hart gedeckelt (I2k wird in step() ohnehin geprueft)
-    W.gemini = lambda: {"kwh": (st.get("kwh") or 0) + 1, "w": 400}
+    # Phase 2: boesartiger Gemini bestaetigt jede Ratschen-Sprosse ->
+    # kumulativ trotzdem hoechstens Rate x Zeit + 1
+    W.gemini = lambda: {"kwh": (st.get("kwh") or 0) + 3, "w": 400}
     t0 = FT.now
     for _ in range(int(6 * 3600 / 10)):
-        step(st, st["kwh"] + 1, dt=10)
+        step(st, st["kwh"] + 3, dt=10)
     rise = st["kwh"] - start
     hours = (FT.now - t0) / 3600
     assert rise <= RATE * hours + 2, f"Ratsche: +{rise} in {hours:.1f}h"
@@ -562,24 +556,34 @@ def angriff_deadlock_hat_notausweg():
 
 @test
 def angriff_zeitstempel_manipulation():
-    """Angriff #13: ts aus der Zukunft oder Uralt-ts darf den Physik-
-    Deckel nicht oeffnen. Zukunft -> auf jetzt geklemmt; Vergangenheit
-    -> auf 72 h gedeckelt."""
+    """Angriff #13 + Runde 3 #2: Zeitstempel-Spielereien duerfen den
+    Physik-Deckel nicht oeffnen. Zukunfts-ts -> elapsed 0 (KEINE Lade-
+    Klemme mehr: die riss bei nachgehender Boot-Uhr nach dem NTP-Sprung
+    den Deckel auf). Uralt-ts -> 72-h-Deckel."""
     W.reset()
     _state_tmp.write_text(json.dumps({"kwh": 35891, "ts": FT.now + 9e6}))
     st = mr.load_state()
-    assert st["kwh_ts"] <= FT.now                       # Zukunft geklemmt
     W.gemini = {"kwh": 35941, "w": 400}
     for _ in range(600):
         ok, _ = step(st, 35941)                         # +50 "nach Ausfall"
         assert not ok, "Zukunfts-ts oeffnete den Deckel"
-    # Uralt-ts: Deckel auf 72 h begrenzt -> +400 bleibt verboten
+    # Nachgehende Boot-Uhr: korrekter ts liegt scheinbar 1 h in der
+    # Zukunft; dann springt NTP vor. elapsed bleibt klein -> +50 verboten
+    W.reset()
+    _state_tmp.write_text(json.dumps({"kwh": 35891, "ts": FT.now + 3600}))
+    st = mr.load_state()
+    FT.now += 3700                                      # NTP-Sprung vor
+    W.gemini = {"kwh": 35941, "w": 400}
+    for _ in range(600):
+        ok, _ = step(st, 35941)
+        assert not ok, "NTP-Sprung oeffnete den Deckel"
+    # Uralt-ts: Deckel auf 72 h begrenzt -> +2000 bleibt verboten
     W.reset()
     st = fresh_state(35891, kwh_ts=FT.now - 90 * 24 * 3600)
-    W.gemini = {"kwh": 36291, "w": 400}
+    W.gemini = {"kwh": 37891, "w": 400}
     for _ in range(600):
-        ok, _ = step(st, 36291)
-        assert not ok, "Uralt-ts erlaubte +400"
+        ok, _ = step(st, 37891)
+        assert not ok, "Uralt-ts erlaubte +2000"
     assert st["kwh"] == 35891
 
 
@@ -650,6 +654,143 @@ def fuzz_adversarial_48h_mit_neustarts():
     drift = abs((st.get("kwh") or 0) - int(truth))
     assert st.get("kwh") is not None and drift <= 3, (
         f"Drift {drift} kWh (Stand {st.get('kwh')}, Wahrheit {int(truth)})")
+
+
+@test
+def legit_wallbox_blockiert_nie():
+    """Runde 3 #3/#8: eine 11-kW-Wallbox-Nachtladung (4 h) ist LEGITIM —
+    mit dem alten 5-kWh/h-Deckel fror die Regelung 5,9 h im Failsafe ein.
+    Jetzt: kein einziger verworfener Frame, Stand folgt der Wahrheit."""
+    W.reset()
+    truth = 35891.0
+    st = fresh_state(35891)
+    W.gemini = lambda: {"kwh": int(truth), "w": 400}
+    for i in range(int(6 * 3600 / 10)):
+        truth += (11.0 if i < 4 * 360 else 1.0) * 10 / 3600
+        ok, _ = step(st, int(truth), dt=10)
+        assert ok, f"legitime Wallbox-Lesung {int(truth)} blockiert"
+    assert abs(st["kwh"] - int(truth)) <= 1
+
+
+@test
+def angriff_boden_ueberlebt_rate_veto():
+    """Runde 3 #1/#6/#10: das Physik-Fenster prueft VOR allen Seiten-
+    effekten. Ein per Nachkomma-Signatur 'bestaetigter' Geist (585870 ->
+    58587) darf weder Boden/kwh_lost vernichten noch Gemini-Aufrufe
+    verbrennen — der Frame stirbt am Fenster, der Zustand bleibt."""
+    W.reset()
+    st = fresh_state(35891)
+    step(st, 35891)                                     # frischer Anker
+    watchdog_free(st)
+    W.gemini = {"kwh": 585870, "w": 400}                # Signatur-Geist
+    for _ in range(300):
+        ok, _ = step(st, 58587)
+        assert not ok
+    assert st.get("kwh_floor") == 35890, "Boden vom Rate-Veto vernichtet"
+    assert st.get("kwh_lost") == 35891
+    assert W.gemini_calls == 0, "Gemini-Aufrufe trotz Physik-Veto"
+    ok1, _ = step(st, 35891)
+    ok2, _ = step(st, 35891)
+    assert ok2 and st["kwh"] == 35891                   # echte Basis ok
+
+
+@test
+def flaky_gemini_heilt_trotzdem():
+    """Runde 3 #9: ein sporadisch erreichbarer Gemini (Quota) heilte NIE,
+    weil 2 Bestaetigungen im selben Zyklus fallen mussten und jeder
+    Fehler den 4x/180s-Konsens loeschte. Jetzt akkumulieren Konsens und
+    Bestaetigungen ueber Zyklen (30-min-Fenster)."""
+    W.reset()
+    st = {"kwh_floor": 58587, "kwh_floor_ts": FT.now}   # vergifteter Boden
+    calls = {"n": 0}
+
+    def flaky():
+        calls["n"] += 1
+        if calls["n"] % 2 == 0:                         # jede 2. klappt
+            return {"kwh": 35891, "w": 400}
+        raise RuntimeError("429 quota")
+
+    W.gemini = flaky
+    healed_at = None
+    t0 = FT.now
+    for _ in range(2000):
+        ok, _ = step(st, 35891, dt=10)
+        if ok:
+            healed_at = FT.now
+            break
+    assert healed_at is not None, "flakiger Gemini heilte nie"
+    assert healed_at - t0 < mr.GEMINI_DEAD_GRACE_H * 3600, (
+        "Heilung kam erst ueber den Notausweg statt ueber den Zeugen")
+    assert st["kwh"] == 35891
+
+
+@test
+def neustart_sturm_verhindert_heilung_nicht():
+    """Runde 3 #11: Neustarts alle 60 s (Supervisor-Watchdog-Schleife)
+    setzten die 180s-Re-Baseline-Uhr ewig zurueck — Ausfall-Heilung
+    strukturell unmoeglich. Jetzt ueberleben die Konsens-Zaehler in
+    state.json."""
+    W.reset()
+    st = fresh_state(35891, kwh_ts=FT.now - 6 * 3600)   # 6h-Ausfall
+    W.gemini = {"kwh": 35904, "w": 400}
+    healed_at = None
+    t0 = FT.now
+    for i in range(1200):
+        ok, _ = step(st, 35904, dt=1.5)
+        if ok:
+            healed_at = FT.now
+            break
+        if i % 40 == 39:                                # alle ~60 s Neustart
+            st = restart(st)
+    assert healed_at is not None, "Neustart-Sturm blockierte die Heilung"
+    assert healed_at - t0 < 1200, f"zu langsam: {healed_at - t0:.0f}s"
+    assert st["kwh"] == 35904
+
+
+@test
+def w_kanal_regelt_bei_kwh_veto_weiter():
+    """Runde 3 #12: ein kWh-Veto ist kein blinder Zaehler — der gesunde
+    W-Wert des Frames darf weiterregeln (w_salvage)."""
+    W.reset()
+    st = fresh_state(35891, w=400)
+    assert mr.w_salvage("verworfen: kWh-Sprung (35891 -> 35941)",
+                        {"kwh": 35941, "w": 450}, dict(st))
+    assert mr.w_salvage("verworfen: Physik-Fenster verletzt (x)",
+                        {"kwh": 35941, "w": 380}, dict(st))
+    assert mr.w_salvage("Basis 35891 braucht Bestaetigung (1/2)",
+                        {"kwh": 35891, "w": 420}, dict(st))
+    # Frame-Muell oder kaputter W-Kanal: nichts zu retten
+    assert not mr.w_salvage("LCD-Segmenttest (alles 8er)",
+                            {"kwh": 888888, "w": 888888}, dict(st))
+    assert not mr.w_salvage("verworfen: kWh-Sprung (x)", None, dict(st))
+    assert not mr.w_salvage("verworfen: kWh rückläufig (x)",
+                            {"kwh": 35879, "w": 9075}, dict(st))
+
+
+@test
+def notausweg_kennt_grenzen():
+    """Runde 3 #0/#5: der Notausweg ist keine Generalvollmacht — nie
+    zeugenlos unter den letzten echten Stand, nie ueber die Physik.
+    Nur die legitime -1 (und der Fall ohne kwh_lost) bleibt moeglich."""
+    W.reset()
+    st = fresh_state(35891)
+    watchdog_free(st)
+    mr._gemini_err_since = FT.now - 8 * 3600            # Gemini lange tot
+    W.gemini = None
+    W.seg_decide = lambda *c: (c[0], 9.9)               # boesartig
+    for ziel in (35091, 3589, 39891, 95891):            # tief & hoch
+        for _ in range(600):
+            ok, _ = step(st, ziel, dt=10)
+            assert not ok, f"Notausweg liess {ziel} durch"
+    assert st.get("kwh") is None and st.get("kwh_floor") == 35890
+    # Legitime -1 (= lost - 1): geht ueber den Notausweg nach Reifung
+    accepted = False
+    for _ in range(600):
+        ok, _ = step(st, 35890, dt=10)
+        if ok:
+            accepted = True
+            break
+    assert accepted and st["kwh"] == 35890
 
 
 @test

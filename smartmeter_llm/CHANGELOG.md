@@ -1,5 +1,47 @@
 # Changelog
 
+## 1.7.37
+
+- 2. ANGRIFFSRUNDE (gegen 1.7.36, inkl. "Anwalt des Gutfalls"): 16
+  Befunde, 13 real bestaetigt — alle 13 gefixt. Die wichtigste Lehre:
+  Deckel duerfen nur PHYSIK kodieren, nie Gewohnheit.
+- Physik-Rate 5 -> 25 kWh/h (Hausanschluss 3x35A), Fenster prueft
+  weiter kumulativ: der alte 5er-Deckel (aus p99=2,2 abgeleitet) fror
+  bei einer 11-kW-Wallbox-Nachtladung die Regelung 5,9 h im Failsafe
+  ein — ausgerechnet in der teuersten Stunde. 358914 braeuchte auch
+  mit 25 noch 538 Tage.
+- Physik-Fenster prueft jetzt VOR allen Seiteneffekten: ein vom
+  Fenster verworfener Frame hatte vorher bereits Boden/kwh_lost
+  gepoppt, rb_counts geleert und Gemini-Aufrufe verbrannt — danach
+  war der Stand zeugenlos frei setzbar.
+- Notausweg (local_escape) mit harten Grenzen: nie unter kwh_lost-1
+  (nur ein rein abgeleiteter Korruptur-Boden darf unterschritten
+  werden), Physik-Deckel gilt auch hier, Zaehler verfallen nach
+  30 min Pause, und "Gemini tot" heisst jetzt ">= 6 h ohne einen
+  einzigen ERFOLG" (vorher setzte jede sporadische Antwort die Uhr
+  zurueck). Er war sonst eine zeugenlose Tuer: -800/-32302 und
+  +4000/+60000 kWh im Repro.
+- Flakiger Gemini heilt wieder: Zeugen-Bestaetigungen akkumulieren
+  ueber Zyklen (30-min-Fenster), Zeugen-FEHLER loeschen den
+  4x/180s-Konsens nicht mehr (nur ein WIDERSPRUCH tut das). Vorher
+  mussten 2 Bestaetigungen im selben Zyklus fallen — ein sporadisch
+  erreichbarer Gemini heilte NIE, schlechter als ein ganz toter.
+- Konsens-Zaehler (rb_counts, base_pend, esc_counts, rb_confirm)
+  werden persistiert: Neustarts alle < 3 min (Supervisor-Watchdog-
+  Schleife) machten jede Ausfall-Heilung strukturell unmoeglich.
+- state.json atomar (tmp + fsync + os.replace): ein SIGTERM mitten im
+  Write hinterliess leeres JSON und loeschte Boden + Fenster still.
+- ts-Klemme entfernt (sie ERZEUGTE ein Loch: nachgehende Boot-Uhr +
+  NTP-Sprung -> Deckel +360 kWh offen); stattdessen werden Zeit-
+  ABSTAENDE an der Verwendungsstelle auf >= 0 geklemmt — immer die
+  strengere Richtung.
+- W-Kanal regelt bei kWh-Veto weiter (w_salvage): ein blockierter
+  Zaehlerstand ist kein blinder Zaehler — vorher fiel die Regelung
+  bei jedem kWh-Tor-Stau in den Failsafe (Wallbox: 5,9 h bei 200 W).
+- Tests: 30 gruen, alle Runde-3-Angriffe als Replays + Gutfall-
+  Regressionen (Wallbox 11 kW, flakiger Gemini, Neustart-Sturm,
+  NTP-Sprung), 48h-Fuzz mit Neustarts ueber 9 Seeds.
+
 ## 1.7.36
 
 - ADVERSARIALER ANGRIFF AUF 1.7.35 (32 Agenten, 3 Angreifer + Einzel-
