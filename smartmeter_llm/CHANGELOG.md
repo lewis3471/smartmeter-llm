@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.34
+
+- Heilspielraum von 2 auf 1 kWh verengt (KWH_HEAL_MAX=1). Begruendung:
+  ein Aufwaertsschritt braucht zwei konsistente Lesungen von exakt
+  Stand+1, eine Geisterlesung kann den Stand also hoechstens um +1
+  vergiften — mehr Spielraum nach unten braucht es nie. Senkungen um 1
+  weiterhin nur mit Gemini-Bestaetigung; alles darueber bleibt absolut
+  verboten. Greift die -1-Heilung je faelschlich, korrigiert der normale
+  +1-Pfad binnen Minuten, weil der echte Zaehler dann +1 voraus ist
+
 ## 1.7.33
 
 - MONOTONIE-INVARIANTE, endgueltig: Der Zaehlerstand kann nie wieder um

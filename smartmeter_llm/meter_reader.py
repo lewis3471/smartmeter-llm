@@ -185,14 +185,20 @@ MIN_STEP_W = int(os.environ.get("MIN_STEP_W", "15"))
 MAX_KWH_STEP = 1
 # DIE MONOTONIE-INVARIANTE: Der Zaehler laeuft physikalisch NIE rueckwaerts.
 # Ein zu HOHER Stand kann nur durch akzeptierte +1-Schritte entstehen (jeder
-# doppelt bestaetigt), also ist er hoechstens um wenige kWh zu hoch — mehr
+# doppelt bestaetigt), also ist er hoechstens um +1 zu hoch — mehr
 # als KWH_HEAL_MAX nach unten zu "heilen" ist in JEDEM Fall ein Lesefehler,
 # egal wie viele Zeugen das Bild bestaetigen (28.07.: Morgenschatten loescht
 # Segment B der 9, kNN UND Segment-Dekoder lasen uebereinstimmend 35850
 # statt 35890 — dieselbe Optik ist kein unabhaengiger Zeuge). Senkungen
 # innerhalb von KWH_HEAL_MAX brauchen zwingend Gemini als bild-fremden
 # Zeugen; groessere Senkungen sind verboten. Punkt.
-KWH_HEAL_MAX = int(os.environ.get("KWH_HEAL_MAX", "2"))
+# Warum 1: ein Aufwaertsschritt braucht ZWEI konsistente Lesungen von exakt
+# Stand+1 — eine Geister-Fehllesung vergiftet also hoechstens +1. Fuer +2
+# muesste sich danach ein zweiter exakter Doppel-Fehler anschliessen,
+# waehrend das System bereits Alarm schlaegt (nie beobachtet). Und greift
+# die -1-Heilung je faelschlich, steht der echte Zaehler sofort +1 ueber
+# dem Stand und der normale +1-Pfad korrigiert binnen Minuten.
+KWH_HEAL_MAX = int(os.environ.get("KWH_HEAL_MAX", "1"))
 # Der Schiedsrichter darf RATEN VERWEIGERN: der Segment-Dekoder liefert pro
 # Zelle einen Log-Likelihood-Abstand zum zweitbesten Muster. Bei Ghost-
 # Fehllesungen (Phantom-Segmente in der Schattenzone) faellt der auf 0.03-0.09,
