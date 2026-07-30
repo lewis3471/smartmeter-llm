@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.7.42
+
+- BUGFIX (wichtig): Die V5-Antworten wurden nicht der Anfrage zugeordnet.
+  Der Logger liefert bei schnell aufeinanderfolgenden Verbindungen die
+  Antwort der VORHERIGEN Abfrage — nachgewiesen, als das Limit-Register
+  den Leistungswert meldete (2680 statt 100). Jetzt wird das Echo-Byte
+  geprueft (V5 echot die Anfrage-Sequenz im UNTEREN Byte, das obere ist
+  der eigene Zaehler des Loggers).
+- Modusunabhaengiges Lesen: erst Solarman V5 (Logger-Modus `cmd`,
+  Slave 1), sonst rohes Modbus RTU (Modus `throughput`, Slave 0xAA),
+  sonst HTML-Statusseite. Neue Option `deye_slave` (Standard 170).
+- Auf dem rohen Bus ermittelt: Der SUN600G3 antwortet auf Modbus-Adresse
+  **0xAA (170)**, nicht auf 1. Im throughput-Modus liegt ausserdem der
+  Eigenverkehr des Loggers auf dem Bus, deshalb wird jede Antwort per
+  Modbus-CRC validiert — ohne das wurden fremde Frames als eigene
+  Lesung uebernommen (0-Werte, Phantom-50,00 Hz).
+- ERGEBNIS DER MESSREIHE: Auch im throughput-Modus mit direktem
+  Buszugriff aktualisieren sich die Werte NICHT schneller (50,00 Hz und
+  172,0 W ueber 70 s CRC-validiert eingefroren). Der Engpass liegt also
+  nicht im Logger-Cache, sondern tiefer. Schnelleres Pollen bringt
+  nichts — der Regler bleibt bei der Netzleistung als Echtzeitquelle.
+
 ## 1.7.41
 
 - Deye-Auslesung laeuft jetzt primaer ueber MODBUS (Solarman V5, Port

@@ -163,6 +163,9 @@ DEYE_POLL_S = float(os.environ.get("DEYE_POLL_S", "60"))
 # Steht der Logger auf yz_tmode=throughput, ist NUR noch der Modbus-Pfad
 # moeglich (und dann echtzeitfaehig — DEYE_POLL_S darf runter auf 5).
 DEYE_LOGGER_SN = int(os.environ.get("DEYE_LOGGER_SN", "0") or 0)
+# Modbus-Slave-Adresse des Wechselrichters. Am 28.07. am rohen Bus
+# ermittelt: der SUN600G3 antwortet auf 0xAA (170), NICHT auf 1.
+DEYE_SLAVE = int(os.environ.get("DEYE_SLAVE", "170"))
 CAM_SNAPSHOT_URL = os.environ.get("CAM_SNAPSHOT_URL", "")  # Legacy-HTTP-Fallback
 OPENDTU_URL = os.environ["OPENDTU_URL"].rstrip("/")
 OPENDTU_AUTH = (os.environ["OPENDTU_USER"], os.environ["OPENDTU_PASS"])
@@ -1936,24 +1939,76 @@ def _mb_crc(d: bytes) -> int:
 _deye_seq = 0
 
 
-def deye_modbus(addr: int, count: int) -> list | None:
-    """Holding-Register ueber Solarman V5 (Port 8899) lesen.
+def _deye_rtu(addr: int, count: int) -> list | None:
+    """ROHES Modbus RTU — noetig, wenn der Logger auf yz_tmode=throughput
+    steht: dann ist Port 8899 eine reine Seriell-Bruecke ohne V5-Rahmen.
+    Auf dem Bus liegt auch der Eigenverkehr des Loggers, deshalb wird die
+    Antwort anhand von Slave-Adresse, Funktionscode UND Bytezahl gesucht."""
+    m = bytes([DEYE_SLAVE, 3]) + struct.pack('>HH', addr, count)
+    m += struct.pack('<H', _mb_crc(m))
+    n = count * 2
+    for _ in range(3):
+        s = socket.socket()
+        s.settimeout(4)
+        buf = b""
+        try:
+            s.connect((DEYE_HOST.split(":")[0], 8899))
+            try:
+                s.recv(256)
+            except Exception:
+                pass
+            s.sendall(m)
+            deadline = time.time() + 3
+            while time.time() < deadline:
+                chunk = s.recv(512)
+                if not chunk:
+                    break
+                buf += chunk
+                for i in range(max(0, len(buf) - (5 + n) + 1)):
+                    if (buf[i] == DEYE_SLAVE and buf[i + 1] == 3
+                            and buf[i + 2] == n):
+                        fr = buf[i:i + 3 + n + 2]
+                        if len(fr) < 3 + n + 2:
+                            continue
+                        # CRC ENTSCHEIDET: auf dem Bus liegt auch der
+                        # Eigenverkehr des Loggers. Ohne diese Pruefung
+                        # werden fremde Frames als eigene Antwort gelesen
+                        # (28.07.: 0-Werte und Phantom-50,00 Hz).
+                        if _mb_crc(fr[:-2]) != struct.unpack('<H', fr[-2:])[0]:
+                            continue
+                        d = fr[3:3 + n]
+                        return [struct.unpack('>H', d[j:j + 2])[0]
+                                for j in range(0, n - 1, 2)]
+        except Exception:
+            pass
+        finally:
+            s.close()
+    return None
 
-    Funktioniert in BEIDEN Logger-Modi: bei yz_tmode=cmd liefert der
-    Logger seinen ~5min alten Cache, bei yz_tmode=throughput geht die
-    Anfrage direkt an den Wechselrichter (dann echtzeitfaehig, und die
-    HTML-Statusseite fuehrt keine Daten mehr — deshalb ist Modbus der
-    primaere Pfad)."""
+
+def deye_modbus(addr: int, count: int) -> list | None:
+    """Holding-Register lesen — modusunabhaengig.
+
+    yz_tmode=cmd        -> Solarman V5, Slave 1, Logger-Cache (~5 min)
+    yz_tmode=throughput -> rohes RTU, Slave 0xAA, direkt am Bus
+    Erst V5 versuchen, dann RTU; was antwortet, gewinnt."""
+    v = _deye_v5(addr, count)
+    return v if v is not None else _deye_rtu(addr, count)
+
+
+def _deye_v5(addr: int, count: int) -> list | None:
+    """Solarman-V5-Rahmen (Logger im Modus cmd)."""
     global _deye_seq
-    _deye_seq = (_deye_seq + 1) & 0xFFFF
+    _deye_seq = (_deye_seq + 1) & 0xFF
+    want = _deye_seq
     mb = bytes([1, 3]) + struct.pack('>HH', addr, count)
     mb += struct.pack('<H', _mb_crc(mb))
     pl = bytes([0x02]) + bytes(14) + mb
     f = bytearray([0xA5]) + struct.pack('<H', len(pl)) + bytes([0x10, 0x45])
-    f += struct.pack('<H', _deye_seq) + struct.pack('<I', DEYE_LOGGER_SN) + pl
+    f += struct.pack('<H', want) + struct.pack('<I', DEYE_LOGGER_SN) + pl
     f += bytes([sum(f[1:]) & 0xFF, 0x15])
     s = socket.socket()
-    s.settimeout(6)
+    s.settimeout(5)
     try:
         s.connect((DEYE_HOST.split(":")[0], 8899))
         try:
@@ -1962,8 +2017,17 @@ def deye_modbus(addr: int, count: int) -> list | None:
             pass
         s.sendall(bytes(f))
         r = s.recv(1024)
+    except Exception:
+        return None              # z.B. Timeout -> Aufrufer probiert RTU
     finally:
         s.close()
+    # ANTWORT-ZUORDNUNG PRUEFEN: der Logger liefert bei schnell
+    # aufeinanderfolgenden Verbindungen sonst die Antwort der VORHERIGEN
+    # Abfrage — nachgewiesen am 28.07., als das Limit-Register den
+    # Leistungswert meldete. Die V5-Antwort echot die Anfrage-Sequenz im
+    # UNTEREN Byte (oberes = eigener Zaehler des Loggers).
+    if len(r) < 8 or r[0] != 0xA5 or r[5] != want:
+        return None
     i = r.find(b'\x01\x03')
     if i < 0 or len(r) < i + 3:
         return None

@@ -1,5 +1,5 @@
 name: Smartmeter LLM Nulleinspeisung
-version: "1.7.41"
+version: "1.7.42"
 slug: smartmeter_llm
 description: >-
   ESP32-Cam liest den Stromzähler (lokales OCR + Gemini-Fallback),
@@ -37,6 +37,7 @@ options:
   deye_user: admin
   deye_pass: admin
   deye_logger_sn: ""
+  deye_slave: 170
   log_level: error
   save_samples: true
   git_sync_enabled: false
@@ -68,6 +69,7 @@ schema:
   deye_user: str?
   deye_pass: password?
   deye_logger_sn: str?
+  deye_slave: int(1,247)?
   log_level: list(all|error|none)
   save_samples: bool
   git_sync_enabled: bool
