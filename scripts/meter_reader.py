@@ -1890,6 +1890,21 @@ def _get_mqtt():
         if MQTT_AUTH:
             c.username_pw_set(MQTT_AUTH["username"], MQTT_AUTH["password"])
         c.reconnect_delay_set(min_delay=1, max_delay=30)
+        if DEYE_HOST:
+            # Deye-Limit von HA aus setzbar (number-Entitaet). Der Aufruf
+            # laeuft im MQTT-Thread und darf den Regelzyklus nicht bremsen —
+            # deye_limit_set() haelt sich an kurze Timeouts.
+            def _on_msg(client, userdata, msg):
+                try:
+                    deye_limit_set(int(float(msg.payload.decode())))
+                except Exception as e:
+                    print(f"Deye-Limit-Befehl ungueltig: {e}", file=sys.stderr)
+
+            def _on_conn(client, userdata, flags, rc, props=None):
+                client.subscribe(f"{TOPIC}/deye_limit/set")
+
+            c.on_message = _on_msg
+            c.on_connect = _on_conn
         c.connect_async(MQTT_HOST, MQTT_PORT, keepalive=30)
         c.loop_start()
         _mqtt = c
@@ -1937,6 +1952,78 @@ def _mb_crc(d: bytes) -> int:
 
 
 _deye_seq = 0
+
+
+def deye_at(cmd: str, timeout: float = 6.0) -> str | None:
+    """Ein AT-Kommando an den Logger (Port 8899, EIN Kommando pro
+    Verbindung — mehrere hintereinander liefern die Antworten versetzt).
+
+    Der Logger begruesst mit AT+YZCMPVER=..., danach ist er fuer
+    AT-Kommandos offen. AT+INVDATA reicht einen Modbus-RTU-Frame an den
+    Wechselrichter DURCH — das ist der einzige Weg, der auch SCHREIBEN
+    kann (28.07. verifiziert; Modbus ueber V5 und ueber die rohe
+    Bruecke werden beide ignoriert)."""
+    s = socket.socket()
+    s.settimeout(timeout)
+    try:
+        s.connect((DEYE_HOST.split(":")[0], 8899))
+        try:
+            s.recv(256)                       # Begruessungsbanner
+        except Exception:
+            pass
+        s.sendall((cmd + "\r\n").encode())
+        end = time.time() + timeout
+        buf = b""
+        while time.time() < end:
+            ch = s.recv(1024)
+            if not ch:
+                break
+            buf += ch
+            if b"+ok=" in buf or b"+ERR" in buf:
+                break
+    except Exception:
+        return None
+    finally:
+        s.close()
+    t = buf.decode(errors="replace")
+    i = t.find("+ok=")
+    if i < 0:
+        return None
+    return t[i + 4:].strip().split()[0] if t[i + 4:].strip() else ""
+
+
+def _deye_invdata(frame: bytes) -> str | None:
+    return deye_at(f"AT+INVDATA={len(frame)},{frame.hex().upper()}")
+
+
+def deye_limit_get() -> int | None:
+    """Wirkleistungsbegrenzung in Prozent (Register 0x0028)."""
+    f = bytes([1, 3]) + struct.pack('>HH', 0x0028, 1)
+    for _ in range(3):
+        r = _deye_invdata(f + struct.pack('<H', _mb_crc(f)))
+        if r and r.startswith("010302") and len(r) >= 10:
+            try:
+                return int(r[6:10], 16)
+            except ValueError:
+                pass
+        time.sleep(0.8)
+    return None
+
+
+def deye_limit_set(pct: int) -> bool:
+    """Begrenzung setzen (0-100 %) und per Ruecklesen bestaetigen.
+    Wirkt ~2-3 min verzoegert, der Registerwert steht sofort."""
+    pct = max(0, min(100, int(pct)))
+    f = bytes([1, 0x10]) + struct.pack('>HHB', 0x0028, 1, 2)
+    f += struct.pack('>H', pct)
+    for _ in range(3):
+        _deye_invdata(f + struct.pack('<H', _mb_crc(f)))
+        time.sleep(1.5)
+        if deye_limit_get() == pct:
+            print(f"Deye-Limit auf {pct} % gesetzt")
+            return True
+    print(f"Deye-Limit {pct} % konnte nicht gesetzt werden", file=sys.stderr)
+    return False
 
 
 def _deye_rtu(addr: int, count: int) -> list | None:
@@ -2071,6 +2158,16 @@ def _deye_poll_once() -> dict | None:
             "total": num("webdata_total_e")}
 
 
+def _deye_poll_all() -> dict | None:
+    d = _deye_poll_once()
+    if d is None:
+        return None
+    lim = deye_limit_get()
+    if lim is not None:
+        d["limit"] = lim
+    return d
+
+
 def deye_start():
     """Hintergrund-Poller starten (nur wenn DEYE_HOST gesetzt ist)."""
     if not DEYE_HOST:
@@ -2081,7 +2178,7 @@ def deye_start():
         fails = 0
         while True:
             try:
-                _deye_cache = (time.time(), _deye_poll_once())
+                _deye_cache = (time.time(), _deye_poll_all())
                 fails = 0
             except Exception as e:
                 fails += 1
@@ -2122,6 +2219,8 @@ def publish(reading: dict | None, status: str, limit: int | None,
             msgs.append((f"{TOPIC}/deye_today", f"{dey['today']:.2f}"))
         if dey.get("total") is not None:
             msgs.append((f"{TOPIC}/deye_total", f"{dey['total']:.1f}"))
+        if dey.get("limit") is not None:
+            msgs.append((f"{TOPIC}/deye_limit", str(dey["limit"])))
     due = retrain_due()
     msgs += [(f"{TOPIC}/retrain_due", "ON" if due else "OFF"),
              (f"{TOPIC}/retrain_reason", due or "-")]
@@ -2192,7 +2291,20 @@ def publish_discovery():
                                  "device_class": "energy",
                                  "state_class": "total_increasing",
                                  "icon": "mdi:counter"}
-    msgs = [("homeassistant/binary_sensor/smartmeter_llm/retrain_due/config",
+    msgs = []
+    if DEYE_HOST:
+        # Regelbare Begrenzung als Schieberegler in HA (0-100 %)
+        msgs.append((
+            "homeassistant/number/smartmeter_llm/deye_limit/config",
+            json.dumps({"name": "Deye Leistungsbegrenzung",
+                        "unique_id": "smartmeter_llm_deye_limit",
+                        "state_topic": f"{TOPIC}/deye_limit",
+                        "command_topic": f"{TOPIC}/deye_limit/set",
+                        "min": 0, "max": 100, "step": 1,
+                        "unit_of_measurement": "%",
+                        "icon": "mdi:speedometer-slow",
+                        "device": device}), 0, True))
+    msgs += [("homeassistant/binary_sensor/smartmeter_llm/retrain_due/config",
              json.dumps({"name": "OCR Retrain f\u00e4llig",
                          "unique_id": "smartmeter_llm_retrain_due",
                          "state_topic": f"{TOPIC}/retrain_due",

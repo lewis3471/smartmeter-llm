@@ -109,28 +109,30 @@ Netzfrequenz: sie stand eine Minute lang bitgenau auf 49,89 Hz, was im
 echten Netz unmöglich ist. Web-Statusseite und Modbus (Port 8899) liefern
 denselben Cache-Wert; häufigeres Abfragen bringt keine Information.
 
-### Lässt sich der Deye drosseln? Nein (Stand 28.07.)
+### Der Deye lässt sich drosseln — über `AT+INVDATA`
 
-Das Register dafür existiert und ist identifiziert — **0x0028 = „Active
-Power Regulation" in Prozent**, liest sauber 100. Beschreiben lässt es
-sich aber nicht: getestet mit Funktion 0x06 und 0x10, in beiden
-Logger-Modi, mit Slave 1 und mit Slave 0xAA. Immer ohne Wirkung.
+**Register 0x0028 = „Active Power Regulation" in Prozent** (0–100).
+Beschreibbar, verifiziert am 28.07.
 
-Die dokumentierte Community-Methode läuft über den **AT-Kanal auf Port
-48899** (Werkzeug `s10l/deye-logger-at-cmd`, Befehl
-`-xmbw 0028000102 00XX`). Dieser Port ist bei unserem Gerät **geschlossen**
-(TCP refused, UDP stumm) — Deye hat den Kanal ab Februar 2023 per
-Firmware dichtgemacht, er war eine Sicherheitslücke. Die Methode
-funktioniert nur mit älterer Firmware. `kbialek/deye-inverter-mqtt` kann
-Leistungsbegrenzung schreiben, aber ausdrücklich nur für String- und
-Hybrid-Wechselrichter, nicht für Mikro-Wechselrichter.
+Der Weg dorthin ist nicht offensichtlich. Modbus über Solarman V5 wird
+ignoriert, und über die rohe Brücke im `throughput`-Modus ebenfalls —
+beides schlägt fehl, egal ob Funktion 0x06 oder 0x10, egal ob Slave 1
+oder 0xAA. Was funktioniert, ist der **AT-Kanal auf Port 8899**: Der
+Logger begrüßt jede Verbindung mit `AT+YZCMPVER=…` und nimmt danach
+AT-Kommandos an. `AT+INVDATA=<länge>,<modbus-hex>` reicht einen
+RTU-Frame an den Wechselrichter **durch** — mit **Slave 01**.
 
-**Konsequenz:** Der Deye darf NICHT an den Akku. Unregelbar am Speicher
-würde er auch nachts seine ~600 W durchdrücken und den Überschuss ins
-Netz verschenken. An seinen eigenen Modulen begrenzt ihn die Sonne.
-Wer die Module regelbar haben will, hängt sie an den freien String 3 des
-HMS — dann regelt OpenDTU sie mit, und die AC-Decke des HMS steigt
-von 1.440 W auf ~1.920 W.
+Wichtig: **ein Kommando pro Verbindung.** Mehrere hintereinander liefern
+die Antworten um einen Befehl versetzt zurück (das hat mich beim ersten
+Anlauf in die Irre geführt). Und der Port **48899**, den die
+Community-Werkzeuge nutzen, ist auf dieser Firmware geschlossen.
+
+Gemessen: Der Registerwert steht sofort, die Leistung folgt nach
+**2–3 Minuten** (82 W → 55 W bei 5 %). Für die Regelung heißt das:
+langsamer äußerer Kreis, während der HMS die schnelle Feinregelung macht.
+
+In HA erscheint dadurch ein Schieberegler **„Deye Leistungsbegrenzung"**
+(0–100 %), der direkt auf den Wechselrichter durchschlägt.
 
 ### Echtzeit: Logger auf `throughput` umstellen
 

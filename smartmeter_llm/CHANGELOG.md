@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.7.43
+
+- DER DEYE IST REGELBAR. Register 0x0028 („Active Power Regulation",
+  0-100 %) laesst sich schreiben — aber NUR ueber den AT-Kanal:
+  `AT+INVDATA=<laenge>,<modbus-hex>` auf Port 8899, mit Slave 01.
+  Modbus ueber Solarman V5 und ueber die rohe Bruecke im
+  throughput-Modus werden beide stillschweigend ignoriert (Funktion
+  0x06 wie 0x10, Slave 1 wie 0xAA).
+- Fallstrick, der mich zuerst zur falschen Schlussfolgerung fuehrte:
+  Mehrere AT-Kommandos auf EINER Verbindung liefern die Antworten um
+  einen Befehl VERSETZT zurueck. Deshalb: ein Kommando pro Verbindung.
+  Der von Community-Werkzeugen genutzte Port 48899 ist auf dieser
+  Firmware geschlossen — der AT-Kanal auf 8899 aber nicht.
+- Neue HA-Entitaet **„Deye Leistungsbegrenzung"** (number, 0-100 %):
+  Schieberegler, der direkt auf den Wechselrichter durchschlaegt.
+  Gelesen wird der Istwert mit, gesetzt ueber `<topic>/deye_limit/set`.
+- Gemessen: Der Registerwert steht sofort, die LEISTUNG folgt nach
+  2-3 Minuten (82 W -> 55 W bei 5 % Limit). Fuer eine Regelung heisst
+  das: langsamer aeusserer Kreis fuer den Deye, waehrend der HMS die
+  schnelle Feinregelung uebernimmt.
+- Damit ist der Deye grundsaetzlich auch am Akku einsetzbar — die
+  Regelbarkeit war die offene Bedingung dafuer.
+
 ## 1.7.42
 
 - BUGFIX (wichtig): Die V5-Antworten wurden nicht der Anfrage zugeordnet.
