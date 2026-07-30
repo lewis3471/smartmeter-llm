@@ -109,11 +109,53 @@ Netzfrequenz: sie stand eine Minute lang bitgenau auf 49,89 Hz, was im
 echten Netz unmöglich ist. Web-Statusseite und Modbus (Port 8899) liefern
 denselben Cache-Wert; häufigeres Abfragen bringt keine Information.
 
+### Lässt sich der Deye drosseln? Nein (Stand 28.07.)
+
+Das Register dafür existiert und ist identifiziert — **0x0028 = „Active
+Power Regulation" in Prozent**, liest sauber 100. Beschreiben lässt es
+sich aber nicht: getestet mit Funktion 0x06 und 0x10, in beiden
+Logger-Modi, mit Slave 1 und mit Slave 0xAA. Immer ohne Wirkung.
+
+Die dokumentierte Community-Methode läuft über den **AT-Kanal auf Port
+48899** (Werkzeug `s10l/deye-logger-at-cmd`, Befehl
+`-xmbw 0028000102 00XX`). Dieser Port ist bei unserem Gerät **geschlossen**
+(TCP refused, UDP stumm) — Deye hat den Kanal ab Februar 2023 per
+Firmware dichtgemacht, er war eine Sicherheitslücke. Die Methode
+funktioniert nur mit älterer Firmware. `kbialek/deye-inverter-mqtt` kann
+Leistungsbegrenzung schreiben, aber ausdrücklich nur für String- und
+Hybrid-Wechselrichter, nicht für Mikro-Wechselrichter.
+
+**Konsequenz:** Der Deye darf NICHT an den Akku. Unregelbar am Speicher
+würde er auch nachts seine ~600 W durchdrücken und den Überschuss ins
+Netz verschenken. An seinen eigenen Modulen begrenzt ihn die Sonne.
+Wer die Module regelbar haben will, hängt sie an den freien String 3 des
+HMS — dann regelt OpenDTU sie mit, und die AC-Decke des HMS steigt
+von 1.440 W auf ~1.920 W.
+
 ### Echtzeit: Logger auf `throughput` umstellen
 
-Der Logger hat einen versteckten transparenten Modus. Umgestellt wird er
-im Browser unter **`http://<logger-ip>/hide_set_edit.html`** (Login
-`admin` / `admin`), Feld **`yz_tmode`**: von `cmd` auf **`throughput`**.
+Der Logger hat einen versteckten transparenten Modus, Feld **`yz_tmode`**
+(`cmd` ↔ `throughput`) auf `hide_set_edit.html`.
+
+**Achtung, die Seite ist im Browser unbrauchbar**, wenn man sie direkt
+aufruft: Ihre Beschriftungen kommen per JavaScript aus dem umgebenden
+Frameset, allein geöffnet sieht man nur leere Auswahlfelder.
+
+Umschalten geht deshalb per Kommandozeile — und **nur mit vollständigen
+Headern**. Ohne `Referer` und `Content-Type` quittiert der Logger den
+POST mit HTTP 200 und verwirft ihn stillschweigend (das kostete beim
+ersten Versuch eine halbe Stunde):
+
+```bash
+IP=192.168.178.26
+H=(-u admin:admin -H "Content-Type: application/x-www-form-urlencoded" -H "Origin: http://$IP")
+curl -s "${H[@]}" -H "Referer: http://$IP/hide_set_edit.html" -X POST -d "yz_tmode=cmd" "http://$IP/do_cmd.html"
+curl -s "${H[@]}" -H "Referer: http://$IP/restart.html" -X POST -d "HF_PROCESS_CMD=RESTART" "http://$IP/success.html"
+```
+
+Für die Gegenrichtung `yz_tmode=throughput` setzen. Der Logger ist danach
+~20 s weg. Kontrolle: `curl -s -u admin:admin http://$IP/hide_set_edit.html
+| grep yz_tmode`.
 
 Dann hört der Logger auf, selbst zu pollen und zu cachen, und wird zur
 reinen Seriell-zu-TCP-Brücke — Modbus-Anfragen gehen direkt an den
