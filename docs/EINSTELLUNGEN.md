@@ -89,9 +89,27 @@ Nachts dagegen: Ziel +20 W, Wechselrichter liefert 430 W, Zähler zeigt −10 W.
 | `failsafe_limit_w` (51) | Limit, wenn das OCR mehrfach hintereinander ausfällt |
 | `batt_strings` | belegte Wechselrichter-Eingänge am Akku-Bus, z. B. `1,2,4` — leer = kein Akku-Schutz |
 | `batt_low_v` (51,2) / `batt_high_v` (54,4) | Akku-Schwellen (16S LiFePO4: 3,20 / 3,40 V pro Zelle) |
+| `deye_host` | IP des Deye-WLAN-Loggers (z. B. `192.168.178.26`) — leer = aus |
+| `deye_user` / `deye_pass` | Login der Logger-Weboberflaeche (Standard `admin` / `admin`) |
 | `log_level` (error) | `all` / `error` / `none` |
 | `save_samples` (true) | Bilder + Labels sammeln (Grundlage fürs Retraining) |
 | `git_*` | Evidence-Sync ins Repo |
+
+## Zweite Quelle: Deye-Balkonwechselrichter
+
+Ist `deye_host` gesetzt, liest das Add-on den Deye **lokal** aus (keine
+Cloud) und legt drei Sensoren an: aktuelle Leistung, Ertrag heute, Ertrag
+gesamt. Der Gesamtertrag eignet sich direkt als Solarquelle im
+HA-Energie-Dashboard.
+
+**Wichtig zur Aktualisierungsrate:** Der WLAN-Logger fragt den
+Wechselrichter intern nur alle **~5 Minuten** ab — gemessen am 28.07. mit
+57 Proben im 5-Sekunden-Takt: genau eine Wertänderung. Die
+Web-Statusseite und das Modbus-Interface (Port 8899) liefern beide
+denselben Cache-Wert; häufigeres Abfragen bringt keine neue Information.
+Deshalb fließt dieser Wert **nicht in die Regelung** ein — die sieht die
+Deye-Leistung ohnehin sofort in der gemessenen Netzleistung. Er dient
+allein der Anzeige und der Energiebilanz.
 
 ## Zählerwechsel oder festgefahrener Zählerstand
 

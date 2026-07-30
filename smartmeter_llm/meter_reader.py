@@ -14,6 +14,7 @@ import math
 import re
 import socket
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -140,6 +141,22 @@ BATT_RECOVER_V = float(os.environ.get("BATT_RECOVER_V", "1.5"))
 # Freigabe erst nach durchgehend gehaltener Spannung: die Victron-LADE-
 # Spannung liegt sonst sofort ueber der Schwelle, obwohl der Akku leer ist
 BATT_RELEASE_S = float(os.environ.get("BATT_RELEASE_S", "300"))
+# --- Zweite Quelle: Deye-Balkonwechselrichter (SUN600G3) lokal auslesen.
+# Der Solarman-Logger liefert seine Werte ohne Cloud auf /status.html als
+# JS-Variablen (webdata_now_p usw.). Rein lesend. Leer = aus.
+# WICHTIG — GEMESSEN am 28.07. (57 Proben im 5s-Takt ueber 4:44 min):
+# Der Logger fragt den Wechselrichter intern nur alle ~5 MINUTEN ab und
+# liefert dazwischen denselben Cache-Wert. HTTP-Statusseite und Modbus
+# (Solarman V5 auf Port 8899) lesen exakt dieselbe Zahl — schneller
+# pollen bringt keine neue Information, nur mehr Fehlversuche auf einer
+# WLAN-Strecke, die ohnehin ~10% Aussetzer hat. Der Wert ist damit gut
+# fuers Monitoring/Energie-Dashboard, aber NIEMALS echtzeitfaehig genug
+# fuer den 0,5s-Regelkreis — der sieht die Deye-Leistung ohnehin sofort
+# in der gemessenen Netzleistung.
+DEYE_HOST = os.environ.get("DEYE_HOST", "")
+DEYE_USER = os.environ.get("DEYE_USER", "admin")
+DEYE_PASS = os.environ.get("DEYE_PASS", "admin")
+DEYE_POLL_S = float(os.environ.get("DEYE_POLL_S", "60"))
 CAM_SNAPSHOT_URL = os.environ.get("CAM_SNAPSHOT_URL", "")  # Legacy-HTTP-Fallback
 OPENDTU_URL = os.environ["OPENDTU_URL"].rstrip("/")
 OPENDTU_AUTH = (os.environ["OPENDTU_USER"], os.environ["OPENDTU_PASS"])
@@ -1887,6 +1904,64 @@ def _throttled(topic: str, payload: str, now: float) -> bool:
     return True
 
 
+_deye_cache: "tuple[float, dict | None]" = (0.0, None)
+
+
+def deye_value() -> dict | None:
+    """Letzter bekannter Stand der zweiten Quelle — NICHT blockierend.
+    Geholt wird im Hintergrund-Thread, damit ein WLAN-Hänger am Logger
+    (Signalqualitaet schwankt, deshalb haengt dort ein Repeater) niemals
+    den 0,5s-Regelzyklus aufhaelt."""
+    ts, val = _deye_cache
+    if val is not None and time.time() - ts > 10 * DEYE_POLL_S:
+        return None          # Logger stumm -> lieber nichts als Altwert
+    return val
+
+
+def _deye_poll_once() -> dict | None:
+    r = requests.get(f"http://{DEYE_HOST}/status.html",
+                     auth=(DEYE_USER, DEYE_PASS), timeout=8)
+    r.raise_for_status()
+
+    def num(key):
+        m = re.search(rf'var {key}\s*=\s*"([^"]*)"', r.text)
+        if not m or not m.group(1).strip():
+            return None
+        try:
+            return float(m.group(1).strip())
+        except ValueError:
+            return None
+
+    w = num("webdata_now_p")
+    if w is None:
+        return None          # Logger online, aber ohne Inverterdaten (Nacht)
+    return {"w": w, "today": num("webdata_today_e"),
+            "total": num("webdata_total_e")}
+
+
+def deye_start():
+    """Hintergrund-Poller starten (nur wenn DEYE_HOST gesetzt ist)."""
+    if not DEYE_HOST:
+        return
+
+    def worker():
+        global _deye_cache
+        fails = 0
+        while True:
+            try:
+                _deye_cache = (time.time(), _deye_poll_once())
+                fails = 0
+            except Exception as e:
+                fails += 1
+                if fails in (1, 10, 100):   # nicht das Log fluten
+                    print(f"Deye nicht lesbar ({fails}x): {e}",
+                          file=sys.stderr)
+            time.sleep(DEYE_POLL_S)
+
+    threading.Thread(target=worker, daemon=True).start()
+    print(f"Deye-Auslesung aktiv: {DEYE_HOST} alle {DEYE_POLL_S:.0f}s")
+
+
 def publish(reading: dict | None, status: str, limit: int | None,
             state: dict | None = None):
     c = _get_mqtt()
@@ -1908,6 +1983,13 @@ def publish(reading: dict | None, status: str, limit: int | None,
             if BATT_CAPACITY_KWH > 0:
                 msgs.append((f"{TOPIC}/batt_kwh",
                              f"{soc / 100 * BATT_CAPACITY_KWH:.1f}"))
+    dey = deye_value()
+    if dey is not None:
+        msgs.append((f"{TOPIC}/deye_w", f"{dey['w']:.0f}"))
+        if dey.get("today") is not None:
+            msgs.append((f"{TOPIC}/deye_today", f"{dey['today']:.2f}"))
+        if dey.get("total") is not None:
+            msgs.append((f"{TOPIC}/deye_total", f"{dey['total']:.1f}"))
     due = retrain_due()
     msgs += [(f"{TOPIC}/retrain_due", "ON" if due else "OFF"),
              (f"{TOPIC}/retrain_reason", due or "-")]
@@ -1962,6 +2044,22 @@ def publish_discovery():
                                    "device_class": "energy_storage",
                                    "state_class": "measurement",
                                    "icon": "mdi:battery-charging-medium"}
+    if DEYE_HOST:
+        sensors["deye_w"] = {"name": "Deye Leistung",
+                             "unit_of_measurement": "W",
+                             "device_class": "power",
+                             "state_class": "measurement",
+                             "icon": "mdi:solar-power-variant"}
+        sensors["deye_today"] = {"name": "Deye Ertrag heute",
+                                 "unit_of_measurement": "kWh",
+                                 "device_class": "energy",
+                                 "state_class": "total_increasing",
+                                 "icon": "mdi:solar-power"}
+        sensors["deye_total"] = {"name": "Deye Ertrag gesamt",
+                                 "unit_of_measurement": "kWh",
+                                 "device_class": "energy",
+                                 "state_class": "total_increasing",
+                                 "icon": "mdi:counter"}
     msgs = [("homeassistant/binary_sensor/smartmeter_llm/retrain_due/config",
              json.dumps({"name": "OCR Retrain f\u00e4llig",
                          "unique_id": "smartmeter_llm_retrain_due",
@@ -2350,6 +2448,7 @@ def main(once: bool = False):
         print("Akku-Waechter AUS (batt_strings leer)")
     print(f"Netz-Ziel {TARGET_GRID_W:+d}W (leer) .. {TARGET_GRID_FULL_W:+d}W (voll), "
           f"Floor {SUSTAIN_FLOOR_W}W, max {MAX_LIMIT_W}W")
+    deye_start()
     publish_discovery()
     w_hist: list[int] = []  # Median-3: einzelner Ausreisser-Frame regelt nicht
     last_written_kwh = (state.get("kwh"), state.get("kwh_floor"))

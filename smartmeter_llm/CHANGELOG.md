@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.7.40
+
+- ZWEITE QUELLE SICHTBAR: Der Deye-Balkonwechselrichter (SUN600G3) wird
+  jetzt lokal ausgelesen — ohne Cloud, ueber die Statusseite des
+  Solarman-WLAN-Loggers. Neue Sensoren: Deye Leistung, Ertrag heute,
+  Ertrag gesamt (letzterer als Solarquelle fuers Energie-Dashboard
+  geeignet). Aktivierung ueber `deye_host` (leer = aus).
+- Der Poll laeuft in einem eigenen Thread: eine haengende Anfrage am
+  Logger darf den 0,5s-Regelzyklus niemals aufhalten. Antwortet der
+  Logger 10 Poll-Intervalle lang nicht, wird nichts gemeldet statt ein
+  Altwert.
+- GEMESSEN und dokumentiert: Der Logger fragt den Wechselrichter intern
+  nur alle ~5 Minuten ab (57 Proben im 5s-Takt = genau eine Aenderung).
+  Die Web-Statusseite und das Modbus-Interface (Solarman V5, Port 8899)
+  liefern nachweislich denselben Cache-Wert — Modbus ist also NICHT
+  schneller, und schnelleres Pollen erzeugt nur Fehlversuche auf einer
+  WLAN-Strecke mit ~10% Aussetzern. Deshalb fliesst der Wert bewusst
+  NICHT in die Regelung ein: die sieht die Deye-Leistung ohnehin sofort
+  in der gemessenen Netzleistung, und ein 5 Minuten alter Wert im
+  0,5s-Regelkreis waere aktiv schaedlich.
+- Register-Karte des SUN600G3 nebenbei ermittelt (fuer spaetere Nutzung):
+  0x003C Ertrag heute (x0,1 kWh), 0x003F Ertrag gesamt (x0,1 kWh),
+  0x0056 AC-Leistung (x0,1 W), 0x0049 Netzspannung (x0,1 V),
+  0x004F Frequenz (x0,01 Hz), 0x003B-0x0040 Seriennummer als ASCII.
+
 ## 1.7.39
 
 - LETZTE ANGRIFFSRUNDE (5, gegen 1.7.38): 16 Befunde, 12 real — alle

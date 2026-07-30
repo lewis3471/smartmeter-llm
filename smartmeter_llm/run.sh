@@ -19,6 +19,9 @@ export BATT_STRINGS=$(bashio::config 'batt_strings')
 export BATT_LOW_V=$(bashio::config 'batt_low_v')
 export BATT_HIGH_V=$(bashio::config 'batt_high_v')
 export BATT_CAPACITY_KWH=$(bashio::config 'batt_capacity_kwh')
+export DEYE_HOST=$(bashio::config 'deye_host')
+export DEYE_USER=$(bashio::config 'deye_user')
+export DEYE_PASS=$(bashio::config 'deye_pass')
 export LOG_LEVEL=$(bashio::config 'log_level')
 # Fest verdrahtet (frueher Optionen; als Env-Defaults im Code weiter tunebar):
 export READER_MODE=hybrid
