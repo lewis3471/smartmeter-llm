@@ -104,12 +104,31 @@ HA-Energie-Dashboard.
 
 **Wichtig zur Aktualisierungsrate:** Der WLAN-Logger fragt den
 Wechselrichter intern nur alle **~5 Minuten** ab — gemessen am 28.07. mit
-57 Proben im 5-Sekunden-Takt: genau eine Wertänderung. Die
-Web-Statusseite und das Modbus-Interface (Port 8899) liefern beide
-denselben Cache-Wert; häufigeres Abfragen bringt keine neue Information.
-Deshalb fließt dieser Wert **nicht in die Regelung** ein — die sieht die
-Deye-Leistung ohnehin sofort in der gemessenen Netzleistung. Er dient
-allein der Anzeige und der Energiebilanz.
+57 Proben im 5-Sekunden-Takt: genau eine Wertänderung. Der Beweis ist die
+Netzfrequenz: sie stand eine Minute lang bitgenau auf 49,89 Hz, was im
+echten Netz unmöglich ist. Web-Statusseite und Modbus (Port 8899) liefern
+denselben Cache-Wert; häufigeres Abfragen bringt keine Information.
+
+### Echtzeit: Logger auf `throughput` umstellen
+
+Der Logger hat einen versteckten transparenten Modus. Umgestellt wird er
+im Browser unter **`http://<logger-ip>/hide_set_edit.html`** (Login
+`admin` / `admin`), Feld **`yz_tmode`**: von `cmd` auf **`throughput`**.
+
+Dann hört der Logger auf, selbst zu pollen und zu cachen, und wird zur
+reinen Seriell-zu-TCP-Brücke — Modbus-Anfragen gehen direkt an den
+Wechselrichter, beliebig schnell. Danach `deye_logger_sn` setzen (der
+Modbus-Pfad wird Pflicht) und `DEYE_POLL_S` auf 5 stellen.
+
+**Konsequenzen:** Die HTML-Statusseite zeigt dann keine Werte mehr, und
+die Solarman-Cloud-Anbindung entfällt (lokal wird ja gelesen).
+Zurückstellen jederzeit über dieselbe Seite. Ausgangswerte für den
+Restore: `yz_tmode=cmd`, UART `9600 / 8 / none / 1 / NFC`,
+Netz `TCP / SERVER / Port 8899 / Timeout 300`, `inv_tp=21510:Deye`.
+
+Der Wert fließt bewusst **nicht in die Regelung** ein — die sieht die
+Deye-Leistung ohnehin sofort in der gemessenen Netzleistung. Er dient der
+Anzeige und der Energiebilanz.
 
 ## Zählerwechsel oder festgefahrener Zählerstand
 

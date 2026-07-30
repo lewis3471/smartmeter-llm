@@ -13,6 +13,7 @@ import os
 import math
 import re
 import socket
+import struct
 import sys
 import threading
 import time
@@ -157,6 +158,11 @@ DEYE_HOST = os.environ.get("DEYE_HOST", "")
 DEYE_USER = os.environ.get("DEYE_USER", "admin")
 DEYE_PASS = os.environ.get("DEYE_PASS", "admin")
 DEYE_POLL_S = float(os.environ.get("DEYE_POLL_S", "60"))
+# Seriennummer des WLAN-Loggers (steht auf dem Stick und in der Weboberflaeche).
+# Gesetzt -> Modbus/Solarman V5 wird bevorzugt, sonst nur die HTML-Statusseite.
+# Steht der Logger auf yz_tmode=throughput, ist NUR noch der Modbus-Pfad
+# moeglich (und dann echtzeitfaehig — DEYE_POLL_S darf runter auf 5).
+DEYE_LOGGER_SN = int(os.environ.get("DEYE_LOGGER_SN", "0") or 0)
 CAM_SNAPSHOT_URL = os.environ.get("CAM_SNAPSHOT_URL", "")  # Legacy-HTTP-Fallback
 OPENDTU_URL = os.environ["OPENDTU_URL"].rstrip("/")
 OPENDTU_AUTH = (os.environ["OPENDTU_USER"], os.environ["OPENDTU_PASS"])
@@ -1918,7 +1924,69 @@ def deye_value() -> dict | None:
     return val
 
 
+def _mb_crc(d: bytes) -> int:
+    c = 0xFFFF
+    for b in d:
+        c ^= b
+        for _ in range(8):
+            c = (c >> 1) ^ 0xA001 if c & 1 else c >> 1
+    return c
+
+
+_deye_seq = 0
+
+
+def deye_modbus(addr: int, count: int) -> list | None:
+    """Holding-Register ueber Solarman V5 (Port 8899) lesen.
+
+    Funktioniert in BEIDEN Logger-Modi: bei yz_tmode=cmd liefert der
+    Logger seinen ~5min alten Cache, bei yz_tmode=throughput geht die
+    Anfrage direkt an den Wechselrichter (dann echtzeitfaehig, und die
+    HTML-Statusseite fuehrt keine Daten mehr — deshalb ist Modbus der
+    primaere Pfad)."""
+    global _deye_seq
+    _deye_seq = (_deye_seq + 1) & 0xFFFF
+    mb = bytes([1, 3]) + struct.pack('>HH', addr, count)
+    mb += struct.pack('<H', _mb_crc(mb))
+    pl = bytes([0x02]) + bytes(14) + mb
+    f = bytearray([0xA5]) + struct.pack('<H', len(pl)) + bytes([0x10, 0x45])
+    f += struct.pack('<H', _deye_seq) + struct.pack('<I', DEYE_LOGGER_SN) + pl
+    f += bytes([sum(f[1:]) & 0xFF, 0x15])
+    s = socket.socket()
+    s.settimeout(6)
+    try:
+        s.connect((DEYE_HOST.split(":")[0], 8899))
+        try:
+            s.recv(256)          # Begruessungsbanner des Loggers
+        except Exception:
+            pass
+        s.sendall(bytes(f))
+        r = s.recv(1024)
+    finally:
+        s.close()
+    i = r.find(b'\x01\x03')
+    if i < 0 or len(r) < i + 3:
+        return None
+    n = r[i + 2]
+    d = r[i + 3:i + 3 + n]
+    if len(d) < n:
+        return None
+    return [struct.unpack('>H', d[j:j + 2])[0] for j in range(0, n - 1, 2)]
+
+
 def _deye_poll_once() -> dict | None:
+    # Registerkarte SUN600G3 (am 28.07. am Geraet ermittelt):
+    #   0x003C Ertrag heute (x0,1 kWh) | 0x003E/0x003F Ertrag gesamt (32bit)
+    #   0x0056 AC-Leistung (x0,1 W)
+    if DEYE_LOGGER_SN:
+        try:
+            v = deye_modbus(0x003C, 27)     # 0x003C .. 0x0056 in einem Rutsch
+            if v and len(v) >= 27:
+                total = ((v[2] << 16) | v[3]) / 10.0
+                return {"w": v[26] / 10.0, "today": v[0] / 10.0,
+                        "total": total if total > 0 else None}
+        except Exception:
+            pass                            # -> HTML-Fallback
     r = requests.get(f"http://{DEYE_HOST}/status.html",
                      auth=(DEYE_USER, DEYE_PASS), timeout=8)
     r.raise_for_status()

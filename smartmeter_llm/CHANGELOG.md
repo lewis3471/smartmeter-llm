@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.7.41
+
+- Deye-Auslesung laeuft jetzt primaer ueber MODBUS (Solarman V5, Port
+  8899) statt HTML-Scraping; die Statusseite bleibt als Fallback. Neue
+  Option `deye_logger_sn` (Seriennummer des WLAN-Loggers) schaltet den
+  Modbus-Pfad frei. Ein Request holt alle drei Werte (0x003C..0x0056).
+- Grund: Der Logger hat einen versteckten transparenten Modus
+  (`yz_tmode=throughput` unter /hide_set_edit.html). Darin cached er
+  nicht mehr, sondern wird zur Seriell-zu-TCP-Bruecke — Modbus geht dann
+  DIREKT an den Wechselrichter und ist echtzeitfaehig (DEYE_POLL_S=5).
+  In diesem Modus liefert die HTML-Statusseite keine Werte mehr, deshalb
+  muss Modbus der primaere Pfad sein. Umschaltung und Restore-Werte sind
+  in docs/EINSTELLUNGEN.md dokumentiert.
+- Cache-Nachweis verschaerft: die Netzfrequenz (0x004F) stand eine Minute
+  lang bitgenau auf 49,89 Hz — im echten Verbundnetz unmoeglich. Damit
+  ist belegt, dass auch Modbus im Modus `cmd` nur den Cache liest.
+- Vollstaendige Registerkarte des SUN600G3 gesichert (182 Register):
+  0x0010 Nennleistung 6000 (=600,0 W), 0x0028 Wirkleistungsbegrenzung
+  in Prozent (steht auf 100), 0x003C Ertrag heute, 0x003E/0x003F Ertrag
+  gesamt (32 bit), 0x0049 Netzspannung, 0x004F Frequenz, 0x0056
+  AC-Leistung, 0x0096-0x0099 VDE-Netzschutzgrenzen (275,0/183,0 V,
+  51,50/47,50 Hz — duerfen NIE veraendert werden).
+- Das AT-Interface auf Port 8899 ist eine Sackgasse: es antwortet auf
+  jedes Kommando mit V5-Binaerframes, `AT+YZCMPVER=...` beim Verbinden
+  ist nur ein Begruessungsbanner.
+
 ## 1.7.40
 
 - ZWEITE QUELLE SICHTBAR: Der Deye-Balkonwechselrichter (SUN600G3) wird
