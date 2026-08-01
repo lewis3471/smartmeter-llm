@@ -1,0 +1,1 @@
+{"accepted_kwh": 35945, "error": "verworfen: Sprung +9225 W > 5000 W", "failures": 1, "kind": "rejected_reading", "timestamp": "2026-08-02T01:23:45+0200"}
