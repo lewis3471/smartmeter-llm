@@ -1,5 +1,67 @@
 # Changelog
 
+## 1.8.0
+
+- MEHR EIGENVERBRAUCH: Der Regler kannte unterhalb des Sustain-Floors nur
+  zwei Antworten — Limit HALTEN (Ueberschuss ins Netz) oder Inverter
+  SCHLAFEN legen (Netz zahlt). Bei 150 W Hauslast ist beides falsch: das
+  eine verschenkt 275 W, das andere kauft 150 W. Genau das war das
+  beobachtete Bild ("zu viel ins Netz" UND "Akku bei 50 % steht daneben").
+- Die dritte Antwort steckte in den eigenen Logs: der HMS hat ein STABILES
+  PLATEAU bei ~160 W. Landeplatz-Tabelle ueber 36 Tage / 96412 Kommandos
+  (nur Befehle gewertet, die >= 60 s stehen blieben):
+    Befehl  50 W    -> 98 % aus (37 W)
+    Befehl 100-249W -> 72-83 % aus (zu tief, reisst ihn ganz ab)
+    Befehl 250-399W -> 62-66 % LANDEN BEI 120-210 W (Median ~160 W)
+    Befehl 400-449W -> 81 % bei 350-460 W (Median 422 W)
+    ab 500 W        -> 85-97 % folgen sauber
+  Das Plateau streut innerhalb einer Ruhelage nur 5,6 W und haengt NICHT an
+  der Busspannung (48 V: 155 W, 51 V: 162 W, 55 V: 152 W).
+- Neue Option `low_points` (Standard `300:160`): Arbeitspunkt-Leiter. Der
+  Regler waehlt unterhalb des Floors den guenstigsten erreichbaren Punkt.
+  Kosten = fehlende Watt (kauft das Netz) + ueberschuessige Watt
+  (verschenkte Akku-Energie); bei vollem Akku entfaellt der zweite Term,
+  dann wird wie bisher immer gehalten (1.7.23 bleibt gueltig). Daraus
+  folgen die Schwellen von selbst: der 160-W-Punkt schlaegt den Schlaf ab
+  80 W Bedarf und den Floor bis 292 W Bedarf.
+- JEDER Punkt wird verifiziert: 25 s nach dem Befehl wird die AC-Leistung
+  geprueft. Treffer -> die Erwartung zieht per EMA nach (Selbstkalibrierung).
+  Fehlschlag -> zweiter Anlauf, danach 15 min Sperre und Rueckfall auf Floor
+  oder Schlaf. Der schlechteste Fall ist damit EXAKT das alte Verhalten.
+  Dazu 120 s Mindest-Standzeit und 20 W Hysterese auf der Kostendifferenz —
+  Plateaus brauchen Ruhe, jedes Kommando stoert den MPPT.
+- Neuer HA-Sensor "Arbeitspunkt". `low_points` leeren = alte Logik.
+- NETZ-SOLLWERT FOLGT DEM LADESTAND, nicht mehr linear der Spannung. Bei
+  LiFePO4 ist die Kennlinie zwischen 20 und 90 % fast flach: mit den
+  Stuetzstellen 47,0/54,4 V las der Regler bei 52,7 V "77 % voll" und
+  stellte das Ziel auf -34 W — Dauereinspeisung aus einem halb leeren
+  Speicher. Ueber soc_estimate (lastkorrigiert) sind es 50 % und -14 W;
+  20 W ueber 24 h sind ~0,5 kWh. Faellt die Schaetzung aus, gilt weiter die
+  lineare Rechnung.
+- ANTI-ZAPPEL auf dem Hoch-Pfad: 43 % aller "hoch"-Befehle wurden binnen
+  30 s wieder zurueckgenommen (Median 68 W), und die Ausfluege ueber den
+  Floor dauerten im Median 4 SEKUNDEN — kuerzer als die Totzeit des HMS.
+  Diese 952 Kommandos in 7 Tagen konnten nichts bewirken, haben aber den
+  MPPT aus seinem Arbeitspunkt geworfen. Jetzt muessen sich kleine Schritte
+  (<= 150 W bei Fehler < 45 W) UP_CONFIRM_S (3 s) lang halten; grosse
+  Lastspruenge gehen unveraendert sofort raus.
+- TELEMETRIE-HERZSCHLAG: ctl_tick schrieb bisher nur rund um Limit-Befehle.
+  Ausgerechnet die langen Schlafphasen (7 Tage: 61,9 h am Stueck) waren
+  dadurch unbelegt — die teuerste Zeit war die unsichtbare. Jetzt geht alle
+  CTL_HEARTBEAT_S (30 s) ein Tick raus (Feld "hb"), ~250 kB/Tag.
+- Neue Werkzeuge:
+  * `scripts/analyze_selfuse.py` — wo der Eigenverbrauch verloren geht,
+    Landeplatz-Tabelle, Monte-Carlo der Ersparnis aus den echten Daten.
+  * `scripts/probe_operating_points.py` — misst die Arbeitspunkte auf der
+    eigenen Hardware aus (Treppe abfahren, jede Stufe stehen lassen) und
+    druckt die fertige `low_points`-Zeile. Bricht ab, wenn ein zweiter
+    Regler mitfunkt, und stellt das alte Limit immer wieder her.
+  * `tests/test_low_points.py` — 20 Tests fuer Leiter, SoC-Ziel und
+    Anti-Zappel.
+- Analyse und offene Punkte (u.a.: 58 % des Netzbezugs entstehen, waehrend
+  der HMS schon an seiner ~1400-W-Decke laeuft — das ist Hardware, kein
+  Regelproblem): docs/eigenverbrauch.md
+
 ## 1.7.43
 
 - DER DEYE IST REGELBAR. Register 0x0028 („Active Power Regulation",

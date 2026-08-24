@@ -23,11 +23,17 @@ Was am Stromzähler stehen soll. **Negativ = einspeisen, positiv = beziehen.**
 
 Mit Akku wandert das Ziel automatisch mit dem Ladezustand:
 
-| Bus-Spannung | Ziel | warum |
+| Ladestand | Ziel | warum |
 |---|---|---|
-| 51,2 V (leer) | `target_grid_w` = **+20 W** | Speicher schonen, lieber ein paar Watt kaufen |
-| 52,8 V | −15 W | dazwischen linear |
-| 54,4 V (voll) | `target_grid_full_w` = **−50 W** | Akku kann nichts mehr aufnehmen, Überschuss darf raus |
+| leer (`batt_low_v`) | `target_grid_w` = **+20 W** | Speicher schonen, lieber ein paar Watt kaufen |
+| ~50 % | −15 W | dazwischen interpoliert |
+| voll (`batt_high_v`) | `target_grid_full_w` = **−50 W** | Akku kann nichts mehr aufnehmen, Überschuss darf raus |
+
+Interpoliert wird seit 1.8.0 über den **Ladestand**, nicht mehr linear über
+die Spannung: bei LiFePO4 ist die Kennlinie zwischen 20 und 90 % fast flach,
+weshalb die lineare Rechnung den Speicher zu voll las (52,7 V galten als
+77 % statt 50 %) und das Ziel auf −34 W statt −14 W stellte — Dauereinspeisung
+aus einem halb leeren Akku.
 
 Ohne konfigurierten Akku (`batt_strings` leer) gilt immer `target_grid_w`.
 
@@ -59,6 +65,38 @@ Günstigere — Kipppunkt ist **Floor/2 (215 W)**:
 Ausnahme: **Bei vollem Akku wird immer gehalten** — der Überschuss wäre sonst
 ohnehin abgeregelt, Einspeisen kostet dann nichts.
 
+### `low_points` — die Arbeitspunkt-Leiter (ab 1.8.0)
+
+Halten oder Abschalten sind bei 150 W Hauslast **beide** falsch: das eine
+verschenkt 275 W an das Netz, das andere kauft 150 W. Der HMS hat aber ein
+drittes, stabiles Plateau bei ~160 W, das er von selbst ansteuert — ein Befehl
+um 300 W landet in zwei von drei Fällen dort (gemessen an 36 Tagen
+Telemetrie, Details in [eigenverbrauch.md](eigenverbrauch.md)).
+
+`low_points` ist die Liste dieser Punkte als `<Befehl>:<erwartete Leistung>`,
+mehrere durch Komma getrennt. Standard: `300:160`.
+
+Der Regler wählt unterhalb des Floors den **günstigsten** Punkt — fehlende
+Watt kauft das Netz, überschüssige verschenken Akku-Energie, beides zählt
+gleich (bei vollem Akku nur der erste Term). Bei 150 W Bedarf:
+
+| Antwort | Kosten |
+|---|---|
+| schlafen (37 W) | 113 W Netzbezug |
+| Floor halten (425 W) | 275 W verschenkt |
+| **Arbeitspunkt (160 W)** | **10 W** |
+
+25 s nach dem Befehl wird geprüft, ob der Inverter wirklich dort gelandet ist.
+Ja → die Erwartung zieht nach (der Punkt kalibriert sich selbst). Nein → ein
+zweiter Anlauf, danach ist der Punkt 15 min gesperrt und es gilt wieder Floor
+oder Schlaf. **Schlimmstenfalls verhält sich der Regler also wie vorher.**
+
+Ein Punkt bleibt mindestens 120 s stehen (Plateaus brauchen Ruhe), und in HA
+zeigt der Sensor **„Arbeitspunkt"**, welcher gerade gefahren wird.
+
+Leerer Wert = aus, dann gilt exakt die alte Zwei-Wege-Logik. Eigene Punkte
+ausmessen: `scripts/probe_operating_points.py --yes` (Add-on vorher stoppen).
+
 ### `min_limit_w` — die Notbremse (50 W, fest verdrahtet)
 
 Tiefstes Limit, das überhaupt gesendet werden darf. Greift nur noch beim
@@ -88,9 +126,10 @@ Nachts dagegen: Ziel +20 W, Wechselrichter liefert 430 W, Zähler zeigt −10 W.
 | `max_limit_w` (2000) | maximales Limit |
 | `failsafe_limit_w` (51) | Limit, wenn das OCR mehrfach hintereinander ausfällt |
 | `batt_strings` | belegte Wechselrichter-Eingänge am Akku-Bus, z. B. `1,2,4` — leer = kein Akku-Schutz |
-| `batt_low_v` (51,2) / `batt_high_v` (54,4) | Akku-Schwellen (16S LiFePO4: 3,20 / 3,40 V pro Zelle) |
+| `batt_low_v` (51,2) / `batt_high_v` (54,4) | Akku-Schwellen (16S LiFePO4: 3,20 / 3,40 V pro Zelle). Stützstellen für das Netz-Ziel — dazwischen wird seit 1.8.0 über den **Ladestand** interpoliert (LiFePO4-Ruhespannungskennlinie), nicht mehr linear über die Spannung |
 | `deye_host` | IP des Deye-WLAN-Loggers (z. B. `192.168.178.26`) — leer = aus |
 | `deye_user` / `deye_pass` | Login der Logger-Weboberflaeche (Standard `admin` / `admin`) |
+| `low_points` (`300:160`) | Arbeitspunkt-Leiter unterhalb des Floors, siehe oben — leer = aus |
 | `log_level` (error) | `all` / `error` / `none` |
 | `save_samples` (true) | Bilder + Labels sammeln (Grundlage fürs Retraining) |
 | `git_*` | Evidence-Sync ins Repo |
