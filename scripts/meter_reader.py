@@ -110,10 +110,12 @@ OCR_MIN_CONF = float(os.environ.get("OCR_MIN_CONF", "0.85"))
 # Rotationen ueber alle Modelle und Keys in 429er gefahren — 800
 # Fehlversuche pro Stunde, jeder davon eine HTTP-Anfrage im Regelzyklus.
 CROSS_CHECK_S = float(os.environ.get("CROSS_CHECK_S", "300"))
-# Zusaetzliche Untergrenze in Zyklen (aeltere Konfigurationen). Beide
-# Bedingungen muessen erfuellt sein, der Kreuz-Check wird also nie
-# haeufiger als frueher.
-CROSS_CHECK_EVERY = int(os.environ.get("CROSS_CHECK_EVERY", "20"))
+# Der frueher hier stehende Zyklen-Zaehler (CROSS_CHECK_EVERY) ist ersatzlos
+# entfallen. Als zusaetzliche UND-Bedingung erzeugte er eine Schwebung: faellt
+# das Zyklen-Vielfache knapp vor Ablauf der Zeit, wird eine ganze Periode
+# uebersprungen — bei ~15 s Zykluszeit halbiert das die Kreuz-Check-Rate.
+# Die Zeitregel allein ist bei jeder Zykluszeit hoechstens so haeufig wie die
+# alte Regel bei den 15 s, fuer die sie gedacht war.
 _last_cross_check = 0.0
 
 _local_reader = None
@@ -814,7 +816,6 @@ def read_meter(cycle: int = 0) -> tuple[dict, str]:
             err = e
         global _last_cross_check
         cross_check = (READER_MODE == "hybrid"
-                       and cycle % CROSS_CHECK_EVERY == 0
                        and time.time() - _last_cross_check >= CROSS_CHECK_S
                        and time.time() >= _gemini_pause_until)
         if cross_check:
@@ -916,11 +917,15 @@ def gemini_read(img: bytes) -> dict:
     keine 20 realen Fehlversuche herbeizaubern (Runde 5, #7)."""
     global _gemini_err_since, _gemini_ok_ts, _gemini_err_n
     global _gemini_pause_until, _gemini_pause_s
-    if time.time() < _gemini_pause_until:
-        raise RuntimeError(
-            f"Gemini pausiert (Quota), noch "
-            f"{(_gemini_pause_until - time.time()) / 60:.0f} min")
     try:
+        if time.time() < _gemini_pause_until:
+            # Eine Pause IST ein Ausfall — sie muss den Fehlerzaehler und die
+            # Uhr des 6h-Notauswegs genauso fuettern wie ein fehlgeschlagener
+            # Aufruf, sonst verlaengert die Bremse still die Zeit, in der ein
+            # vergifteter Zaehlerstand nicht heilen kann.
+            raise RuntimeError(
+                f"Gemini pausiert (Quota), noch "
+                f"{(_gemini_pause_until - time.time()) / 60:.0f} min")
         r = _gemini_read_raw(img)
         _gemini_err_since = None
         _gemini_err_n = 0
@@ -962,14 +967,23 @@ def _gemini_read_raw(img: bytes) -> dict:
         _combo_idx, _combo_day = 0, today
         _dead_models.clear()
     n_combos = len(GEMINI_MODELS) * len(GEMINI_API_KEYS)
+    if not n_combos:
+        raise RuntimeError("keine Gemini-Modelle/Keys konfiguriert")
     r = None
-    versuche = max(1, min(GEMINI_TRIES, n_combos))
-    limitiert = 0
-    for _ in range(versuche + len(_dead_models)):
+    versuche = min(GEMINI_TRIES, n_combos)
+    limitiert = gesendet = 0
+    # Gezaehlt werden GESENDETE Anfragen, nicht Schleifendurchlaeufe: ein
+    # totes Modell belegt eine Kombination JE KEY, uebersprungene Kombinationen
+    # duerfen das Versuchsbudget also nicht aufbrauchen. Die aeussere Grenze
+    # verhindert nur, dass eine Rotation aus lauter toten Modellen ewig laeuft.
+    for _ in range(n_combos):
+        if gesendet >= versuche:
+            break
         model, key = gemini_combo(_combo_idx)
         if model in _dead_models:
             _combo_idx += 1
             continue
+        gesendet += 1
         r = requests.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
             headers={"Content-Type": "application/json", "X-goog-api-key": key},
@@ -1003,7 +1017,7 @@ def _gemini_read_raw(img: bytes) -> dict:
         break
     if r is None:
         raise RuntimeError("alle Gemini-Modelle tot (404) — Rotation leer")
-    if r.status_code == 429 and limitiert >= versuche:
+    if r.status_code == 429 and limitiert >= gesendet > 0:
         # Kein Einzelfehler, sondern ein leeres Kontingent: der Aufrufer
         # legt daraufhin eine Pause ein, statt im Sekundentakt weiter
         # 429er zu sammeln.

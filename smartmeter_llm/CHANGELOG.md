@@ -14,8 +14,10 @@
   lief er danach ungebremst in die 429er.
 - Der Kreuz-Check haelt jetzt einen ZEITLICHEN Mindestabstand:
   `CROSS_CHECK_S` (Standard 300 s = 288 Kreuz-Checks/Tag, wieder im
-  dokumentierten Budget). Die alte Zyklen-Untergrenze bleibt zusaetzlich
-  bestehen, es wird also nie haeufiger gefragt als vorher.
+  dokumentierten Budget). Der Zyklen-Zaehler ist ersatzlos entfallen: als
+  zusaetzliche UND-Bedingung erzeugte er eine Schwebung — faellt das
+  Zyklen-Vielfache knapp vor Ablauf der Zeit, wird eine ganze Periode
+  uebersprungen (bei ~15 s Zykluszeit halbiert das die Rate).
 - QUOTA-BREMSE: Antworten `GEMINI_TRIES` (3) Kombinationen hintereinander
   mit 429, ist das kein Einzelfehler, sondern ein leeres Kontingent. Dann
   bricht die Rotation ab und pausiert — 5 min, danach verdoppelnd bis
@@ -27,8 +29,18 @@
   einmal im selben Regelzyklus.
 - Am Regelverhalten aendert sich nichts: das lokale OCR ist der Primaerleser
   und liest waehrend der Pause unveraendert weiter. Gemini bleibt Berater.
+- Gezaehlt werden GESENDETE Anfragen, nicht Schleifendurchlaeufe: ein
+  totes Modell (404) belegt eine Kombination JE KEY, uebersprungene
+  Kombinationen duerfen das Versuchsbudget also nicht aufbrauchen — sonst
+  waere die Pause bei einem 404-Modell nie ausgeloest worden.
+- Die Pause zaehlt als Gemini-AUSFALL. Sonst haette die Bremse still die
+  Uhr des 6h-Notauswegs angehalten (Fehlerzaehler < 20) und ein vergifteter
+  Zaehlerstand haette statt 6 h ueber 16 h nicht heilen koennen.
+- Ohne konfigurierte Modelle/Keys gibt es eine klare Fehlermeldung statt
+  einer Division durch Null.
 - tests/test_gemini_quota.py deckt Abstand, Rotationsgrenze, Pause,
-  Verdopplung, Ruecksetzung und den lokalen Weiterbetrieb ab.
+  Verdopplung, Ruecksetzung, totes Modell, leere Konfiguration und den
+  lokalen Weiterbetrieb ab.
 
 ## 1.8.0
 

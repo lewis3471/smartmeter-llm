@@ -275,7 +275,7 @@ Ab Branch `feature/ocr` kann das LCD **lokal** gelesen werden — ohne Cloud-Cal
 beliebig schnelles Intervall, keine Rate-Limits:
 
 - `READER_MODE=hybrid` (empfohlen): lokales OCR liest; bei Confidence
-  < `OCR_MIN_CONF`, Lesefehler oder jedem `CROSS_CHECK_EVERY`-ten Zyklus wird
+  < `OCR_MIN_CONF`, Lesefehler oder alle `CROSS_CHECK_S` Sekunden wird
   Gemini gefragt. Abweichungen landen in `samples/disagreements/` als neue
   Trainingsfälle.
 - `READER_MODE=local`: nur OCR, kein Gemini (kein API-Key nötig)

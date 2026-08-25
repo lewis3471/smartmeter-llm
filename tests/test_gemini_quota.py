@@ -151,8 +151,8 @@ def t_kreuzcheck_abstand():
     print("\nQ1: Kreuz-Check haelt zeitlichen Mindestabstand")
     check("Abstand ist in Sekunden konfiguriert, nicht in Zyklen",
           mr.CROSS_CHECK_S >= 60, f"CROSS_CHECK_S={mr.CROSS_CHECK_S}")
-    # Der alte Zaehler bleibt als zusaetzliche Untergrenze bestehen
-    check("Zyklen-Untergrenze bleibt erhalten", mr.CROSS_CHECK_EVERY >= 1)
+    check("kein Zyklen-Zaehler mehr (erzeugte eine Schwebung)",
+          not hasattr(mr, "CROSS_CHECK_EVERY"))
     # Bei 0,5 s Zykluszeit waren 20 Zyklen ~10-25 s — jetzt bindet die Zeit
     zyklen_s = 20 * 0.7
     check("Zeitregel bindet bei 0,5-s-Zyklen", mr.CROSS_CHECK_S > zyklen_s,
@@ -160,6 +160,90 @@ def t_kreuzcheck_abstand():
     calls_pro_tag = 86400 / mr.CROSS_CHECK_S
     check("Tagesbudget im dokumentierten Rahmen (~300-500)",
           calls_pro_tag <= 500, f"{calls_pro_tag:.0f} Kreuz-Checks/Tag")
+
+
+def t_totes_modell_frisst_kein_budget():
+    """R1: ein 404-Modell belegt eine Kombination JE KEY — uebersprungene
+    Kombinationen duerfen das Versuchsbudget nicht aufbrauchen, sonst
+    greift die Pause nie."""
+    print("\nR1: totes Modell (404) frisst das Versuchsbudget nicht")
+    now = [1_800_000_000.0]
+    real_time, real_post = mr.time.time, mr.requests.post
+
+    class Gemischt(Netz):
+        def post(self, url, **kw):
+            modell = url.rsplit("/", 1)[-1].split(":")[0]
+            self.calls.append(modell)
+            if modell == "gemini-flash-lite-latest":
+                return Antwort(404)
+            return Antwort(429)
+
+    netz = Gemischt()
+    try:
+        reset(netz, now)
+        for _ in range(2):        # erster Aufruf entdeckt das tote Modell
+            try:
+                mr.gemini_read(b"jpeg")
+            except Exception:
+                pass
+        check("totes Modell erkannt",
+              "gemini-flash-lite-latest" in mr._dead_models,
+              f"{mr._dead_models}")
+        echte = [c for c in netz.calls if c != "gemini-flash-lite-latest"]
+        check("Pause trotz uebersprungener Kombinationen gesetzt",
+              mr._gemini_pause_until > now[0],
+              f"{len(echte)} echte Anfragen, pause={mr._gemini_pause_until}")
+    finally:
+        mr.time.time, mr.requests.post = real_time, real_post
+
+
+def t_leere_konfiguration():
+    """R3: ohne Keys darf es keine Division durch Null geben."""
+    print("\nR3: leere Konfiguration bricht sauber ab")
+    saved = mr.GEMINI_API_KEYS
+    real_post = mr.requests.post
+    try:
+        mr.GEMINI_API_KEYS = []
+        mr.requests.post = lambda *a, **k: Antwort(200, OK_PAYLOAD)
+        try:
+            mr._gemini_read_raw(b"jpeg")
+            check("klare Fehlermeldung statt ZeroDivisionError", False,
+                  "keine Exception")
+        except ZeroDivisionError:
+            check("klare Fehlermeldung statt ZeroDivisionError", False,
+                  "ZeroDivisionError")
+        except RuntimeError as e:
+            check("klare Fehlermeldung statt ZeroDivisionError", True, f"{e}")
+    finally:
+        mr.GEMINI_API_KEYS = saved
+        mr.requests.post = real_post
+
+
+def t_pause_zaehlt_als_ausfall():
+    """R2: die Pause darf die Uhr des 6h-Notauswegs nicht anhalten."""
+    print("\nR2: Pause zaehlt als Gemini-Ausfall")
+    now = [1_800_000_000.0]
+    netz = Netz(429)
+    real_time, real_post = mr.time.time, mr.requests.post
+    try:
+        reset(netz, now)
+        try:
+            mr.gemini_read(b"jpeg")
+        except Exception:
+            pass
+        n0, seit = mr._gemini_err_n, mr._gemini_err_since
+        for _ in range(5):
+            now[0] += 1.0
+            try:
+                mr.gemini_read(b"jpeg")
+            except Exception:
+                pass
+        check("Fehlerzaehler laeuft in der Pause weiter",
+              mr._gemini_err_n == n0 + 5, f"{n0} -> {mr._gemini_err_n}")
+        check("Ausfall-Uhr laeuft weiter (Startzeit bleibt stehen)",
+              mr._gemini_err_since == seit)
+    finally:
+        mr.time.time, mr.requests.post = real_time, real_post
 
 
 def t_lokal_laeuft_weiter():
@@ -196,6 +280,9 @@ if __name__ == "__main__":
           f"GEMINI_TRIES={mr.GEMINI_TRIES}")
     t_kreuzcheck_abstand()
     t_tries_und_pause()
+    t_totes_modell_frisst_kein_budget()
+    t_leere_konfiguration()
+    t_pause_zaehlt_als_ausfall()
     t_lokal_laeuft_weiter()
     print()
     if FAILED:
