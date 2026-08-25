@@ -173,6 +173,21 @@ Einspeisung nicht. Details: [docs/regler-v2-plan.md](docs/regler-v2-plan.md)
 - Limit non-persistent (`limit_type: 0`) — schont den Flash von DTU/Inverter
 - Grenzen: `MIN_LIMIT_W` bis `MAX_LIMIT_W` (2000 W beim HMS-2000-4T)
 - Gemessene Reaktionskette: Erkennung ≤1 s + Funk/MPPT 2–6 s
+- **Arbeitspunkt-Leiter (ab 1.8.0)**: unterhalb des Sustain-Floors gibt es
+  nicht nur „halten oder aus". Der HMS hat ein stabiles Plateau bei ~160 W,
+  das die Grundlast deckt — der Regler wählt den günstigsten erreichbaren
+  Punkt und verifiziert ihn. Siehe [docs/eigenverbrauch.md](docs/eigenverbrauch.md)
+
+### Eigenverbrauch messen und verbessern
+
+```bash
+python3 scripts/analyze_selfuse.py --days 7      # wo geht er verloren?
+python3 scripts/probe_operating_points.py --yes  # Arbeitspunkte ausmessen
+```
+
+Die Auswertung der eigenen Telemetrie (36 Tage, 96 412 Limit-Befehle),
+die Kostenrechnung hinter der Leiter und die offenen Hardware-Punkte
+stehen in [docs/eigenverbrauch.md](docs/eigenverbrauch.md).
 
 ## Setup
 

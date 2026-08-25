@@ -192,11 +192,56 @@ TARGET_GRID_W = int(os.environ.get("TARGET_GRID_W", "20"))
 TARGET_GRID_FULL_W = int(os.environ.get("TARGET_GRID_FULL_W", "-50"))
 
 
+# Zeitkonstante der Ladestands-Glaettung fuer das Netz-Ziel (s.u.)
+SOC_EMA_TAU_S = float(os.environ.get("SOC_EMA_TAU_S", "300"))
+
+
+def now_ts() -> float:
+    return time.time()
+
+
 def target_grid(state: dict) -> int:
+    """Netz-Sollwert, interpoliert ueber den LADESTAND — nicht ueber die
+    Spannung.
+
+    Bis 1.7.43 lief die Interpolation linear ueber die Packspannung. Bei
+    LiFePO4 ist das grob falsch: die Kennlinie ist zwischen 20 und 90 %
+    fast flach, ein linearer Ansatz liest den Speicher deshalb systematisch
+    zu voll. Mit den hier gefahrenen Stuetzstellen (47,0 / 54,4 V) meldete
+    er bei 52,7 V Busspannung "77 % voll" und stellte das Ziel auf -34 W —
+    also Dauer-Einspeisung aus einem halb leeren Akku. Dieselbe Spannung
+    ergibt ueber die Ruhespannungskennlinie (soc_estimate, lastkorrigiert)
+    50 % und damit -14 W. Ueber einen Tag sind das ~0,5 kWh, die nicht
+    mehr verschenkt werden.
+
+    Faellt die Schaetzung aus (keine Spannung, unplausible Werte), gilt
+    weiter die alte lineare Interpolation."""
     v = state.get("batt_v")
     if not BATT_STRINGS or v is None or BATT_HIGH_V <= BATT_LOW_V:
         return TARGET_GRID_W
-    f = max(0.0, min(1.0, (v - BATT_LOW_V) / (BATT_HIGH_V - BATT_LOW_V)))
+    f = None
+    soc = soc_estimate(v, state.get("batt_pv", 0.0))
+    lo = soc_estimate(BATT_LOW_V, 0.0)
+    hi = soc_estimate(BATT_HIGH_V, 0.0)
+    if soc is not None and lo is not None and hi is not None and hi > lo:
+        # Die Schaetzung wird GEGLAETTET, bevor sie das Ziel bewegt. Sie
+        # haengt ueber die Lastkorrektur an der Ausgangsleistung — physikalisch
+        # richtig, aber damit wandert das Ziel im Sekundentakt mit der Last,
+        # und der Regler haette eine (schwache, aber unnoetige) Mitkopplung:
+        # mehr Ausgang -> Akku wirkt voller -> Ziel einspeise-freudiger.
+        # Ein Ladestand aendert sich in Minuten, nicht in Sekunden.
+        prev, prev_ts = state.get("soc_ema"), state.get("soc_ema_ts")
+        if prev is None or prev_ts is None:
+            soc_s = soc
+        else:
+            dt = max(0.0, min(SOC_EMA_TAU_S, now_ts() - prev_ts))
+            a = 1.0 - math.exp(-dt / SOC_EMA_TAU_S)
+            soc_s = prev + a * (soc - prev)
+        state["soc_ema"], state["soc_ema_ts"] = soc_s, now_ts()
+        f = (soc_s - lo) / (hi - lo)
+    if f is None:
+        f = (v - BATT_LOW_V) / (BATT_HIGH_V - BATT_LOW_V)
+    f = max(0.0, min(1.0, f))
     return int(round(TARGET_GRID_W + f * (TARGET_GRID_FULL_W - TARGET_GRID_W)))
 DEADBAND_W = int(os.environ.get("DEADBAND_W", "15"))
 # Regelkreis-Totzeit Limit->Wirkung (gemessen ~6-8s inkl. MPPT/LCD/Median);
@@ -210,6 +255,18 @@ LATENCY_S = float(os.environ.get("LATENCY_S", "8"))
 PENDING_THETA_S = float(os.environ.get("PENDING_THETA_S", "4"))
 PENDING_TAU_S = float(os.environ.get("PENDING_TAU_S", "2.5"))
 MIN_STEP_W = int(os.environ.get("MIN_STEP_W", "15"))
+# ANTI-ZAPPEL auf dem Hoch-Pfad. Gemessen an 7 Tagen (6201 Kommandos,
+# 886/Tag): 43 % aller "hoch"-Befehle wurden binnen 30 s wieder auf den
+# Ausgangswert zurueckgenommen, Median-Schrittweite 68 W, und der Ausflug
+# ueber den Floor dauerte im Median 4 SEKUNDEN — kuerzer als die Totzeit
+# des HMS (6-8 s). Diese Befehle koennen also gar nichts bewirkt haben;
+# sie haben nur den MPPT aus seinem Arbeitspunkt geworfen. Genau das ist
+# der Mechanismus, der niedrige Arbeitspunkte instabil macht.
+# Deshalb: grosse Schritte (echter Lastsprung) gehen weiter SOFORT raus,
+# kleine muessen sich UP_CONFIRM_S lang halten. Kosten pro Ereignis:
+# <= UP_FAST_W * UP_CONFIRM_S = 0,13 Wh. 0 = aus (Verhalten wie bisher).
+UP_FAST_W = int(os.environ.get("UP_FAST_W", "150"))
+UP_CONFIRM_S = float(os.environ.get("UP_CONFIRM_S", "3"))
 # Max. kWh-Zuwachs pro Lesung — physikalisch 1 (Zaehler zaehlt ganze kWh)
 MAX_KWH_STEP = 1
 # DIE MONOTONIE-INVARIANTE: Der Zaehler laeuft physikalisch NIE rueckwaerts.
@@ -297,6 +354,74 @@ SEG_WATCH_EVERY = int(os.environ.get("SEG_WATCH_EVERY", "200"))
 SUSTAIN_FLOOR_W = int(os.environ.get("SUSTAIN_FLOOR_W", "430"))
 # Glaettungsfenster fuer die Schlafen/Halten-Entscheidung am Floor
 FLOOR_SMOOTH_S = float(os.environ.get("FLOOR_SMOOTH_S", "12"))
+# ARBEITSPUNKT-LEITER unterhalb des Floors ("300:160").
+#
+# Der Floor kannte nur zwei Antworten auf eine kleine Last: Limit HALTEN
+# (Akku-Energie geht ins Netz) oder Inverter SCHLAFEN legen (das Netz
+# zahlt). Beides ist bei 150 W Hauslast falsch — und beides zusammen ist
+# der Grund, warum der Speicher bei halbem Ladestand danebensteht.
+#
+# Die dritte Antwort steckt in den eigenen Telemetriedaten (36 Tage,
+# 96412 Limit-Kommandos): der HMS folgt niedrigen Limits zwar nicht, aber
+# er faellt auch nicht beliebig — er landet auf STABILEN PLATEAUS. Gemessen
+# ueber Kommandos, die >= 60 s stehen blieben (Fenster 25-60 s danach):
+#
+#   Kommando 50 W     -> 98 % "aus"      (Median 37 W)
+#   Kommando 100-249W -> 72-83 % "aus"   (zu niedrig, reisst ihn ganz ab)
+#   Kommando 250-399W -> 62-66 % LANDEN BEI 120-210 W (Median ~160 W)
+#   Kommando 400-449W -> 81 % bei 350-460 W (Median 422 W)
+#   Kommando >= 500 W -> 85-97 % folgen sauber
+#
+# Das ~160-W-Plateau ist bemerkenswert stabil (Streuung 5,6 W innerhalb
+# eines Plateaus) und haengt NICHT an der Busspannung (48-55 V: 152-162 W).
+# Genau dieser Punkt deckt die typische Grundlast — statt sie zu kaufen.
+#
+# Format: "<Kommando>:<erwartete AC-Leistung>", mehrere per Komma.
+# Leer = alte Zwei-Wege-Logik (Halten oder Schlafen).
+LOW_POINTS_RAW = os.environ.get("LOW_POINTS", "300:160")
+# Wie lange nach dem Kommando gewartet wird, bis der Landeplatz bewertet
+# wird (Totzeit 6-8 s + MPPT-Einschwingen).
+LOW_VERIFY_S = float(os.environ.get("LOW_VERIFY_S", "25"))
+# Mindest-Standzeit eines Arbeitspunkts. Die Plateaus brauchen Ruhe —
+# jedes Kommando ist eine Stoerung des MPPT.
+LOW_DWELL_S = float(os.environ.get("LOW_DWELL_S", "120"))
+# Nach zwei Fehlversuchen wird ein Punkt so lange gesperrt (Wolke,
+# leerer Akku, Firmware-Laune) — danach darf er wieder probiert werden.
+LOW_MISS_COOLDOWN_S = float(os.environ.get("LOW_MISS_COOLDOWN_S", "900"))
+# Ein Punkt gilt als getroffen, wenn die AC-Leistung so nah dran ist.
+LOW_TOL_W = int(os.environ.get("LOW_TOL_W", "45"))
+# Ein Wechsel lohnt erst ab dieser Kostendifferenz (Hysterese).
+LOW_SWITCH_MARGIN_W = int(os.environ.get("LOW_SWITCH_MARGIN_W", "20"))
+
+
+def low_points() -> list[tuple[int, int]]:
+    """[(Kommando, erwartete AC-Leistung)], aufsteigend."""
+    pts = []
+    for part in LOW_POINTS_RAW.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            cmd, ac = part.split(":")
+            cmd, ac = int(cmd), int(ac)
+        except ValueError:
+            print(f"LOW_POINTS: '{part}' ignoriert (Format <cmd>:<watt>)",
+                  file=sys.stderr)
+            continue
+        if MIN_LIMIT_W < cmd < SUSTAIN_FLOOR_W and ac > 0:
+            pts.append((cmd, ac))
+    return sorted(set(pts))
+
+
+def lp_cost(ac: float, need: float, batt_full: bool) -> float:
+    """Kosten eines Arbeitspunkts in Watt — die ganze Entscheidungslogik.
+
+    Zu wenig Leistung muss das Netz decken und kostet Geld. Zu viel geht
+    ins Netz und verschenkt Akku-Energie, die spaeter Netzbezug ersetzt
+    haette — gleiche Waehrung, deshalb 1:1 gewichtet. Nur bei vollem Akku
+    ist der Ueberschuss gratis (er waere ohnehin abgeregelt), dann zaehlt
+    ausschliesslich die Unterdeckung."""
+    return max(0.0, need - ac) + (0.0 if batt_full else max(0.0, ac - need))
 # MPPT-Stuck-Kick: der HMS verklemmt sich an der Batterie gelegentlich weit
 # unter dem Limit (z.B. 178W bei Limit 420) und reagiert auf kleine Schritte
 # kaum — ein grosser Limit-Sprung zwingt den Tracker zum Neu-Akquirieren,
@@ -2212,6 +2337,12 @@ def publish(reading: dict | None, status: str, limit: int | None,
             if BATT_CAPACITY_KWH > 0:
                 msgs.append((f"{TOPIC}/batt_kwh",
                              f"{soc / 100 * BATT_CAPACITY_KWH:.1f}"))
+    if state is not None and low_ladder():
+        lp = state.get("lp_cmd")
+        msgs.append((f"{TOPIC}/low_point",
+                     "regelnd" if lp is None else
+                     "aus" if lp <= MIN_LIMIT_W else
+                     "Floor" if lp >= SUSTAIN_FLOOR_W else f"{lp} W"))
     dey = deye_value()
     if dey is not None:
         msgs.append((f"{TOPIC}/deye_w", f"{dey['w']:.0f}"))
@@ -2256,6 +2387,9 @@ def publish_discovery():
                     "icon": "mdi:speedometer"},
         "status": {"name": "Status", "icon": "mdi:eye-check"},
     }
+    if low_ladder():
+        sensors["low_point"] = {"name": "Arbeitspunkt",
+                                "icon": "mdi:stairs-down"}
     if BATT_STRINGS:
         sensors["batt_v"] = {"name": "Akku-Spannung",
                              "unit_of_measurement": "V",
@@ -2340,7 +2474,15 @@ from collections import deque as _deque
 
 _ctl_buf: "_deque[dict]" = _deque(maxlen=30)
 _ctl_until = 0.0
+_ctl_beat = 0.0
 CTL_LOG_AFTER_S = 45
+# HERZSCHLAG: ausserhalb der Sende-Fenster wird alle CTL_HEARTBEAT_S ein
+# Tick geschrieben. Ohne ihn ist genau die interessanteste Zeit unbelegt —
+# die langen ruhigen Abschnitte, in denen der Inverter schlaeft und das
+# Haus Strom kauft (7 Tage: 62 h am Stueck, nur durch den Ringpuffer am
+# Ende belegt). Kosten bei 30 s: ~2900 Zeilen/Tag, ~250 kB — neben den
+# 1-2 MB, die die Sende-Fenster ohnehin erzeugen, vernachlaessigbar.
+CTL_HEARTBEAT_S = float(os.environ.get("CTL_HEARTBEAT_S", "30"))
 
 
 def _ctl_write(rec: dict):
@@ -2356,24 +2498,182 @@ def _ctl_write(rec: dict):
 
 
 def ctl_tick(grid_w: int, pv_w: float, limit, batt_v=None):
-    rec = {"t": round(time.time(), 2), "ev": "tick", "grid": grid_w,
+    global _ctl_beat
+    now = time.time()
+    rec = {"t": round(now, 2), "ev": "tick", "grid": grid_w,
            "pv": round(pv_w, 1), "limit": limit}
     if batt_v is not None:
         rec["bv"] = round(batt_v, 2)
-    if time.time() < _ctl_until:
+    if now < _ctl_until:
         _ctl_write(rec)
     else:
+        if CTL_HEARTBEAT_S > 0 and now - _ctl_beat >= CTL_HEARTBEAT_S:
+            _ctl_beat = now
+            rec["hb"] = 1          # markiert: steht schon in der Datei
+            _ctl_write(rec)
         _ctl_buf.append(rec)
 
 
 def ctl_send(old, new, tag: str):
     global _ctl_until
     for rec in _ctl_buf:
-        _ctl_write(rec)
+        if not rec.get("hb"):   # Herzschlag-Ticks stehen schon in der Datei
+            _ctl_write(rec)
     _ctl_buf.clear()
     _ctl_write({"t": round(time.time(), 2), "ev": "limit",
                 "from": old, "to": new, "tag": tag})
     _ctl_until = time.time() + CTL_LOG_AFTER_S
+
+
+_low_ladder: list[tuple[int, int]] | None = None
+
+
+def low_ladder() -> list[tuple[int, int]]:
+    global _low_ladder
+    if _low_ladder is None:
+        _low_ladder = low_points()
+    return _low_ladder
+
+
+def smooth_wanted(state: dict, wanted: int, now: float) -> int:
+    """Median des Wunsch-Limits ueber FLOOR_SMOOTH_S.
+
+    Die Hauslast zappelt (26.07. 03:48-03:49: 180 W <-> 266 W im
+    Sekundentakt) und lief dabei staendig ueber die Entscheidungsschwellen —
+    daraus wurden drei Limit-Wechsel in 25 Sekunden. Der Median ist
+    unempfindlich gegen einzelne Ausreisser, folgt aber echten Lastwechseln.
+    """
+    wh = state.setdefault("want_hist", [])
+    wh.append((now, wanted))
+    del wh[:max(0, len(wh) - 40)]
+    fenster = sorted(w for t, w in wh if now - t <= FLOOR_SMOOTH_S)
+    return fenster[len(fenster) // 2] if fenster else wanted
+
+
+def low_control(state: dict, wanted: int, pv_w: float, now: float,
+                current: int | None, send) -> int | None:
+    """Arbeitspunkt-Leiter unterhalb des Sustain-Floors.
+
+    Statt der Zwei-Wege-Entscheidung (Floor halten oder schlafen legen)
+    waehlt der Regler hier den GUENSTIGSTEN der tatsaechlich erreichbaren
+    Arbeitspunkte — inklusive der Plateaus, die der HMS von sich aus
+    ansteuert (~160 W). Jeder Punkt wird nach dem Kommando VERIFIZIERT:
+    landet der Inverter woanders, wird die Erwartung nachgezogen und nach
+    dem zweiten Fehlschlag auf den naechstbesten Punkt ausgewichen. Der
+    schlechteste Fall ist damit exakt das alte Verhalten."""
+    need = smooth_wanted(state, wanted, now)
+    v = state.get("batt_v")
+    batt_full = v is not None and v >= BATT_HIGH_V
+    learned = state.setdefault("lp_ac", {})       # Kommando -> gemessene AC
+    blocked = state.setdefault("lp_block", {})    # Kommando -> gesperrt bis
+    ver = state.get("lp_verify")
+
+    def expect(cmd: int, default: float) -> float:
+        return learned.get(cmd, default)
+
+    def treffer(exp: float) -> bool:
+        return abs(pv_w - exp) <= max(LOW_TOL_W, 0.3 * exp)
+
+    # --- 1) faellige Verifikation auswerten -----------------------------
+    if ver and now - ver["ts"] >= LOW_VERIFY_S:
+        exp, cmd = ver["exp"], ver["cmd"]
+        if treffer(exp):
+            # Erwartung sanft nachziehen (der Punkt driftet mit Temperatur
+            # und Busspannung ein paar Watt)
+            learned[cmd] = round(0.7 * exp + 0.3 * pv_w, 1)
+            state.pop("lp_verify", None)
+            state["lp_seen"] = now
+        else:
+            miss = ver.get("try", 1)
+            _ctl_write({"t": round(now, 2), "ev": "lp_miss", "cmd": cmd,
+                        "exp": round(exp), "pv": round(pv_w, 1), "try": miss})
+            if miss >= 2:
+                blocked[cmd] = now + LOW_MISS_COOLDOWN_S
+                # Gelerntes verwerfen: nach der Sperre soll der Punkt mit
+                # seinem konfigurierten Wert eine faire zweite Chance haben,
+                # nicht mit der Erwartung aus dem Fehlschlag.
+                learned.pop(cmd, None)
+                state.pop("lp_verify", None)
+                state.pop("lp_cmd", None)
+                print(f"Arbeitspunkt {cmd}W verfehlt (ist {pv_w:.0f}W statt "
+                      f"{exp:.0f}W) — {LOW_MISS_COOLDOWN_S / 60:.0f} min gesperrt")
+            else:
+                # Ein zweiter Anlauf ist billig: der Inverter steht jetzt
+                # woanders, dieselbe Anfrage hat damit eine andere Ausgangslage
+                r = send(cmd, f"arbeitspunkt{cmd}-retry")
+                if r is not None:      # Uhr nur bei WIRKLICH gesendetem Befehl
+                    ver["try"] = miss + 1
+                    ver["ts"] = now
+                    return r
+                return current
+        ver = state.get("lp_verify")
+    # --- 1b) laufende Ueberwachung: ein Punkt kann auch spaeter wegkippen
+    elif (not ver and state.get("lp_cmd") is not None
+          and now - state.get("lp_seen", 0.0) >= LOW_VERIFY_S):
+        cmd = state["lp_cmd"]
+        exp = expect(cmd, 0.0 if cmd == MIN_LIMIT_W else float(cmd))
+        state["lp_seen"] = now
+        if cmd in (MIN_LIMIT_W, SUSTAIN_FLOOR_W):
+            # Floor und Schlaf sind der Rueckfallweg — sie werden NIE
+            # gesperrt, sondern nur vermessen. Damit weiss der Kostenvergleich,
+            # was sie wirklich liefern (Schlaf: ~37 W statt 0, Floor: ~425
+            # statt 430) — und wenn der Inverter am Floor doch wegkippt, sinkt
+            # dessen Erwartung von selbst und die Leiter waehlt neu.
+            learned[cmd] = round(0.9 * exp + 0.1 * pv_w, 1)
+        elif treffer(exp):
+            learned[cmd] = round(0.9 * exp + 0.1 * pv_w, 1)
+        else:
+            # nicht sofort umschalten — derselbe Weg wie beim ersten Mal:
+            # ein Nachfassen, dann Sperre
+            state["lp_verify"] = {"cmd": cmd, "exp": exp, "ts": now, "try": 2}
+
+    # --- 2) Kandidaten bewerten ----------------------------------------
+    cands: list[tuple[int, float]] = [(MIN_LIMIT_W, expect(MIN_LIMIT_W, 0.0))]
+    for cmd, ac in low_ladder():
+        if now < blocked.get(cmd, 0.0):
+            continue
+        cands.append((cmd, expect(cmd, float(ac))))
+    cands.append((SUSTAIN_FLOOR_W, expect(SUSTAIN_FLOOR_W,
+                                          float(SUSTAIN_FLOOR_W))))
+    cost = {cmd: lp_cost(ac, need, batt_full) for cmd, ac in cands}
+    best = min(cands, key=lambda c: (cost[c[0]], -c[1]))[0]
+
+    # --- 3) Hysterese: ein Wechsel ist eine Stoerung, kein Gratis-Klick --
+    cur = state.get("lp_cmd")
+    if cur is not None and cur in cost and cur != best:
+        gain = cost[cur] - cost[best]
+        held = now - state.get("lp_since", 0.0)
+        if gain < LOW_SWITCH_MARGIN_W or (held < LOW_DWELL_S and gain < 100):
+            best = cur
+    if ver and state.get("lp_cmd") == ver.get("cmd") and now - ver["ts"] < LOW_VERIFY_S:
+        best = ver["cmd"]        # laufende Verifikation nicht stoeren
+
+    # --- 4) senden -----------------------------------------------------
+    if best == cur and current is not None and abs(current - best) < MIN_STEP_W:
+        return current
+    tag = ("floor-schlaf" if best == MIN_LIMIT_W else
+           "floor-halten" if best == SUSTAIN_FLOOR_W else f"arbeitspunkt{best}")
+    if current is not None and abs(current - best) < MIN_STEP_W:
+        r = None
+    else:
+        r = send(best, tag)
+    if best != cur:
+        exp = dict(cands)[best]
+        print(f"Arbeitspunkt {best}W (erwartet {exp:.0f}W AC) fuer Bedarf "
+              f"{need}W — Kosten {cost[best]:.0f}W" +
+              (f", Alternative {cur}W kostete {cost.get(cur, 0):.0f}W"
+               if cur is not None else ""))
+        state["lp_cmd"] = best
+        state["lp_since"] = now
+        state["lp_seen"] = now
+        if best not in (SUSTAIN_FLOOR_W, MIN_LIMIT_W):
+            state["lp_verify"] = {"cmd": best, "exp": exp, "ts": now, "try": 1}
+        else:
+            state.pop("lp_verify", None)
+    # der alte Zwei-Wege-Zustand bleibt fuer Telemetrie/Publish konsistent
+    state["floor_sleep"] = best == MIN_LIMIT_W
+    state["floor_since"] = now if best == SUSTAIN_FLOOR_W else None
+    return r if r is not None else current
 
 
 def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
@@ -2448,6 +2748,30 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     # Unterhalb des ansteuerbaren Floors nicht weiter runterjagen (s.o.).
     # Der Akku-Waechter hat Vorrang: haelt er, darf der Floor nicht dagegen
     # arbeiten — leerer Akku schlaegt Ueberschuss-Einspeisung.
+    # Die Leiter uebernimmt NUR, wenn der Inverter auch tut, was man ihm
+    # sagt. Klemmt er (liefert weit weniger als das Limit, waehrend das Haus
+    # kauft), gehoert der Fall dem MPPT-Kick weiter unten — genau der Fall,
+    # fuer den er geschrieben wurde ("178 W bei Limit 420"). Ohne diese
+    # Ausnahme wuerde die Leiter den Klemmwert einfach als Arbeitspunkt
+    # dazulernen und der Inverter bliebe fuer immer unten.
+    # Gemessen wird am ROHEN Fehler: waehrend eines Kicks zieht die
+    # Pending-Kompensation den kompensierten Fehler weit ins Negative, und
+    # die Leiter haette dem laufenden Kick genau dann den Zustand unter den
+    # Fuessen weggezogen. Ein angefangener Kick laeuft immer zu Ende — er
+    # protokolliert die loesende Sprunghoehe (kick_result), aus der die
+    # Eskalationstreppe kalibriert ist.
+    verklemmt = (current is not None and error_raw > DEADBAND_W
+                 and current - pv_w > STUCK_GAP_W)
+    if (SUSTAIN_FLOOR_W and wanted < SUSTAIN_FLOOR_W
+            and not state.get("batt_hold")
+            and SUSTAIN_FLOOR_W <= max_limit
+            and low_ladder() and not verklemmt and not state.get("kick")):
+        # Zaehler, an denen der Rueckweg vorbeifuehrt, sauber zuruecksetzen:
+        # pv_hist wuerde sonst spaeter als "seit STUCK_S flach" durchgehen,
+        # obwohl es nur alt ist, und up_since als bereits bestaetigt.
+        state["pv_hist"] = []
+        state["up_since"] = None
+        return low_control(state, wanted, pv_w, now, current, send), pv_w
     if (SUSTAIN_FLOOR_W and wanted < SUSTAIN_FLOOR_W
             and not state.get("batt_hold")
             and SUSTAIN_FLOOR_W <= max_limit):
@@ -2463,16 +2787,8 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
         v = state.get("batt_v")
         batt_full = v is not None and v >= BATT_HIGH_V
         # Die Schlafen/Halten-Entscheidung auf einem GEGLAETTETEN Wunschwert
-        # faellen. Die Hauslast zappelt (26.07. 03:48-03:49: 180 W <-> 266 W
-        # im Sekundentakt) und lief dabei staendig ueber beide Schwellen —
-        # daraus wurden drei Limit-Wechsel in 25 Sekunden. Median ueber
-        # FLOOR_SMOOTH_S ist unempfindlich gegen einzelne Ausreisser,
-        # reagiert aber auf echte Lastwechsel.
-        wh = state.setdefault("want_hist", [])
-        wh.append((now, wanted))
-        del wh[:max(0, len(wh) - 40)]
-        fenster = sorted(w for t, w in wh if now - t <= FLOOR_SMOOTH_S)
-        wanted_s = fenster[len(fenster) // 2] if fenster else wanted
+        # faellen (siehe smooth_wanted).
+        wanted_s = smooth_wanted(state, wanted, now)
         # Hysterese um den KIPPPUNKT (Floor/2), nicht um den Floor: bei
         # Nachtlast ~390W liegt das Wunsch-Limit unter dem Floor, aber weit
         # ueber dem Kipppunkt — dort ist Halten klar guenstiger als Schlafen.
@@ -2497,6 +2813,8 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     else:
         state["floor_since"] = None
         state["floor_sleep"] = False
+        state.pop("lp_cmd", None)      # Leiter verlassen: Arbeitspunkt gilt
+        state.pop("lp_verify", None)   # nicht mehr, sonst meldet HA Altwerte
     if current is None:
         return send(wanted, "init"), pv_w
     # MPPT-Stuck-Kick (siehe oben): Eskalationstreppe reisst den Tracker
@@ -2561,9 +2879,28 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     # runter-Bedingung greift nicht, solange der Akku das Netz auf Ziel haelt
     if current > max_limit and now - state.get("limit_sent_ts", 0) >= LATENCY_S:
         return send(max_limit, "akku-schutz") or current, pv_w
+    # Die Bestaetigungsuhr laeuft nur, solange es ueberhaupt etwas zu
+    # bestaetigen gibt — sonst uebersteht ein alter Zeitstempel die Pause
+    # und der naechste kleine Schritt geht ungeprueft raus.
+    if not (error > DEADBAND_W and wanted > current):
+        state["up_since"] = None
     if error > DEADBAND_W and wanted > current:
         if wanted - current < MIN_STEP_W:
             return current, pv_w  # Mikro-Trim: Funk-Spam ohne Wirkung
+        # Kleine Aufwaertsschritte muessen sich bestaetigen (s. UP_CONFIRM_S):
+        # ein 4-Sekunden-Ausflug ueber den Floor erreicht den Inverter nie,
+        # wirft ihm aber den Arbeitspunkt um. Massstab ist der FEHLER, nicht
+        # die Schrittweite: wanted - current ist wegen wanted = pv + Fehler
+        # immer <= Fehler, eine zusaetzliche Schrittbedingung waere also nie
+        # bindend (und liesse genau die 68-W-Zappler durch, um die es geht).
+        if UP_CONFIRM_S > 0 and error <= UP_FAST_W:
+            since = state.get("up_since")
+            if since is None:
+                state["up_since"] = now
+                return current, pv_w
+            if now - since < UP_CONFIRM_S:
+                return current, pv_w
+        state["up_since"] = None
         return send(wanted, "hoch") or current, pv_w
     if error < -DEADBAND_W and wanted < current:
         if current - wanted < MIN_STEP_W:
