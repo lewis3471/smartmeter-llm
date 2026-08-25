@@ -98,7 +98,23 @@ SAVE_SAMPLES_DIR = os.environ.get("SAVE_SAMPLES_DIR", "")
 # Gemini bei niedriger Confidence/Fehler und als Kreuz-Check alle N Zyklen
 READER_MODE = os.environ.get("READER_MODE", "gemini")
 OCR_MIN_CONF = float(os.environ.get("OCR_MIN_CONF", "0.85"))
+# Kreuz-Check-Abstand in SEKUNDEN, nicht in Zyklen.
+#
+# Bis 1.8.0 stand hier "alle 20 Zyklen". Das stammte aus der Zeit, als ein
+# Zyklus ~15 s dauerte — damals waren das die ~5 min, die README und Doku
+# bis heute nennen. Mit INTERVAL_S=0.5 dauert ein Zyklus aber unter einer
+# Sekunde, also lief der Kreuz-Check alle 10-25 s: statt der geplanten
+# ~300 Calls/Tag wurden es mehrere tausend. Das Free-Tier-Kontingent war
+# damit vormittags verbraucht, und weil der Kreuz-Check den Cooldown
+# ausdruecklich uebergeht, hat er danach im 45-Sekunden-Takt volle
+# Rotationen ueber alle Modelle und Keys in 429er gefahren — 800
+# Fehlversuche pro Stunde, jeder davon eine HTTP-Anfrage im Regelzyklus.
+CROSS_CHECK_S = float(os.environ.get("CROSS_CHECK_S", "300"))
+# Zusaetzliche Untergrenze in Zyklen (aeltere Konfigurationen). Beide
+# Bedingungen muessen erfuellt sein, der Kreuz-Check wird also nie
+# haeufiger als frueher.
 CROSS_CHECK_EVERY = int(os.environ.get("CROSS_CHECK_EVERY", "20"))
+_last_cross_check = 0.0
 
 _local_reader = None
 if READER_MODE in ("local", "hybrid"):
@@ -796,7 +812,13 @@ def read_meter(cycle: int = 0) -> tuple[dict, str]:
             if "Segmenttest" in str(e):
                 raise  # eindeutig, Gemini braucht's nicht zu bestaetigen
             err = e
-        cross_check = READER_MODE == "hybrid" and cycle % CROSS_CHECK_EVERY == 0
+        global _last_cross_check
+        cross_check = (READER_MODE == "hybrid"
+                       and cycle % CROSS_CHECK_EVERY == 0
+                       and time.time() - _last_cross_check >= CROSS_CHECK_S
+                       and time.time() >= _gemini_pause_until)
+        if cross_check:
+            _last_cross_check = time.time()
         if local is not None and conf >= OCR_MIN_CONF and not cross_check:
             return local, f"local c={conf:.2f}"
         if READER_MODE == "local":
@@ -865,6 +887,24 @@ def witness_match(gem_kwh: int, kwh: int) -> bool:
 _gemini_err_since: float | None = None
 _gemini_ok_ts: float | None = None
 _gemini_err_n: int = 0
+# QUOTA-BREMSE. Ist das Tageskontingent leer, antwortet JEDE Kombination aus
+# Modell und Key mit 429 — weiterzufragen kostet nur Zeit im Regelzyklus und
+# haelt die Minutenquote zusaetzlich unten. Nach einer komplett erfolglosen
+# Rotation wird deshalb pausiert, mit verdoppelnder Wartezeit; ein einziger
+# Erfolg setzt alles zurueck. Der Zaehler ueberlebt Neustarts nicht — das ist
+# gewollt, ein Neustart darf einmal nachsehen, ob die Quota zurueck ist.
+GEMINI_PAUSE_MIN_S = float(os.environ.get("GEMINI_PAUSE_MIN_S", "300"))
+GEMINI_PAUSE_MAX_S = float(os.environ.get("GEMINI_PAUSE_MAX_S", "3600"))
+# Wie viele Modell/Key-Kombinationen ein EINZELNER Aufruf durchprobieren
+# darf. Der Index laeuft ueber Aufrufe hinweg weiter, es werden also
+# weiterhin alle Kombinationen erreicht — nur nicht alle auf einmal.
+GEMINI_TRIES = int(os.environ.get("GEMINI_TRIES", "3"))
+_gemini_pause_until = 0.0
+_gemini_pause_s = 0.0
+
+
+class QuotaExhausted(RuntimeError):
+    """Alle probierten Modell/Key-Kombinationen antworteten mit HTTP 429."""
 
 
 def gemini_read(img: bytes) -> dict:
@@ -875,16 +915,28 @@ def gemini_read(img: bytes) -> dict:
     NTP-Vorwaertssprung kann die Uhr kuenstlich altern lassen, aber
     keine 20 realen Fehlversuche herbeizaubern (Runde 5, #7)."""
     global _gemini_err_since, _gemini_ok_ts, _gemini_err_n
+    global _gemini_pause_until, _gemini_pause_s
+    if time.time() < _gemini_pause_until:
+        raise RuntimeError(
+            f"Gemini pausiert (Quota), noch "
+            f"{(_gemini_pause_until - time.time()) / 60:.0f} min")
     try:
         r = _gemini_read_raw(img)
         _gemini_err_since = None
         _gemini_err_n = 0
         _gemini_ok_ts = time.time()
+        _gemini_pause_until = _gemini_pause_s = 0.0
         return r
-    except Exception:
+    except Exception as e:
         if _gemini_err_since is None:
             _gemini_err_since = time.time()
         _gemini_err_n += 1
+        if isinstance(e, QuotaExhausted):
+            _gemini_pause_s = (GEMINI_PAUSE_MIN_S if not _gemini_pause_s
+                               else min(_gemini_pause_s * 2, GEMINI_PAUSE_MAX_S))
+            _gemini_pause_until = time.time() + _gemini_pause_s
+            print(f"Gemini-Quota erschoepft — Pause {_gemini_pause_s / 60:.0f} min "
+                  f"(lokales OCR laeuft unveraendert weiter)", file=sys.stderr)
         raise
 
 
@@ -911,7 +963,9 @@ def _gemini_read_raw(img: bytes) -> dict:
         _dead_models.clear()
     n_combos = len(GEMINI_MODELS) * len(GEMINI_API_KEYS)
     r = None
-    for _ in range(n_combos):
+    versuche = max(1, min(GEMINI_TRIES, n_combos))
+    limitiert = 0
+    for _ in range(versuche + len(_dead_models)):
         model, key = gemini_combo(_combo_idx)
         if model in _dead_models:
             _combo_idx += 1
@@ -936,6 +990,8 @@ def _gemini_read_raw(img: bytes) -> dict:
         if r.status_code in (400, 404, 429, 503):
             if r.status_code == 404:
                 _dead_models.add(model)  # Modell existiert nicht (mehr)
+            if r.status_code == 429:
+                limitiert += 1
             _combo_idx += 1
             nm, nk = gemini_combo(_combo_idx)
             print(
@@ -947,6 +1003,12 @@ def _gemini_read_raw(img: bytes) -> dict:
         break
     if r is None:
         raise RuntimeError("alle Gemini-Modelle tot (404) — Rotation leer")
+    if r.status_code == 429 and limitiert >= versuche:
+        # Kein Einzelfehler, sondern ein leeres Kontingent: der Aufrufer
+        # legt daraufhin eine Pause ein, statt im Sekundentakt weiter
+        # 429er zu sammeln.
+        raise QuotaExhausted(
+            f"{limitiert} Kombinationen hintereinander mit HTTP 429")
     r.raise_for_status()
     # Antwort-Part suchen: Thinking-Modelle liefern zusaetzlich "thought"-Parts
     parts = r.json()["candidates"][0]["content"]["parts"]
