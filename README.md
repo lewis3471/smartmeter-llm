@@ -32,7 +32,7 @@ Jeder Zyklus (~0,4–0,5 s, `INTERVAL_S=0`):
 1. **Frame** über die persistente ESPHome-Verbindung (Belichtung bleibt
    eingependelt, kein Warm-up)
 2. **Lokales OCR** liest `{"kwh","w"}`; bei Confidence < `OCR_MIN_CONF`,
-   Lesefehler oder als Kreuz-Check (alle `CROSS_CHECK_EVERY` Zyklen) fragt
+   Lesefehler oder als Kreuz-Check (alle `CROSS_CHECK_S` Sekunden) fragt
    der Hybrid-Modus **Gemini** — Abweichungen werden Trainingsdaten
 3. **Plausibilitätsfilter** + Median-3 — bei Verwurf: letzten Wert halten;
    hartnäckig konsistente „unplausible" Werte heilt die **Re-Baseline**
@@ -135,13 +135,20 @@ keine Rate-Limits, dadurch der Sekundentakt. Gemini (`-latest`-Aliasse mit
 Fallback-Rotation über Modelle und mehrere API-Keys bei 429/503) dient nur
 noch als:
 
-- **Kreuz-Check** alle `CROSS_CHECK_EVERY` Zyklen (~5 min)
+- **Kreuz-Check** alle `CROSS_CHECK_S` Sekunden (Standard 300 = 5 min)
 - **Fallback** bei niedriger OCR-Confidence (gedrosselt via
   `GEMINI_COOLDOWN_S`, dunkle Bilder werden gar nicht erst gesendet)
 - **Label-Quelle**: Jede bestätigte Lesung und jede Abweichung wird
   Trainingsmaterial — das OCR verbessert sich selbst
 
-Free-Tier-Budget: ~300–500 Calls/Tag, weit unter den Limits. Kosten: 0 €.
+Free-Tier-Budget: ~300 Calls/Tag (288 Kreuz-Checks bei `CROSS_CHECK_S=300`),
+weit unter den Limits. Kosten: 0 €.
+
+Ist das Kontingent doch einmal leer, antwortet **jede** Modell/Key-Kombination
+mit HTTP 429. Dann bricht die Rotation nach `GEMINI_TRIES` (3) Versuchen ab und
+legt eine Pause ein, die sich von 5 auf bis zu 60 Minuten verdoppelt; ein
+Erfolg setzt sie zurück. Das lokale OCR liest unverändert weiter — Gemini ist
+nur Berater.
 
 ## Plausibilitätsfilter & Selbstheilung
 
@@ -268,7 +275,7 @@ Ab Branch `feature/ocr` kann das LCD **lokal** gelesen werden — ohne Cloud-Cal
 beliebig schnelles Intervall, keine Rate-Limits:
 
 - `READER_MODE=hybrid` (empfohlen): lokales OCR liest; bei Confidence
-  < `OCR_MIN_CONF`, Lesefehler oder jedem `CROSS_CHECK_EVERY`-ten Zyklus wird
+  < `OCR_MIN_CONF`, Lesefehler oder alle `CROSS_CHECK_S` Sekunden wird
   Gemini gefragt. Abweichungen landen in `samples/disagreements/` als neue
   Trainingsfälle.
 - `READER_MODE=local`: nur OCR, kein Gemini (kein API-Key nötig)

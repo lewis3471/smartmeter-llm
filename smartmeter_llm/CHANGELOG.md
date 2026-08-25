@@ -1,5 +1,47 @@
 # Changelog
 
+## 1.8.1
+
+- GEMINI-QUOTA: Das Add-on lief in eine Dauerschleife aus HTTP 429 — alle
+  ~45 s eine volle Rotation ueber alle Modelle und Keys, ~800 Fehlversuche
+  pro Stunde, jeder davon eine HTTP-Anfrage mitten im 0,5-s-Regelzyklus.
+- URSACHE war nicht die Rotation, sondern der Abstand des Kreuz-Checks: er
+  zaehlte ZYKLEN (`CROSS_CHECK_EVERY=20`). Das ergab die dokumentierten
+  "~5 min", solange ein Zyklus ~15 s dauerte. Mit `INTERVAL_S=0.5` dauert
+  ein Zyklus unter einer Sekunde — aus 5 Minuten wurden 10-25 Sekunden und
+  aus ~300 Calls/Tag mehrere tausend. Das Kontingent war damit vormittags
+  verbraucht, und weil der Kreuz-Check den Cooldown ausdruecklich uebergeht,
+  lief er danach ungebremst in die 429er.
+- Der Kreuz-Check haelt jetzt einen ZEITLICHEN Mindestabstand:
+  `CROSS_CHECK_S` (Standard 300 s = 288 Kreuz-Checks/Tag, wieder im
+  dokumentierten Budget). Der Zyklen-Zaehler ist ersatzlos entfallen: als
+  zusaetzliche UND-Bedingung erzeugte er eine Schwebung — faellt das
+  Zyklen-Vielfache knapp vor Ablauf der Zeit, wird eine ganze Periode
+  uebersprungen (bei ~15 s Zykluszeit halbiert das die Rate).
+- QUOTA-BREMSE: Antworten `GEMINI_TRIES` (3) Kombinationen hintereinander
+  mit 429, ist das kein Einzelfehler, sondern ein leeres Kontingent. Dann
+  bricht die Rotation ab und pausiert — 5 min, danach verdoppelnd bis
+  60 min; ein einziger Erfolg setzt alles zurueck. Waehrend der Pause geht
+  keine einzige Anfrage mehr raus (auch nicht fuer den Kreuz-Check).
+- Ein einzelner Aufruf verbrennt hoechstens `GEMINI_TRIES` Kombinationen
+  statt aller zehn. Der Rotationsindex laeuft ueber Aufrufe hinweg weiter,
+  es werden also weiterhin alle Kombinationen erreicht — nur nicht alle auf
+  einmal im selben Regelzyklus.
+- Am Regelverhalten aendert sich nichts: das lokale OCR ist der Primaerleser
+  und liest waehrend der Pause unveraendert weiter. Gemini bleibt Berater.
+- Gezaehlt werden GESENDETE Anfragen, nicht Schleifendurchlaeufe: ein
+  totes Modell (404) belegt eine Kombination JE KEY, uebersprungene
+  Kombinationen duerfen das Versuchsbudget also nicht aufbrauchen — sonst
+  waere die Pause bei einem 404-Modell nie ausgeloest worden.
+- Die Pause zaehlt als Gemini-AUSFALL. Sonst haette die Bremse still die
+  Uhr des 6h-Notauswegs angehalten (Fehlerzaehler < 20) und ein vergifteter
+  Zaehlerstand haette statt 6 h ueber 16 h nicht heilen koennen.
+- Ohne konfigurierte Modelle/Keys gibt es eine klare Fehlermeldung statt
+  einer Division durch Null.
+- tests/test_gemini_quota.py deckt Abstand, Rotationsgrenze, Pause,
+  Verdopplung, Ruecksetzung, totes Modell, leere Konfiguration und den
+  lokalen Weiterbetrieb ab.
+
 ## 1.8.0
 
 - MEHR EIGENVERBRAUCH: Der Regler kannte unterhalb des Sustain-Floors nur
