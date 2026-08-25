@@ -237,6 +237,110 @@ def t_up_confirm():
         mr.time.time = real_time
 
 
+def t_kick_vorrang():
+    """R1/R2: klemmt der Inverter, gehoert der Fall dem MPPT-Kick — die
+    Leiter darf ihn weder uebernehmen noch einen laufenden Kick einfrieren."""
+    print("\nR1: verklemmter Inverter geht an den Kick, nicht an die Leiter")
+    sent = []
+    dc = {1: (52.0, 100.0), 4: (52.0, 100.0)}
+    pv = [178.0]
+    mr.get_livedata = lambda: (pv[0], dc)
+    mr.set_limit = lambda w: sent.append(w)
+    now = [1_800_000_000.0]
+    real_time = mr.time.time
+    mr.time.time = lambda: now[0]
+    try:
+        # Limit 430, Inverter liefert nur 178 W, Haus zieht 250 W -> klemmt
+        st = {"limit_w": 430, "batt_v": 52.0}
+        for _ in range(40):          # STUCK_S lang flach halten
+            now[0] += 1.0
+            mr.control(250, st)
+        check("Kick statt Leiter", any(w > 430 for w in sent),
+              f"gesendet={sent}")
+        check("laufender Kick wird von der Leiter nicht abgeraeumt",
+              "kick" in st, f"kick={st.get('kick')}")
+        check("Kick eskaliert weiter", len(sent) >= 2, f"gesendet={sent}")
+        # Loest der Kick, wird er sauber abgeschlossen (kick_result) und die
+        # Leiter uebernimmt erst danach wieder
+        pv[0] = 430.0
+        now[0] += 2.0
+        mr.control(250, st)
+        check("geloester Kick wird abgeschlossen", "kick" not in st,
+              f"kick={st.get('kick')}")
+    finally:
+        mr.time.time = real_time
+
+
+def t_up_since_verfaellt():
+    """R6: die Bestaetigungsuhr darf eine Pause nicht ueberleben."""
+    print("\nR6: alter Bestaetigungs-Zeitstempel wird verworfen")
+    sent = []
+    mr.get_livedata = lambda: (600.0, {1: (52.0, 300.0), 4: (52.0, 300.0)})
+    mr.set_limit = lambda w: sent.append(w)
+    now = [1_800_000_000.0]
+    real_time = mr.time.time
+    mr.time.time = lambda: now[0]
+    try:
+        st = {"limit_w": 600, "batt_v": 52.0}
+        mr.control(40, st)                 # Uhr startet
+        check("Uhr laeuft", st.get("up_since") is not None)
+        now[0] += 1.0
+        mr.control(0, st)                  # Fehler weg -> Uhr muss weg
+        check("Uhr geloescht, sobald der Fehler weg ist",
+              st.get("up_since") is None, f"{st.get('up_since')}")
+        now[0] += 600.0
+        mr.control(40, st)                 # neuer kleiner Fehler
+        check("neuer kleiner Schritt wartet wieder", not sent, f"{sent}")
+    finally:
+        mr.time.time = real_time
+
+
+def t_up_confirm_greift_bei_68w():
+    """R7: der Median-Zappler aus den Logs (68 W) muss erfasst werden."""
+    print("\nR7: 68-W-Zappler wird abgefangen, 200-W-Sprung nicht")
+    sent = []
+    mr.get_livedata = lambda: (430.0, {1: (52.0, 215.0), 4: (52.0, 215.0)})
+    mr.set_limit = lambda w: sent.append(w)
+    now = [1_800_000_000.0]
+    real_time = mr.time.time
+    mr.time.time = lambda: now[0]
+    try:
+        st = {"limit_w": 430, "batt_v": 52.0}
+        mr.control(70, st)                 # ~68 W Fehler
+        now[0] += 1.0
+        mr.control(70, st)
+        check("68-W-Zappler wartet auf Bestaetigung", not sent, f"{sent}")
+        sent.clear()
+        st = {"limit_w": 430, "batt_v": 52.0}
+        now[0] += 10.0
+        mr.control(200, st)                # klarer Lastsprung
+        check("200-W-Fehler geht sofort raus", len(sent) == 1, f"{sent}")
+    finally:
+        mr.time.time = real_time
+
+
+def t_soc_glaettung():
+    print("\nR3: Ladestand fuers Ziel wird geglaettet (keine Mitkopplung)")
+    real_time = mr.time.time
+    now = [1_800_000_000.0]
+    mr.time.time = lambda: now[0]
+    try:
+        st = {"batt_v": 52.7, "batt_pv": 0.0}
+        leer = mr.target_grid(st)
+        now[0] += 2.0
+        st["batt_pv"] = 1400.0             # Lastsprung
+        unter_last = mr.target_grid(st)
+        check("Ziel springt nicht mit der Last",
+              abs(unter_last - leer) <= 2, f"{leer} W -> {unter_last} W")
+        for _ in range(30):                # nach Minuten zieht es nach
+            now[0] += 60.0
+            spaet = mr.target_grid(st)
+        check("nach Minuten folgt es der Schaetzung", spaet < leer,
+              f"{leer} W -> {spaet} W")
+    finally:
+        mr.time.time = real_time
+
+
 def t_ladder_off():
     print("\nAbschaltbar: LOW_POINTS leer -> alte Zwei-Wege-Logik")
     saved_raw, saved_cache = mr.LOW_POINTS_RAW, mr._low_ladder
@@ -269,6 +373,10 @@ if __name__ == "__main__":
     t_no_flapping()
     t_target_soc()
     t_up_confirm()
+    t_up_since_verfaellt()
+    t_up_confirm_greift_bei_68w()
+    t_kick_vorrang()
+    t_soc_glaettung()
     t_ladder_off()
     print()
     if FAILED:

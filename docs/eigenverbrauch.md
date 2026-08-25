@@ -152,6 +152,13 @@ Kostendifferenz, Entscheidung auf dem 12-s-Median des Bedarfs. Im Test mit
 der echten Zappellast (180 ↔ 266 W im Sekundentakt) bleibt es bei
 **einem** Befehl in 320 s.
 
+**Der MPPT-Kick behaelt Vorrang.** Liefert der Inverter weit weniger als
+sein Limit, waehrend das Haus kauft (der Fall, fuer den der Kick
+geschrieben wurde: „178 W bei Limit 420"), uebernimmt die Leiter gar nicht
+erst, und ein angefangener Kick laeuft immer zu Ende. Sonst haette die
+Leiter den Klemmwert einfach als Arbeitspunkt dazugelernt und der Inverter
+waere unten geblieben.
+
 Abschalten: Add-on-Option `low_points` leeren → exakt die alte Logik.
 
 ### 2.2 Netz-Sollwert folgt dem Ladestand, nicht der Spannung
@@ -165,15 +172,25 @@ einem halb leeren Speicher. Dieselbe Spannung ergibt ueber die
 Ruhespannungskennlinie (`soc_estimate`, lastkorrigiert) **50 %** und damit
 **−14 W**. 20 W ueber 24 h sind ~0,5 kWh.
 
-Faellt die Schaetzung aus, gilt weiter die alte lineare Rechnung.
+Die Schaetzung geht **geglaettet** (5 min) ins Ziel: ueber die
+Lastkorrektur haengt sie an der Ausgangsleistung, und ohne Glaettung
+wanderte das Ziel im Sekundentakt mit der Last — eine schwache, aber
+unnoetige Mitkopplung. Ein Ladestand aendert sich in Minuten, nicht in
+Sekunden. Faellt die Schaetzung ganz aus, gilt weiter die alte lineare
+Rechnung.
 
 ### 2.3 Kleine Hoch-Schritte brauchen eine Bestaetigung
 
-Schritte bis 150 W bei einem Fehler unter 45 W gehen erst raus, wenn die
-Abweichung `UP_CONFIRM_S` (3 s) angehalten hat. Grosse Lastspruenge und
-grosse Fehler bleiben **sofort und ungebremst** — die Politik „kein Cent
-Netzbezug, wenn die Sonne liefern kann" gilt unveraendert. Kosten pro
-unterdruecktem Zappler: hoechstens 0,13 Wh.
+Ein Fehler bis `UP_FAST_W` (150 W) muss `UP_CONFIRM_S` (3 s) anhalten,
+bevor der Befehl rausgeht. Grosse Lastspruenge bleiben **sofort und
+ungebremst** — die Politik „kein Cent Netzbezug, wenn die Sonne liefern
+kann" gilt unveraendert. Kosten pro unterdruecktem Zappler: hoechstens
+0,13 Wh.
+
+Massstab ist bewusst der Fehler, nicht die Schrittweite: wegen
+`wanted = PV + Fehler` ist `wanted − Limit` immer kleiner oder gleich dem
+Fehler, eine zusaetzliche Schrittbedingung waere also nie bindend — und
+liesse genau die 68-W-Zappler durch, um die es geht.
 
 ### 2.4 Telemetrie-Herzschlag
 

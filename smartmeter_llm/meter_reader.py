@@ -192,6 +192,14 @@ TARGET_GRID_W = int(os.environ.get("TARGET_GRID_W", "20"))
 TARGET_GRID_FULL_W = int(os.environ.get("TARGET_GRID_FULL_W", "-50"))
 
 
+# Zeitkonstante der Ladestands-Glaettung fuer das Netz-Ziel (s.u.)
+SOC_EMA_TAU_S = float(os.environ.get("SOC_EMA_TAU_S", "300"))
+
+
+def now_ts() -> float:
+    return time.time()
+
+
 def target_grid(state: dict) -> int:
     """Netz-Sollwert, interpoliert ueber den LADESTAND — nicht ueber die
     Spannung.
@@ -216,7 +224,21 @@ def target_grid(state: dict) -> int:
     lo = soc_estimate(BATT_LOW_V, 0.0)
     hi = soc_estimate(BATT_HIGH_V, 0.0)
     if soc is not None and lo is not None and hi is not None and hi > lo:
-        f = (soc - lo) / (hi - lo)
+        # Die Schaetzung wird GEGLAETTET, bevor sie das Ziel bewegt. Sie
+        # haengt ueber die Lastkorrektur an der Ausgangsleistung — physikalisch
+        # richtig, aber damit wandert das Ziel im Sekundentakt mit der Last,
+        # und der Regler haette eine (schwache, aber unnoetige) Mitkopplung:
+        # mehr Ausgang -> Akku wirkt voller -> Ziel einspeise-freudiger.
+        # Ein Ladestand aendert sich in Minuten, nicht in Sekunden.
+        prev, prev_ts = state.get("soc_ema"), state.get("soc_ema_ts")
+        if prev is None or prev_ts is None:
+            soc_s = soc
+        else:
+            dt = max(0.0, min(SOC_EMA_TAU_S, now_ts() - prev_ts))
+            a = 1.0 - math.exp(-dt / SOC_EMA_TAU_S)
+            soc_s = prev + a * (soc - prev)
+        state["soc_ema"], state["soc_ema_ts"] = soc_s, now_ts()
+        f = (soc_s - lo) / (hi - lo)
     if f is None:
         f = (v - BATT_LOW_V) / (BATT_HIGH_V - BATT_LOW_V)
     f = max(0.0, min(1.0, f))
@@ -2485,16 +2507,18 @@ def ctl_tick(grid_w: int, pv_w: float, limit, batt_v=None):
     if now < _ctl_until:
         _ctl_write(rec)
     else:
-        _ctl_buf.append(rec)
         if CTL_HEARTBEAT_S > 0 and now - _ctl_beat >= CTL_HEARTBEAT_S:
             _ctl_beat = now
-            _ctl_write(dict(rec, ev="tick", hb=1))
+            rec["hb"] = 1          # markiert: steht schon in der Datei
+            _ctl_write(rec)
+        _ctl_buf.append(rec)
 
 
 def ctl_send(old, new, tag: str):
     global _ctl_until
     for rec in _ctl_buf:
-        _ctl_write(rec)
+        if not rec.get("hb"):   # Herzschlag-Ticks stehen schon in der Datei
+            _ctl_write(rec)
     _ctl_buf.clear()
     _ctl_write({"t": round(time.time(), 2), "ev": "limit",
                 "from": old, "to": new, "tag": tag})
@@ -2724,10 +2748,29 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     # Unterhalb des ansteuerbaren Floors nicht weiter runterjagen (s.o.).
     # Der Akku-Waechter hat Vorrang: haelt er, darf der Floor nicht dagegen
     # arbeiten — leerer Akku schlaegt Ueberschuss-Einspeisung.
+    # Die Leiter uebernimmt NUR, wenn der Inverter auch tut, was man ihm
+    # sagt. Klemmt er (liefert weit weniger als das Limit, waehrend das Haus
+    # kauft), gehoert der Fall dem MPPT-Kick weiter unten — genau der Fall,
+    # fuer den er geschrieben wurde ("178 W bei Limit 420"). Ohne diese
+    # Ausnahme wuerde die Leiter den Klemmwert einfach als Arbeitspunkt
+    # dazulernen und der Inverter bliebe fuer immer unten.
+    # Gemessen wird am ROHEN Fehler: waehrend eines Kicks zieht die
+    # Pending-Kompensation den kompensierten Fehler weit ins Negative, und
+    # die Leiter haette dem laufenden Kick genau dann den Zustand unter den
+    # Fuessen weggezogen. Ein angefangener Kick laeuft immer zu Ende — er
+    # protokolliert die loesende Sprunghoehe (kick_result), aus der die
+    # Eskalationstreppe kalibriert ist.
+    verklemmt = (current is not None and error_raw > DEADBAND_W
+                 and current - pv_w > STUCK_GAP_W)
     if (SUSTAIN_FLOOR_W and wanted < SUSTAIN_FLOOR_W
             and not state.get("batt_hold")
             and SUSTAIN_FLOOR_W <= max_limit
-            and low_ladder()):
+            and low_ladder() and not verklemmt and not state.get("kick")):
+        # Zaehler, an denen der Rueckweg vorbeifuehrt, sauber zuruecksetzen:
+        # pv_hist wuerde sonst spaeter als "seit STUCK_S flach" durchgehen,
+        # obwohl es nur alt ist, und up_since als bereits bestaetigt.
+        state["pv_hist"] = []
+        state["up_since"] = None
         return low_control(state, wanted, pv_w, now, current, send), pv_w
     if (SUSTAIN_FLOOR_W and wanted < SUSTAIN_FLOOR_W
             and not state.get("batt_hold")
@@ -2836,14 +2879,21 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     # runter-Bedingung greift nicht, solange der Akku das Netz auf Ziel haelt
     if current > max_limit and now - state.get("limit_sent_ts", 0) >= LATENCY_S:
         return send(max_limit, "akku-schutz") or current, pv_w
+    # Die Bestaetigungsuhr laeuft nur, solange es ueberhaupt etwas zu
+    # bestaetigen gibt — sonst uebersteht ein alter Zeitstempel die Pause
+    # und der naechste kleine Schritt geht ungeprueft raus.
+    if not (error > DEADBAND_W and wanted > current):
+        state["up_since"] = None
     if error > DEADBAND_W and wanted > current:
         if wanted - current < MIN_STEP_W:
             return current, pv_w  # Mikro-Trim: Funk-Spam ohne Wirkung
         # Kleine Aufwaertsschritte muessen sich bestaetigen (s. UP_CONFIRM_S):
         # ein 4-Sekunden-Ausflug ueber den Floor erreicht den Inverter nie,
-        # wirft ihm aber den Arbeitspunkt um.
-        if (UP_CONFIRM_S > 0 and wanted - current <= UP_FAST_W
-                and error <= 3 * DEADBAND_W):
+        # wirft ihm aber den Arbeitspunkt um. Massstab ist der FEHLER, nicht
+        # die Schrittweite: wanted - current ist wegen wanted = pv + Fehler
+        # immer <= Fehler, eine zusaetzliche Schrittbedingung waere also nie
+        # bindend (und liesse genau die 68-W-Zappler durch, um die es geht).
+        if UP_CONFIRM_S > 0 and error <= UP_FAST_W:
             since = state.get("up_since")
             if since is None:
                 state["up_since"] = now
@@ -2852,7 +2902,6 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
                 return current, pv_w
         state["up_since"] = None
         return send(wanted, "hoch") or current, pv_w
-    state["up_since"] = None
     if error < -DEADBAND_W and wanted < current:
         if current - wanted < MIN_STEP_W:
             return current, pv_w

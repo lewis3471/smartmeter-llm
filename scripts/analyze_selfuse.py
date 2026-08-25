@@ -169,6 +169,7 @@ def section_2(ticks, lims, args):
     print(f"(Fenster {args.settle_from}-{args.settle_to} s nach dem Befehl, "
           f"nur Befehle die >= {args.settle_to} s stehen blieben)")
     zones = [(0, 60), (60, 120), (120, 210), (210, 350), (350, 460), (460, 10 ** 9)]
+    TOP_BUCKET = 1000   # alles darueber faellt in einen offenen Sammel-Eimer
     b = collections.defaultdict(list)
     for e in lims:
         i = bisect.bisect_right(lt, e["t"])
@@ -180,7 +181,7 @@ def section_2(ticks, lims, args):
              if ticks[k].get("pv") is not None]
         if len(w) < 5:
             continue
-        b[min(e["to"], 1000) // 50 * 50].append(statistics.median(w))
+        b[min(e["to"], TOP_BUCKET) // 50 * 50].append(statistics.median(w))
     head = "".join(f"{lo}-{hi if hi < 10 ** 9 else '':>4}".rjust(10)
                    for lo, hi in zones)
     print(f"{'Befehl':>10s} {'n':>5s}" + head + f"{'Median':>8s}")
@@ -191,7 +192,8 @@ def section_2(ticks, lims, args):
             continue
         cells = "".join(f"{sum(1 for x in v if lo <= x < hi) / len(v):9.0%} "
                         for lo, hi in zones)
-        print(f"{k:6d}-{k + 49:3d} {len(v):5d} " + cells +
+        label = f"{k:6d}+   " if k >= TOP_BUCKET else f"{k:6d}-{k + 49:3d}"
+        print(f"{label} {len(v):5d} " + cells +
               f"{statistics.median(v):8.0f}")
         table[k] = v
     return table

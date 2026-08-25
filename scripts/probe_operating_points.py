@@ -129,6 +129,9 @@ def main() -> int:
                    help="vor jeder Stufe erst schlafen legen (misst, ob der "
                         "Anfahrweg den Landeplatz bestimmt)")
     p.add_argument("--out", default="", help="JSONL-Protokoll (optional)")
+    p.add_argument("--restore", type=int, default=0,
+                   help="Limit, das am Ende gesetzt wird, falls das aktuelle "
+                        "nicht auslesbar ist")
     p.add_argument("--yes", action="store_true",
                    help="Bestaetigung: Add-on ist gestoppt, Messung darf laufen")
     args = p.parse_args()
@@ -155,17 +158,29 @@ def main() -> int:
         print(f"OpenDTU nicht erreichbar ({e}) — Messung abgebrochen",
               file=sys.stderr)
         return 2
-    vorher = read_limit()
+    vorher = read_limit() or args.restore
+    if not vorher:
+        # Ohne bekanntes Ausgangslimit gaebe es am Ende nichts, worauf
+        # zurueckgestellt werden koennte — der Inverter bliebe auf der
+        # letzten Messstufe stehen. Lieber gar nicht erst anfangen.
+        print("Aktuelles Limit ist nicht auslesbar (/api/limit/status). "
+              "Erst pruefen, oder --restore <Watt> mitgeben — sonst bleibt "
+              "der Inverter am Ende auf der letzten Stufe stehen.",
+              file=sys.stderr)
+        return 2
     print(f"Inverter liefert gerade {ac0:.0f} W bei {v0:.1f} V Bus.")
     print(f"Limit vorher: {vorher} W — wird am Ende wiederhergestellt")
 
     def restore(*_):
-        if vorher:
+        for versuch in range(3):
             try:
                 set_limit(int(vorher))
                 print(f"\nLimit auf {vorher} W zurueckgesetzt.")
+                break
             except Exception as e:
-                print(f"\nLimit-Restore fehlgeschlagen: {e}", file=sys.stderr)
+                print(f"\nLimit-Restore fehlgeschlagen ({versuch + 1}/3): {e}",
+                      file=sys.stderr)
+                time.sleep(2)
         if fh:
             fh.close()
         sys.exit(0)
@@ -197,11 +212,12 @@ def main() -> int:
                       f"(min {r.get('min', 0):.0f} / max {r.get('max', 0):.0f}, "
                       f"sd {r.get('sd', 0):.1f}, Bus {r.get('v', 0):.1f} V)")
     finally:
-        if vorher:
+        for _ in range(3):
             try:
                 set_limit(int(vorher))
+                break
             except Exception:
-                pass
+                time.sleep(2)
 
     print("\n== Ergebnis ==")
     print(f"{'Befehl':>7s} {'AC Median':>10s} {'Streuung':>9s} {'Runden':>7s} "

@@ -61,6 +61,32 @@
 - Analyse und offene Punkte (u.a.: 58 % des Netzbezugs entstehen, waehrend
   der HMS schon an seiner ~1400-W-Decke laeuft — das ist Hardware, kein
   Regelproblem): docs/eigenverbrauch.md
+- Aus dem Review vor dem Merge, alle mit Test abgedeckt:
+  * MPPT-KICK BEHAELT VORRANG. Klemmt der Inverter (liefert weit weniger
+    als sein Limit, waehrend das Haus kauft), uebernimmt die Leiter gar
+    nicht erst — sonst haette sie den Klemmwert als Arbeitspunkt
+    dazugelernt und der Inverter waere unten geblieben. Ein angefangener
+    Kick laeuft immer zu Ende (sonst fehlte das kick_result, aus dem die
+    Eskalationstreppe kalibriert ist). Geprueft wird am ROHEN Fehler: die
+    Pending-Kompensation zieht den kompensierten Fehler waehrend eines
+    Kicks weit ins Negative.
+  * pv_hist und up_since werden beim Wechsel in die Leiter zurueckgesetzt.
+    Sonst galt eine alte Historie spaeter als "seit STUCK_S flach" (Kick
+    nach 5 s statt 25 s) und ein alter Zeitstempel als bereits bestaetigt.
+  * Anti-Zappel misst am FEHLER statt an der Schrittweite. Wegen
+    wanted = PV + Fehler ist wanted - Limit immer <= Fehler, die
+    Schrittbedingung war also nie bindend — und liess genau die
+    68-W-Zappler durch, um die es geht.
+  * Ladestand fuers Ziel wird ueber 5 min geglaettet: er haengt ueber die
+    Lastkorrektur an der Ausgangsleistung, ohne Glaettung wanderte das
+    Ziel im Sekundentakt mit der Last (schwache Mitkopplung).
+  * Herzschlag-Ticks wurden doppelt geschrieben (sofort UND spaeter aus
+    dem Ringpuffer). Sie sind jetzt mit "hb" markiert und werden beim
+    Nachschreiben uebersprungen.
+  * probe_operating_points bricht ab, wenn das aktuelle Limit nicht
+    auslesbar ist (sonst waere der Inverter am Ende auf der letzten
+    Messstufe stehen geblieben) — oder nimmt --restore <Watt>; der
+    Restore versucht es jetzt dreimal.
 
 ## 1.7.43
 
