@@ -3826,3 +3826,1594 @@
 {"t": 1788051348.67, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
 {"t": 1788051350.52, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
 {"t": 1788051350.54, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051352.64, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051352.66, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051354.62, "ev": "tick", "grid": 147, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051356.42, "ev": "tick", "grid": 147, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051356.45, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051358.4, "ev": "tick", "grid": 147, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051360.42, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051360.55, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051362.4, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051364.23, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051364.34, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051366.19, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051367.98, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051368.02, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051369.97, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051371.87, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051371.91, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051373.86, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051375.79, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051375.91, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051377.86, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051377.88, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051379.69, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051381.65, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051381.67, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051383.47, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051385.44, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051385.46, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051387.37, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051389.33, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051389.35, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051391.24, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051393.02, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051393.04, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051394.84, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051396.81, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051396.82, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051398.66, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051402.38, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051402.39, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051404.2, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051406.12, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051406.14, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051407.95, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051409.91, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051409.93, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051411.75, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051413.7, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051413.71, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051415.64, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051417.49, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051417.51, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051419.3, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051421.18, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051421.19, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051422.99, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051424.96, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051424.98, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051426.8, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051428.75, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051428.77, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051430.56, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051432.35, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051432.37, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788051434.17, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051436.13, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051436.15, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051437.93, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051439.81, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051439.83, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788051441.75, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051443.6, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051443.61, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051445.5, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051447.29, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051447.3, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788051449.2, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051451.08, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051451.14, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051452.95, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051454.87, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051454.92, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788051456.74, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051458.65, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051458.67, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051460.48, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051460.48, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 0.0, "try": 1}
+{"t": 1788051464.18, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051464.18, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 0.0, "try": 1}
+{"t": 1788051464.2, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300-retry"}
+{"t": 1788051467.36, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051467.38, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051469.19, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051470.94, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051470.95, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788051472.76, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051474.49, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051474.51, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051476.41, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051478.32, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051478.34, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788051480.26, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051482.21, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051482.22, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051484.02, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051485.91, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051485.93, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788051487.74, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051489.68, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788051489.7, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051491.62, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051491.62, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 0.0, "try": 2}
+{"t": 1788051493.78, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051493.79, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051495.69, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051497.46, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051497.48, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051499.31, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051501.15, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051501.16, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051502.94, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051504.84, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051504.86, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051506.65, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051508.52, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051508.58, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051510.39, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051512.32, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051512.33, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051514.12, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051516.0, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051516.03, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051517.84, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051519.89, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051519.91, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051521.72, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051525.52, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051525.54, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051527.36, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051529.21, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051529.22, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051531.13, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051533.1, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051533.12, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051534.93, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051536.99, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051537.0, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051538.78, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051540.65, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051540.67, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051542.57, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051544.46, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051544.48, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051546.29, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051548.25, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051548.27, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051550.08, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051551.94, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051551.96, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051553.77, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051555.69, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051555.71, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051557.5, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051559.41, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051559.43, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051561.25, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051563.1, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051563.12, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051565.04, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051567.0, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051567.01, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051568.94, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051570.89, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051570.9, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051572.83, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051574.67, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051574.69, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051576.48, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051578.26, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051578.29, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051580.11, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051582.04, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051582.06, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051583.87, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051587.58, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051587.6, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051589.4, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051591.26, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051591.28, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051593.08, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051595.05, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051595.06, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051597.05, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051598.94, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051598.96, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051601.06, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051601.08, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051603.25, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051603.26, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051605.2, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051607.13, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051607.15, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051609.2, "ev": "tick", "grid": 147, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051609.22, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051611.13, "ev": "tick", "grid": 148, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051612.98, "ev": "tick", "grid": 148, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051613.07, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051615.1, "ev": "tick", "grid": 148, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051615.11, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051617.02, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051618.81, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051618.82, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051620.72, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051622.6, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051622.61, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051624.52, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051626.49, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051626.51, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051628.41, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051630.28, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051630.29, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051632.05, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051633.96, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051633.98, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051635.77, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051637.57, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051637.59, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051639.36, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051641.34, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051641.35, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051643.11, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051644.93, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051644.95, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051646.75, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051650.55, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051650.57, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051652.46, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051654.34, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051654.36, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051656.16, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051658.13, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051658.15, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051659.96, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051661.82, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051661.84, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051663.63, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051665.51, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051665.53, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051667.32, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051669.19, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051669.21, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051671.02, "ev": "tick", "grid": 146, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051672.98, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051673.0, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051674.79, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051676.67, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051676.69, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051678.48, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051680.35, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051680.37, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051682.27, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051684.24, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051684.25, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051686.17, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051688.03, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051688.05, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051689.88, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051691.82, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051691.84, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051693.65, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051695.61, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051695.63, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051697.55, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051699.5, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051699.52, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051701.43, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051703.3, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051703.32, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051705.11, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051706.87, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051706.89, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051708.67, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051713.42, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051713.44, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051715.33, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051717.21, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051717.22, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051719.03, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051720.83, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051720.85, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051722.66, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051724.49, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051724.5, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051726.37, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051728.27, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051728.29, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051730.2, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051732.16, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051732.18, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051733.98, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051735.76, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051735.82, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051737.5, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051739.42, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051739.44, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051741.31, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051743.22, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051743.24, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051745.13, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051747.02, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051747.03, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051748.85, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051750.8, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051750.82, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051752.63, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051754.59, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051754.61, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051756.51, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051758.38, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051758.39, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051760.32, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051762.27, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051762.29, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051764.12, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051766.16, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051766.18, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051769.24, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051769.26, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051771.07, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051773.03, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051773.04, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051774.84, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051776.71, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051776.72, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051778.52, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051780.29, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051780.31, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051782.18, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051784.09, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051784.1, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051786.0, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051787.87, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051787.89, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051789.79, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051791.66, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051791.67, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051793.48, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051795.45, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051795.47, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051797.29, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051799.24, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051799.25, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051801.16, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051803.03, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051803.04, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051804.95, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051806.81, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051806.83, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051808.63, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051810.5, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051810.51, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051812.29, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051814.19, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051814.21, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051816.01, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051817.88, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051817.89, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051819.69, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051821.56, "ev": "tick", "grid": 254, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051821.58, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788051823.36, "ev": "tick", "grid": 255, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051825.08, "ev": "tick", "grid": 255, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788051825.1, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788051826.91, "ev": "tick", "grid": 256, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051828.83, "ev": "tick", "grid": 257, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051830.63, "ev": "tick", "grid": 256, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051837.23, "ev": "tick", "grid": 256, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051839.03, "ev": "tick", "grid": 256, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051840.91, "ev": "tick", "grid": 256, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051842.71, "ev": "tick", "grid": 255, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051844.6, "ev": "tick", "grid": 255, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051846.38, "ev": "tick", "grid": 255, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051848.29, "ev": "tick", "grid": 255, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051850.2, "ev": "tick", "grid": 255, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051851.97, "ev": "tick", "grid": 254, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051853.88, "ev": "tick", "grid": 252, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051855.76, "ev": "tick", "grid": 252, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788051855.78, "ev": "limit", "from": 430, "to": 830, "tag": "kick1"}
+{"t": 1788051857.58, "ev": "tick", "grid": 252, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788051859.45, "ev": "tick", "grid": 253, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788051861.34, "ev": "tick", "grid": 254, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788051863.24, "ev": "tick", "grid": 254, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788051865.16, "ev": "tick", "grid": 252, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788051867.03, "ev": "tick", "grid": 252, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788051867.04, "ev": "limit", "from": 830, "to": 1230, "tag": "kick2"}
+{"t": 1788051868.86, "ev": "tick", "grid": 252, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051870.8, "ev": "tick", "grid": 250, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051872.68, "ev": "tick", "grid": 250, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051874.6, "ev": "tick", "grid": 247, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051876.51, "ev": "tick", "grid": 246, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051878.39, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051878.39, "ev": "kick_result", "ok": false, "base": 430, "pv0": 0.0, "delta": 800, "pv": 0.0}
+{"t": 1788051880.29, "ev": "tick", "grid": 244, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051882.18, "ev": "tick", "grid": 244, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051883.96, "ev": "tick", "grid": 240, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051885.84, "ev": "tick", "grid": 240, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051887.75, "ev": "tick", "grid": 239, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051889.56, "ev": "tick", "grid": 237, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051891.44, "ev": "tick", "grid": 236, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051893.34, "ev": "tick", "grid": 236, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051897.14, "ev": "tick", "grid": 236, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051899.05, "ev": "tick", "grid": 236, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051900.81, "ev": "tick", "grid": 237, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051902.7, "ev": "tick", "grid": 236, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051904.61, "ev": "tick", "grid": 237, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051906.49, "ev": "tick", "grid": 236, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051908.4, "ev": "tick", "grid": 238, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051910.28, "ev": "tick", "grid": 237, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788051912.08, "ev": "tick", "grid": 237, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788051942.39, "ev": "tick", "grid": 236, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788051974.13, "ev": "tick", "grid": 238, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052005.86, "ev": "tick", "grid": 238, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052036.75, "ev": "tick", "grid": 236, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052069.37, "ev": "tick", "grid": 237, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052101.0, "ev": "tick", "grid": 237, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052132.86, "ev": "tick", "grid": 237, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052164.6, "ev": "tick", "grid": 236, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052194.6, "ev": "tick", "grid": 238, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052224.66, "ev": "tick", "grid": 236, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052254.68, "ev": "tick", "grid": 235, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052285.84, "ev": "tick", "grid": 235, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052317.41, "ev": "tick", "grid": 235, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052349.06, "ev": "tick", "grid": 233, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052380.09, "ev": "tick", "grid": 232, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052411.9, "ev": "tick", "grid": 235, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052442.21, "ev": "tick", "grid": 233, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052473.75, "ev": "tick", "grid": 232, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052505.56, "ev": "tick", "grid": 233, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052535.62, "ev": "tick", "grid": 232, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052567.04, "ev": "tick", "grid": 234, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052597.16, "ev": "tick", "grid": 231, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052628.99, "ev": "tick", "grid": 233, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052659.74, "ev": "tick", "grid": 230, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052690.73, "ev": "tick", "grid": 230, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052722.48, "ev": "tick", "grid": 231, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052752.48, "ev": "tick", "grid": 230, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052782.62, "ev": "tick", "grid": 231, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052812.76, "ev": "tick", "grid": 230, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052844.08, "ev": "tick", "grid": 231, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052875.77, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052907.35, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788052870.14, "ev": "tick", "grid": 230, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052872.08, "ev": "tick", "grid": 230, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052873.86, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052877.51, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052879.35, "ev": "tick", "grid": 230, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052881.16, "ev": "tick", "grid": 230, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052883.04, "ev": "tick", "grid": 230, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052884.94, "ev": "tick", "grid": 230, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052886.83, "ev": "tick", "grid": 230, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052890.41, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052892.3, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052894.2, "ev": "tick", "grid": 228, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052896.08, "ev": "tick", "grid": 228, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052897.99, "ev": "tick", "grid": 228, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052899.93, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052901.88, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052903.64, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052905.46, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052909.15, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052910.93, "ev": "tick", "grid": 228, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052912.73, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052914.51, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052916.52, "ev": "tick", "grid": 229, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052918.31, "ev": "tick", "grid": 221, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052920.15, "ev": "tick", "grid": 177, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052921.92, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052923.81, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052925.72, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788052925.85, "ev": "limit", "from": 1230, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788052927.68, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052929.56, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052929.64, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788052931.48, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052933.23, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052933.25, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788052935.06, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052936.87, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052936.88, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788052938.74, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052940.67, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052940.79, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788052942.74, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052942.76, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788052944.65, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052946.52, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052946.54, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788052948.34, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052951.95, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052951.97, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788052953.75, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052955.64, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052955.66, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788052957.54, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052957.54, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 0.0, "try": 1}
+{"t": 1788052959.43, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052959.43, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 0.0, "try": 1}
+{"t": 1788052959.45, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300-retry"}
+{"t": 1788052961.25, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052963.12, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052963.13, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788052964.91, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052966.7, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052966.71, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788052968.63, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052970.49, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052970.5, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788052973.67, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052973.69, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788052975.47, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052977.35, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052977.37, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788052979.14, "ev": "tick", "grid": 138, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052980.94, "ev": "tick", "grid": 138, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052980.95, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788052982.74, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052984.62, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788052984.63, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788052986.53, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052986.53, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 0.0, "try": 2}
+{"t": 1788052988.4, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052988.42, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788052990.27, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788052992.14, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788052992.15, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788052993.83, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052995.79, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788052995.81, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788052997.59, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788052999.47, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788052999.49, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053001.28, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053003.15, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053003.18, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053004.97, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053006.84, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053006.85, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053008.76, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053010.63, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053010.64, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053014.42, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053014.43, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053016.35, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053018.21, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053018.22, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053020.0, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053021.89, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053021.91, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053023.8, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053025.68, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053025.7, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053027.48, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053029.37, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053029.38, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053031.27, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053033.16, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053033.17, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053035.08, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053036.95, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053036.97, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053038.83, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053040.74, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053040.75, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053042.65, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053044.53, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053044.54, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053046.44, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053048.31, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053048.33, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053050.16, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053052.1, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053052.12, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053053.9, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053055.79, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053055.8, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053057.69, "ev": "tick", "grid": 145, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053059.57, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053059.59, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053061.41, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053063.16, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053063.18, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053065.06, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053066.95, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053066.96, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053068.76, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053070.64, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053070.65, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053072.46, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053074.32, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053074.34, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053076.12, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053078.01, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053078.02, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053079.82, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053081.79, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053081.81, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053083.62, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053085.49, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053085.5, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053087.42, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053089.41, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053089.42, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053091.23, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053093.16, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053093.18, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053095.02, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053096.86, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053096.88, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053098.66, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053100.54, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053100.55, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053102.43, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053104.43, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053104.45, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053106.33, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053108.22, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053108.24, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053110.03, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053111.91, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053111.93, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053113.7, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053115.59, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053115.63, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053117.53, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053119.48, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053119.5, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053121.29, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053123.17, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053123.19, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053124.96, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053126.76, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053126.77, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053128.53, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053130.34, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053130.36, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053132.24, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053137.59, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053137.6, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053139.4, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053141.29, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053141.3, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053143.19, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053145.0, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053145.05, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053146.83, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053148.72, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053148.74, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053150.53, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053152.46, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053152.48, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053154.26, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053156.04, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053156.06, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053157.82, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053159.64, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053159.66, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053161.43, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053163.31, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053163.33, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053165.21, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053167.1, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053167.11, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053168.9, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053170.68, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053170.7, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053172.62, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053174.57, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053174.59, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053176.49, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053178.36, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053178.38, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053180.28, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053182.15, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053182.21, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053183.99, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053185.84, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053185.86, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053187.73, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053189.52, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053189.53, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053191.32, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053193.21, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053193.23, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053195.02, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053201.5, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053201.52, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053203.32, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053205.19, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053205.2, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053207.01, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053208.88, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053208.9, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053210.69, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053212.46, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053212.47, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053214.26, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053216.07, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053216.09, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053217.89, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053219.83, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053219.85, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053221.72, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053223.62, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053223.64, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053225.53, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053227.41, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053227.43, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053229.22, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053231.07, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053231.09, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053232.98, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053234.89, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053234.9, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053236.7, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053238.57, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053238.59, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053240.39, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053242.26, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053242.27, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053244.05, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053245.95, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053245.97, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053247.86, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053249.73, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053249.75, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053251.66, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053253.53, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053253.55, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053255.44, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053257.31, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053257.33, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053262.02, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053262.04, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053263.73, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053265.61, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053265.63, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053267.42, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053269.29, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053269.31, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053271.22, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053274.11, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053274.13, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053276.04, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053277.89, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053277.91, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053279.8, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053281.68, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053281.7, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053283.61, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053285.47, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053285.49, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053287.38, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053289.26, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053289.28, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053291.19, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053293.05, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053293.06, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053294.92, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053296.84, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053296.86, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053298.63, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053300.53, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053300.58, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053302.36, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053304.31, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053304.33, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053306.23, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053308.1, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053308.12, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053310.0, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053311.78, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053311.8, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053313.71, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053315.58, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053315.59, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053317.38, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053319.26, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053319.28, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053323.05, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053323.07, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053324.95, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053326.84, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053326.86, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053328.63, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053330.43, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053330.44, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053332.2, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053334.12, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053334.14, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053336.0, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053337.9, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053337.92, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053339.82, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053341.69, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053341.71, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053343.5, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053345.38, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053345.39, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053347.29, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053349.17, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053349.18, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053351.08, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053352.96, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053352.97, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053354.77, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053356.74, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053356.76, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053358.56, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053360.42, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053360.44, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053362.22, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053364.12, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053364.14, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053366.01, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053367.91, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053367.94, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053369.82, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053371.69, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053371.71, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053373.5, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053375.38, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053375.4, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053377.19, "ev": "tick", "grid": 144, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053379.07, "ev": "tick", "grid": 148, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053379.08, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053380.97, "ev": "tick", "grid": 151, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053382.86, "ev": "tick", "grid": 152, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053382.88, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053384.72, "ev": "tick", "grid": 157, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053398.42, "ev": "tick", "grid": 208, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053398.43, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053400.22, "ev": "tick", "grid": 259, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053402.21, "ev": "tick", "grid": 270, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053403.9, "ev": "tick", "grid": 281, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053405.79, "ev": "tick", "grid": 291, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053407.68, "ev": "tick", "grid": 298, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053409.58, "ev": "tick", "grid": 303, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053411.49, "ev": "tick", "grid": 309, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053413.37, "ev": "tick", "grid": 311, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053415.23, "ev": "tick", "grid": 317, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053417.16, "ev": "tick", "grid": 321, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053419.05, "ev": "tick", "grid": 323, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053420.94, "ev": "tick", "grid": 323, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053422.85, "ev": "tick", "grid": 327, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053424.74, "ev": "tick", "grid": 328, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053426.52, "ev": "tick", "grid": 328, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053428.43, "ev": "tick", "grid": 329, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053430.22, "ev": "tick", "grid": 332, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053430.26, "ev": "limit", "from": 430, "to": 830, "tag": "kick1"}
+{"t": 1788053432.12, "ev": "tick", "grid": 332, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788053433.91, "ev": "tick", "grid": 332, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788053435.79, "ev": "tick", "grid": 332, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788053437.72, "ev": "tick", "grid": 345, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788053439.58, "ev": "tick", "grid": 351, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788053441.5, "ev": "tick", "grid": 355, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788053441.62, "ev": "limit", "from": 830, "to": 1230, "tag": "kick2"}
+{"t": 1788053443.56, "ev": "tick", "grid": 360, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053447.27, "ev": "tick", "grid": 373, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053449.13, "ev": "tick", "grid": 400, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053451.05, "ev": "tick", "grid": 411, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053452.92, "ev": "tick", "grid": 419, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053452.92, "ev": "kick_result", "ok": false, "base": 430, "pv0": 0.0, "delta": 800, "pv": 0.0}
+{"t": 1788053454.74, "ev": "tick", "grid": 429, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053456.62, "ev": "tick", "grid": 437, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053458.5, "ev": "tick", "grid": 442, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053460.29, "ev": "tick", "grid": 452, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053462.21, "ev": "tick", "grid": 456, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053464.01, "ev": "tick", "grid": 465, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053465.9, "ev": "tick", "grid": 479, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053467.8, "ev": "tick", "grid": 493, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053469.69, "ev": "tick", "grid": 507, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053471.58, "ev": "tick", "grid": 520, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053473.48, "ev": "tick", "grid": 532, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053475.39, "ev": "tick", "grid": 546, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053477.27, "ev": "tick", "grid": 558, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053479.16, "ev": "tick", "grid": 567, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053481.05, "ev": "tick", "grid": 581, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053482.96, "ev": "tick", "grid": 592, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053484.85, "ev": "tick", "grid": 593, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053486.75, "ev": "tick", "grid": 594, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788053517.01, "ev": "tick", "grid": 488, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788053547.1, "ev": "tick", "grid": 351, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788053500.21, "ev": "tick", "grid": 585, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053502.02, "ev": "tick", "grid": 580, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053503.88, "ev": "tick", "grid": 563, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053505.75, "ev": "tick", "grid": 556, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053509.42, "ev": "tick", "grid": 546, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053511.32, "ev": "tick", "grid": 523, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053513.21, "ev": "tick", "grid": 517, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053515.13, "ev": "tick", "grid": 506, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053518.93, "ev": "tick", "grid": 484, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053520.79, "ev": "tick", "grid": 470, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053522.69, "ev": "tick", "grid": 460, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053524.58, "ev": "tick", "grid": 448, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053526.4, "ev": "tick", "grid": 432, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053528.27, "ev": "tick", "grid": 432, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053530.06, "ev": "tick", "grid": 423, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053531.95, "ev": "tick", "grid": 413, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053533.92, "ev": "tick", "grid": 403, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053535.84, "ev": "tick", "grid": 391, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053537.71, "ev": "tick", "grid": 382, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053539.63, "ev": "tick", "grid": 372, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053541.43, "ev": "tick", "grid": 361, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053543.32, "ev": "tick", "grid": 358, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053545.24, "ev": "tick", "grid": 354, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053549.0, "ev": "tick", "grid": 329, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053550.89, "ev": "tick", "grid": 153, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053552.8, "ev": "tick", "grid": 148, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053554.68, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053556.57, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788053556.62, "ev": "limit", "from": 1230, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053558.57, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053558.59, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053560.4, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053562.27, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053562.29, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053564.15, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053565.95, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053566.01, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053567.77, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053571.47, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053571.49, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053575.16, "ev": "tick", "grid": 142, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053575.18, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053577.09, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053578.95, "ev": "tick", "grid": 141, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053578.97, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053580.87, "ev": "tick", "grid": 132, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053582.74, "ev": "tick", "grid": 132, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053582.75, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053584.55, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053586.43, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053586.44, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053588.25, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053590.11, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053590.12, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053592.05, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053594.0, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053594.02, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053595.96, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053597.89, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053597.91, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053599.69, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053601.58, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053601.6, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053603.51, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053605.37, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053605.39, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053607.18, "ev": "tick", "grid": 138, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053609.0, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053609.01, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053610.82, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053612.65, "ev": "tick", "grid": 143, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053612.67, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053614.47, "ev": "tick", "grid": 140, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053616.27, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053616.29, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053618.1, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053620.11, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053620.13, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053622.07, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053624.12, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053624.16, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053625.93, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053627.79, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053627.81, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053629.59, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053633.22, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053633.23, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053635.03, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053636.91, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053636.92, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053638.73, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053640.6, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053640.62, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053642.52, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053644.49, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053644.5, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053646.43, "ev": "tick", "grid": 134, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053648.38, "ev": "tick", "grid": 134, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053648.39, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053650.24, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053652.16, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053652.18, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053654.15, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053656.06, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053656.12, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053657.91, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053659.74, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053659.76, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053661.53, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053663.43, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053663.45, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053665.37, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053667.22, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053667.24, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053669.05, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053671.01, "ev": "tick", "grid": 138, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053671.02, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053672.82, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053674.59, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053674.6, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053676.52, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053678.38, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053678.4, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053680.31, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053682.17, "ev": "tick", "grid": 138, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053682.19, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053684.1, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053685.96, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053685.98, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053687.77, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053689.54, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053689.59, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053691.41, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053695.18, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053695.2, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053697.12, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053698.96, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053698.98, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053700.77, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053702.54, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053702.56, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053704.26, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053706.08, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053706.09, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053707.87, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053709.66, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053709.69, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053711.5, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053713.3, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053713.32, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053715.2, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053717.09, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053717.11, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053719.01, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053720.88, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053720.9, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053722.72, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053724.66, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053724.72, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053726.53, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053728.45, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053728.47, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053730.29, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053732.11, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053732.13, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053733.81, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053735.62, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053735.64, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053737.51, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053739.41, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053739.43, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053741.3, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053743.2, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053743.21, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053745.05, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053746.89, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053746.91, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053748.69, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053750.47, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053750.49, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053752.4, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053754.27, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053754.32, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053757.94, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053757.96, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053759.74, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053761.64, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053761.66, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053763.58, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053765.52, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053765.54, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053767.43, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053769.31, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053769.33, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053771.22, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053773.1, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053773.12, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053774.96, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053776.89, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053776.91, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053778.69, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053780.57, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053780.59, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053782.48, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053784.37, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053784.39, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053786.18, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053788.05, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053788.1, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053789.91, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053791.74, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053791.75, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053793.55, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053795.52, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053795.54, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053797.44, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053799.26, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053799.28, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053801.05, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053803.0, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053803.02, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053804.84, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053806.69, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053806.71, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053808.51, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053810.38, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053810.39, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053812.29, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053814.17, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053814.19, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053815.99, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053819.59, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053819.61, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053821.48, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053823.38, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053823.4, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053825.3, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053827.12, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053827.15, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053828.93, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053830.75, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053830.77, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053832.56, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053834.36, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053834.37, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053836.2, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053838.12, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053838.14, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053840.03, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053841.91, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053841.93, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053843.83, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053845.7, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053845.72, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053847.53, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053849.34, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053849.35, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053851.16, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053853.07, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053853.09, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053854.98, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053856.86, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053856.88, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053858.7, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053860.55, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053860.57, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053862.37, "ev": "tick", "grid": 134, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053864.23, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053864.25, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053866.29, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053866.31, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053868.23, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053870.1, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053870.17, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053872.02, "ev": "tick", "grid": 134, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053874.79, "ev": "tick", "grid": 134, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053874.81, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053876.6, "ev": "tick", "grid": 134, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053878.47, "ev": "tick", "grid": 134, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053878.5, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053882.16, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053882.18, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053884.07, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053885.94, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053885.96, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053887.86, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053889.73, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053889.75, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053891.56, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053893.32, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053893.34, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788053895.25, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053897.11, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053897.12, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053899.02, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053900.9, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053900.91, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788053902.73, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053904.58, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053904.6, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053906.42, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053908.27, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053908.28, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788053910.1, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053911.95, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053911.98, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053913.9, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053915.74, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053915.76, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788053917.7, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053919.53, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053919.55, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053921.36, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053921.36, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 0.0, "try": 1}
+{"t": 1788053923.22, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053923.22, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 0.0, "try": 1}
+{"t": 1788053923.27, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300-retry"}
+{"t": 1788053925.09, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053927.11, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053927.13, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053929.07, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053931.0, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053931.02, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788053932.85, "ev": "tick", "grid": 134, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053934.79, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053934.81, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053936.72, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053938.48, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053938.5, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788053940.28, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053943.9, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053943.92, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053945.84, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053947.69, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053947.71, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1788053949.62, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053951.48, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 300, "bv": 52.9}
+{"t": 1788053951.5, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053953.32, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053953.32, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 0.0, "try": 2}
+{"t": 1788053955.26, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053955.28, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053957.19, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053959.06, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053959.08, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053961.0, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053962.85, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053962.87, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053964.63, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053966.51, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053966.53, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053968.32, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053970.12, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053970.18, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053971.98, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053973.91, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053973.93, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053975.73, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053977.59, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053977.62, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053979.51, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053981.38, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053981.4, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053983.19, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053985.07, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053985.09, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053987.0, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053988.85, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053988.87, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053990.77, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053992.64, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788053992.66, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788053994.46, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053996.33, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788053996.35, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788053998.25, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054000.12, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054000.13, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054001.94, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054005.55, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054005.57, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054007.38, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054009.23, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054009.25, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054011.16, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054013.02, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054013.04, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054014.73, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054016.57, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054016.59, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054018.38, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054020.31, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054020.33, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054022.13, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054023.98, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054024.0, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054025.9, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054027.72, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054027.73, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054029.53, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054031.46, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054031.48, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054033.38, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054035.35, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054035.36, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054037.16, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054039.03, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054039.05, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054040.95, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054042.82, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054042.84, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054044.74, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054046.61, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054046.63, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054048.51, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054050.4, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054050.42, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054052.2, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054054.09, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054054.11, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054056.03, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054057.88, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054057.93, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054059.73, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054061.63, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054061.65, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054063.46, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054067.1, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054067.11, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054069.02, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054070.88, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054070.89, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054072.81, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054074.98, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054075.0, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054076.95, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054078.76, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054078.78, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054080.56, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054082.45, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054082.48, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054084.4, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054086.34, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054086.35, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054088.26, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054090.13, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054090.15, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054091.97, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054093.82, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054093.84, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054095.64, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054097.43, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054097.45, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054099.33, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054101.2, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054101.25, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054103.11, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054104.98, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054105.0, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054106.88, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054108.77, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054108.79, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054110.69, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054112.56, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054112.58, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054114.48, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054116.34, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054116.36, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054118.26, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054120.13, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054120.15, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054122.08, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054123.92, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054123.94, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054130.68, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054130.7, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054132.63, "ev": "tick", "grid": 134, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054134.48, "ev": "tick", "grid": 134, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054134.5, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054136.54, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054136.56, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054138.48, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054140.28, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054140.4, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054142.25, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054144.0, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054144.09, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054145.94, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054147.73, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054147.75, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054149.62, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054151.53, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054151.55, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054153.41, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054155.15, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054155.25, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054157.1, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054159.02, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054159.14, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054160.99, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054162.78, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054162.83, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054164.57, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054166.63, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054166.72, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054168.67, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054168.69, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054170.47, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054172.35, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054172.37, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054175.43, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054175.45, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054177.33, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054179.13, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054179.15, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054181.05, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054182.9, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054182.92, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054184.73, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054186.57, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054186.58, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054188.42, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054192.12, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054192.13, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054194.0, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054196.02, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054196.04, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054197.9, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054199.81, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054199.83, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054201.75, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054203.59, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054203.61, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054205.41, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054207.28, "ev": "tick", "grid": 138, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054207.3, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054209.17, "ev": "tick", "grid": 138, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054211.06, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054211.08, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054212.98, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054214.86, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054214.88, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054216.67, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054218.54, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054218.56, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054220.45, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054222.33, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054222.36, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054224.15, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054226.01, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054226.03, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054227.88, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054229.91, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054229.93, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054231.85, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054233.7, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054233.72, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054235.59, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054237.59, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054237.61, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054239.41, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054241.27, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054241.29, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054243.19, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054245.27, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054245.29, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054247.2, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054249.05, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054249.07, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054250.96, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054254.69, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054254.7, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054256.6, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054258.47, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054258.49, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054260.39, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054262.37, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054262.39, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054264.32, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054266.16, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054266.17, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054268.07, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054269.94, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054269.96, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054271.85, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054273.83, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054273.85, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054275.75, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054277.62, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054277.64, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054279.55, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054281.41, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054281.43, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054283.24, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054285.11, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054285.13, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054287.02, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054288.89, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054288.9, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054290.8, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054292.68, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054292.69, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054294.59, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054296.47, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054296.48, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054298.37, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054300.25, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054300.27, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054302.18, "ev": "tick", "grid": 135, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054304.04, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054304.06, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054305.96, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054307.83, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054307.85, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054309.77, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054311.6, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054311.62, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054315.31, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054315.32, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054317.2, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054319.1, "ev": "tick", "grid": 136, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054319.12, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054321.02, "ev": "tick", "grid": 137, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054322.88, "ev": "tick", "grid": 309, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054322.9, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054324.82, "ev": "tick", "grid": 309, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054326.62, "ev": "tick", "grid": 243, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054326.63, "ev": "limit", "from": 430, "to": 50, "tag": "floor-schlaf"}
+{"t": 1788054328.41, "ev": "tick", "grid": 243, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054330.26, "ev": "tick", "grid": 243, "pv": 0.0, "limit": 50, "bv": 52.9}
+{"t": 1788054330.28, "ev": "limit", "from": 50, "to": 430, "tag": "floor-halten"}
+{"t": 1788054332.09, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054333.95, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054335.77, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054337.63, "ev": "tick", "grid": 244, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054339.43, "ev": "tick", "grid": 244, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054341.32, "ev": "tick", "grid": 244, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054343.1, "ev": "tick", "grid": 243, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054344.97, "ev": "tick", "grid": 243, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054346.77, "ev": "tick", "grid": 243, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054348.79, "ev": "tick", "grid": 243, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054350.63, "ev": "tick", "grid": 242, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054352.48, "ev": "tick", "grid": 241, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054354.19, "ev": "tick", "grid": 241, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054356.06, "ev": "tick", "grid": 241, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054357.86, "ev": "tick", "grid": 239, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054359.85, "ev": "tick", "grid": 239, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054361.66, "ev": "tick", "grid": 239, "pv": 0.0, "limit": 430, "bv": 52.9}
+{"t": 1788054361.68, "ev": "limit", "from": 430, "to": 830, "tag": "kick1"}
+{"t": 1788054363.53, "ev": "tick", "grid": 239, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788054365.36, "ev": "tick", "grid": 239, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788054367.23, "ev": "tick", "grid": 240, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788054369.04, "ev": "tick", "grid": 240, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788054370.91, "ev": "tick", "grid": 240, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788054372.82, "ev": "tick", "grid": 239, "pv": 0.0, "limit": 830, "bv": 52.9}
+{"t": 1788054372.85, "ev": "limit", "from": 830, "to": 1230, "tag": "kick2"}
+{"t": 1788054374.7, "ev": "tick", "grid": 237, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054376.5, "ev": "tick", "grid": 237, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054378.39, "ev": "tick", "grid": 234, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054380.22, "ev": "tick", "grid": 234, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054382.07, "ev": "tick", "grid": 233, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054383.77, "ev": "tick", "grid": 233, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054383.77, "ev": "kick_result", "ok": false, "base": 430, "pv0": 0.0, "delta": 800, "pv": 0.0}
+{"t": 1788054385.56, "ev": "tick", "grid": 235, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054387.35, "ev": "tick", "grid": 238, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054389.34, "ev": "tick", "grid": 240, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054391.14, "ev": "tick", "grid": 242, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054393.03, "ev": "tick", "grid": 242, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054394.81, "ev": "tick", "grid": 242, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054396.61, "ev": "tick", "grid": 243, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054398.39, "ev": "tick", "grid": 244, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054400.4, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054402.21, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054404.08, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054405.91, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054407.77, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054409.59, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054411.46, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054413.27, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054415.09, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054416.96, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9}
+{"t": 1788054418.83, "ev": "tick", "grid": 244, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054450.38, "ev": "tick", "grid": 243, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054481.28, "ev": "tick", "grid": 243, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054512.43, "ev": "tick", "grid": 249, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054543.8, "ev": "tick", "grid": 250, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054575.61, "ev": "tick", "grid": 253, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054606.96, "ev": "tick", "grid": 254, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054637.25, "ev": "tick", "grid": 254, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054668.66, "ev": "tick", "grid": 252, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054700.23, "ev": "tick", "grid": 251, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054731.56, "ev": "tick", "grid": 250, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054762.28, "ev": "tick", "grid": 249, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054793.07, "ev": "tick", "grid": 249, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054824.29, "ev": "tick", "grid": 249, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054855.98, "ev": "tick", "grid": 248, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054886.89, "ev": "tick", "grid": 247, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054918.14, "ev": "tick", "grid": 245, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
+{"t": 1788054949.14, "ev": "tick", "grid": 244, "pv": 0.0, "limit": 1230, "bv": 52.9, "hb": 1}
