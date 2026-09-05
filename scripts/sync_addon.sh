@@ -5,6 +5,7 @@
 set -e
 cd "$(dirname "$0")/.."
 cp scripts/meter_reader.py smartmeter_llm/meter_reader.py
+cp scripts/ac_guard.py smartmeter_llm/ac_guard.py
 cp scripts/feedback.py smartmeter_llm/feedback.py
 cp scripts/nuc_feedback_sync.py smartmeter_llm/nuc_feedback_sync.py
 mkdir -p smartmeter_llm/ocr
