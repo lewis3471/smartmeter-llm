@@ -1,1 +1,0 @@
-{"accepted_kwh": 35801, "error": "400 Client Error: Bad Request for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent", "failures": 3, "kind": "rejected_reading", "timestamp": "2026-07-26T14:36:24+0200"}

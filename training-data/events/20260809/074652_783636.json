@@ -1,1 +1,0 @@
-{"accepted_kwh": 35996, "error": "429 Client Error: Too Many Requests for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent", "failures": 2, "kind": "rejected_reading", "timestamp": "2026-08-09T07:46:52+0200"}

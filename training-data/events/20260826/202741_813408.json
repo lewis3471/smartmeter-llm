@@ -1,1 +1,0 @@
-{"accepted_kwh": 36063, "error": "invalid literal for int() with base 10: '0-80'", "failures": 2, "kind": "rejected_reading", "timestamp": "2026-08-26T20:27:41+0200"}
