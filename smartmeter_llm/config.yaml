@@ -1,5 +1,5 @@
 name: Smartmeter LLM Nulleinspeisung
-version: "1.8.1"
+version: "1.8.2"
 slug: smartmeter_llm
 description: >-
   ESP32-Cam liest den Stromzähler (lokales OCR + Gemini-Fallback),
@@ -9,6 +9,8 @@ arch:
   - amd64
   - aarch64
 init: false
+# Schaltet die Steckdose des Wechselrichters ueber die HA-API
+homeassistant_api: true
 startup: application
 boot: auto
 services:
@@ -34,6 +36,27 @@ options:
   batt_low_v: 51.2
   batt_high_v: 54.4
   batt_capacity_kwh: 0.0
+  # --- AC-seitiger Tiefentladeschutz (ac_switch_entity leer = Feature aus) ---
+  ac_switch_entity: ""
+  ac_power_entity: ""
+  ac_deadman_switch_entity: ""
+  ac_deadman_number_entity: ""
+  ac_deadman_at_entity: ""
+  batt_mqtt_prefix: solar/
+  batt_capacity_ah: 0
+  batt_current_charge_positive: true
+  ac_throttle_cell_mv: 3120
+  ac_off_cell_mv: 3050
+  ac_off_soc: 18
+  ac_hard_cell_mv: 2900
+  ac_on_cell_mv: 3300
+  ac_on_soc: 50
+  ac_on_diff_max_mv: 0
+  ac_off_min_s: 2700
+  ac_max_switch_per_day: 6
+  ac_start_blind_s: 180
+  ac_deadman_s: 900
+  ac_automatik: true
   deye_host: ""
   deye_user: admin
   deye_pass: admin
@@ -67,6 +90,26 @@ schema:
   batt_low_v: float(10,60)
   batt_high_v: float(10,60)
   batt_capacity_kwh: float(0,200)
+  ac_switch_entity: str?
+  ac_power_entity: str?
+  ac_deadman_switch_entity: str?
+  ac_deadman_number_entity: str?
+  ac_deadman_at_entity: str?
+  batt_mqtt_prefix: str
+  batt_capacity_ah: int(0,2000)
+  batt_current_charge_positive: bool
+  ac_throttle_cell_mv: int(2700,3400)
+  ac_off_cell_mv: int(2700,3400)
+  ac_off_soc: int(0,100)
+  ac_hard_cell_mv: int(2500,3200)
+  ac_on_cell_mv: int(3000,3600)
+  ac_on_soc: int(0,100)
+  ac_on_diff_max_mv: int(0,800)
+  ac_off_min_s: int(300,86400)
+  ac_max_switch_per_day: int(1,20)
+  ac_start_blind_s: int(30,900)
+  ac_deadman_s: int(120,7200)
+  ac_automatik: bool
   deye_host: str?
   deye_user: str?
   deye_pass: password?
