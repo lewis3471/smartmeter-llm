@@ -20,6 +20,39 @@ export BATT_STRINGS=$(bashio::config 'batt_strings')
 export BATT_LOW_V=$(bashio::config 'batt_low_v')
 export BATT_HIGH_V=$(bashio::config 'batt_high_v')
 export BATT_CAPACITY_KWH=$(bashio::config 'batt_capacity_kwh')
+# --- AC-seitiger Tiefentladeschutz ---
+export AC_SWITCH_ENTITY=$(bashio::config 'ac_switch_entity')
+export AC_POWER_ENTITY=$(bashio::config 'ac_power_entity')
+export AC_DEADMAN_SWITCH_ENTITY=$(bashio::config 'ac_deadman_switch_entity')
+export AC_DEADMAN_NUMBER_ENTITY=$(bashio::config 'ac_deadman_number_entity')
+export AC_DEADMAN_AT_ENTITY=$(bashio::config 'ac_deadman_at_entity')
+export BATT_MQTT_PREFIX=$(bashio::config 'batt_mqtt_prefix')
+export BATT_CAPACITY_AH=$(bashio::config 'batt_capacity_ah')
+# Vorzeichen von battery/current beim LADEN. Ein Vorzeichenfehler dreht
+# das Ah-Integral um und macht die Freigabebedingung entweder sofort wahr
+# oder nie erfuellbar — deshalb explizit als Option.
+if bashio::config.true 'batt_current_charge_positive'; then
+    export BATT_CURRENT_CHARGE_POSITIVE=1
+else
+    export BATT_CURRENT_CHARGE_POSITIVE=-1
+fi
+export AC_THROTTLE_CELL_MV=$(bashio::config 'ac_throttle_cell_mv')
+export AC_OFF_CELL_MV=$(bashio::config 'ac_off_cell_mv')
+export AC_OFF_SOC=$(bashio::config 'ac_off_soc')
+export AC_HARD_CELL_MV=$(bashio::config 'ac_hard_cell_mv')
+export AC_ON_CELL_MV=$(bashio::config 'ac_on_cell_mv')
+export AC_ON_SOC=$(bashio::config 'ac_on_soc')
+export AC_ON_DIFF_MAX_MV=$(bashio::config 'ac_on_diff_max_mv')
+export AC_OFF_MIN_S=$(bashio::config 'ac_off_min_s')
+export AC_MAX_SWITCH_PER_DAY=$(bashio::config 'ac_max_switch_per_day')
+export AC_START_BLIND_S=$(bashio::config 'ac_start_blind_s')
+export AC_DEADMAN_S=$(bashio::config 'ac_deadman_s')
+export AC_AUTOMATIK=$(bashio::config 'ac_automatik')
+# Entprellung/Freigabe des Packspannungs-Waechters war bisher gar nicht
+# durchgereicht — die Defaults im Code galten unveraenderlich.
+export BATT_TRIP_S=${BATT_TRIP_S:-15}
+export BATT_RECOVER_V=${BATT_RECOVER_V:-1.5}
+export BATT_RELEASE_S=${BATT_RELEASE_S:-300}
 export DEYE_HOST=$(bashio::config 'deye_host')
 export DEYE_USER=$(bashio::config 'deye_user')
 export DEYE_PASS=$(bashio::config 'deye_pass')
@@ -35,6 +68,10 @@ export CONTROL_EVERY=1
 export MIN_LIMIT_W=50
 export FAILSAFE_AFTER=8
 # MQTT automatisch vom HA-Broker-Service (Mosquitto-Add-on)
+if ! bashio::services.available "mqtt"; then
+    bashio::log.error "Kein MQTT-Broker gefunden — ohne MQTT gibt es keine \
+Akku-Daten und keine HA-Sensoren; der AC-Schutz bleibt blind."
+fi
 if bashio::services.available "mqtt"; then
     export MQTT_HOST=$(bashio::services "mqtt" "host")
     export MQTT_PORT=$(bashio::services "mqtt" "port")

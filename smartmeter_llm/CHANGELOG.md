@@ -1,5 +1,112 @@
 # Changelog
 
+## 1.8.2
+
+- TIEFENTLADESCHUTZ ZWEITER STUFE: Der Wechselrichter wird bei leerem Akku
+  AC-SEITIG ueber eine schaltbare Steckdose getrennt. Grund ist eine
+  Erkenntnis aus dem Vorfall vom 28.08.: EIN LIMIT IST KEINE ABSCHALTUNG.
+  Das kleinste ansteuerbare Limit des HMS ist 50 W, und unter ~500 W folgt
+  er dem Befehl ohnehin nur zu 25-67 % (eigene Messung, 929 Kommandos) —
+  er faellt in den Attraktor bei ~157 W und entlaedt weiter, bis das BMS
+  abschaltet. Genau das ist passiert.
+- NEUE SCHUTZGROESSE: die ZELLSPANNUNG aus dem JK-BMS (ueber
+  OpenDTU-on-Battery), nicht mehr die Packspannung. Die Packspannung kann
+  es prinzipiell nicht leisten: die LFP-Kurve ist im Betriebsbereich flach,
+  der Victron zieht den Bus beim Laden hoch (volle Spannung bei leerem
+  Akku), und das BMS schuetzt auf die SCHWAECHSTE Zelle — bei 200 mV Drift
+  steht die bei 2,6 V, waehrend der Pack noch 48 V zeigt. Deshalb konnten
+  47/48 V nie vor dem BMS greifen.
+- TOTMANN-SCHALTUNG als Herzstueck: die Dose bekommt ihre geraeteseitige
+  Auto-Off-Frist gesetzt (15 min) und wird alle 5 min nachgetriggert.
+  Faellt WLAN, Broker, HA oder der Prozess aus, schaltet das Relais VON
+  SELBST ab — die Ruhelage ist AUS. Der Schutz haengt damit nicht daran,
+  dass im Moment der Not noch ein Befehl zugestellt werden kann. Das
+  Add-on VERIFIZIERT das Nachtriggern ueber `auto_off_at`; laesst es sich
+  nicht bestaetigen, sagt es das (`ac_deadman = unbestaetigt/fehlt`).
+- WIDERSPRUCHSREGEL: "aus" ist eine Behauptung, kein Messwert. Meldet das
+  BMS weiter Entladestrom oder die DTU einen erreichbaren Inverter,
+  waehrend der Automat "aus" glaubt, geht er nach `ac_aus_unbestaetigt`,
+  bremst und schlaegt Alarm. Diese eine Pruefung faengt klebendes Relais,
+  einpolige N-Trennung, umgesteckte Verlaengerung und schlicht die falsche
+  Steckdose gemeinsam ab.
+- FREIGABE BRAUCHT POSITIVEN NACHWEIS, nie die Abwesenheit von
+  Gegenbeweisen: Ruhespannung >= 3300 mV (nur bei |I| <= 2 A ueber 2 min
+  gemessen), SoC-Zuwachs, ein Ah-INTEGRAL statt einer Ladedauer (eine
+  Wolkenluecke kostet nur ihren Beitrag, sie nullt nichts), Mindest-Aus-
+  Zeit, Tagesbudget und Zeitfenster. Fehlende Daten geben nie frei.
+- FAIL-CLOSED mit Augenmass: kurzer Blindflug drosselt, langer schaltet
+  ab — aber ein Mosquitto-Neustart schaltet keinen vollen Akku ab, weil
+  eine HTTP-Gegenprobe direkt an die OpenDTU laeuft.
+- Der Mensch hat Vorrang: eine beobachtete Fremdschaltung fuehrt nach
+  `manuell_aus`/`manuell_ein`, und dort bleibt der Automat draussen. Ein
+  KALTSTART fuehrt nie dorthin — sonst haette ein Neustart bei
+  ausgeschalteter Dose den Wiedereinstieg blockiert.
+- Neue HA-Entitaeten: Zustand, Grund, "Freigabe blockiert durch" im
+  Klartext, Zellspannung, Zell-Drift, BMS-SoC, Datenalter, nachgeladene
+  Ah, Totmann-Status, Schaltungen heute; dazu ein Automatik-Schalter
+  (schaltet dann nur noch AB, nie EIN), eine Hand-Freigabe (0-240 min) und
+  ein Quittier-Knopf.
+- MQTT gehaertet: letzter Wille (`availability`) + `expire_after: 90` auf
+  allen Schutzgroessen — erst damit kann eine HA-Automation den AUSFALL
+  des Add-ons bemerken, und ein fehlender Sensor ist hier der
+  gefaehrlichere Zustand als ein niedriger Messwert. Abos und Discovery
+  wandern in `on_connect` (ueberleben einen Reconnect), und ein
+  fehlgeschlagenes Publish nimmt seinen Throttle-Stempel zurueck.
+- FUNDAMENT (galt schon vor der Steckdose):
+  - Der FAILSAFE lief am Akku-Waechter vorbei — 8 verworfene Kamera-
+    Lesungen genuegten, und der HMS bekam Vollgas, egal wie leer der Akku
+    war. Jetzt deckelt `guarded_limit()` jeden Failsafe.
+  - `batt_hold` ueberlebt jetzt Neustarts. Bisher stand nach jedem Update,
+    HA-Neustart oder Watchdog-Zyklus wieder "kein Schutz".
+  - `get_livedata()` wertet `data_age`/`reachable` aus: eine eingefrorene
+    DTU-Anzeige gilt nicht mehr als Messwert.
+  - Im Failsafe werden Akku-Sensoren mitpubliziert — in der HA-Historie
+    stand dort bisher eine Luecke, waehrend der Akku real leerlief.
+  - `set_limit(persistent=True)` fuer den Wiederanlauf: der HMS startet
+    sonst mit dem persistierten Wert (im Zweifel 100 %) und zieht in den
+    ersten Sekunden alles aus einem halb geladenen Akku.
+  - `batt_trip_s`, `batt_recover_v`, `batt_release_s` sind endlich
+    konfigurierbar (standen bisher unveraenderlich auf den Code-Defaults).
+- Tests: 2 neue Suiten (`tests/test_akku_schutz.py`, `tests/test_ac_guard.py`)
+  mit gefaelschter Uhr, gefaelschtem HA und gefaelschtem BMS — der ganze
+  Automat ist ohne Netz, ohne Broker und ohne DTU durchspielbar. Sonst
+  waere die einzige Teststrecke der Akku, den er schuetzen soll.
+- Einrichtung, Inbetriebnahme in sieben Phasen und die empfohlenen
+  JK-BMS-Schwellen: `docs/ac-tiefentladeschutz.md`.
+- ANGRIFFSRUNDE gegen 1.8.0 (5 Dimensionen, 58 Befunde gemeldet, 22 nach
+  Einzelverifikation bestaetigt). Die beiden schlimmsten:
+  1. RENNEN BEIM EINSCHALTEN: Der Ist-Zustand der Dose wird nur alle 10 s
+     abgefragt; `_schalte()` schrieb ihn nicht mit. Der Anlauf las deshalb
+     das VERALTETE "aus" von vor dem eigenen Einschaltbefehl, hielt das
+     fuer eine Handschaltung und ging nach `manuell_aus` — mit
+     EINGESCHALTETER Dose, stummem Regler und ohne jede weitere Pruefung.
+     In 9 von 10 Phasenlagen reproduzierbar; nachgestellt mit 2 h Zelle
+     2700 mV ohne eine einzige Abschaltung. Also exakt der Vorfall, den
+     dieser Umbau verhindern soll — nur mit mehr Code davor.
+     Und: DER EIGENE TEST HAT IHN VERDECKT, weil er vor jedem Tick
+     `_ha_poll` zurueckstellte und damit die Zeitverhaeltnisse der
+     Wirklichkeit wegnahm. Der Testaufbau taktet jetzt ehrlich mit 1 Hz.
+  2. HAND-FREIGABE ALS GENERALSCHLUESSEL: Sie stand als erster `return` in
+     `_freigabe()` — vor Frischepruefung, Zellspannung, Sperrzeit und
+     Tagesbudget. Am leeren Akku ergab das 77 Einschaltungen und 153
+     Relaisoperationen in 4 h. Jetzt trennt die Funktion SCHUTZ- von
+     ERTRAGSbedingungen: die Hand darf das Zeitfenster, die Mindest-Aus-
+     Zeit und den Ladungsnachweis ueberspringen — nie die Zellgrenze, die
+     Datenfrische, die Sperrzeit oder das Tagesbudget.
+  Weitere bestaetigte und behobene Befunde: die HTTP-Gegenprobe an die
+  Fusion behauptete "frische Daten", obwohl sie keine Werte liefert (sie
+  kauft jetzt nur noch Zeit); `soc_valid=False` blockierte nicht nur die
+  Freigabe, sondern auch die ABSCHALTUNG (die eine Richtung kostet Ertrag,
+  die andere den Akku); die Freigabe haengte an den Victron-Topics und kam
+  ohne sie nie zustande (jetzt reicht ersatzweise der BMS-Ladestrom); der
+  Heilpfad fuer korrupte state.json warf `batt_hold` weg; `_ac_dtu_meta()`
+  reichte eingefrorene Werte als Widerspruchszeugen durch; `set_limit()`
+  lief unsynchronisiert aus zwei Threads; das Root-Dockerfile kopierte
+  `ac_guard.py` nicht (im docker-compose-Betrieb waere der Schutz
+  vollstaendig aus gewesen — jetzt startet der Prozess in diesem Fall
+  gar nicht erst); Anlauf-Timeout und Totmann-Frist konnten sich per
+  Konfiguration widersprechen; `manuell_aus` war eine Sackgasse ohne
+  Widerspruchspruefung und ohne Ausgang.
 ## 1.8.1
 
 - GEMINI-QUOTA: Das Add-on lief in eine Dauerschleife aus HTTP 429 — alle
