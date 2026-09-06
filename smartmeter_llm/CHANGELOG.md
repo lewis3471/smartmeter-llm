@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.8.0
+## 1.8.2
 
 - TIEFENTLADESCHUTZ ZWEITER STUFE: Der Wechselrichter wird bei leerem Akku
   AC-SEITIG ueber eine schaltbare Steckdose getrennt. Grund ist eine
@@ -107,6 +107,135 @@
   gar nicht erst); Anlauf-Timeout und Totmann-Frist konnten sich per
   Konfiguration widersprechen; `manuell_aus` war eine Sackgasse ohne
   Widerspruchspruefung und ohne Ausgang.
+## 1.8.1
+
+- GEMINI-QUOTA: Das Add-on lief in eine Dauerschleife aus HTTP 429 — alle
+  ~45 s eine volle Rotation ueber alle Modelle und Keys, ~800 Fehlversuche
+  pro Stunde, jeder davon eine HTTP-Anfrage mitten im 0,5-s-Regelzyklus.
+- URSACHE war nicht die Rotation, sondern der Abstand des Kreuz-Checks: er
+  zaehlte ZYKLEN (`CROSS_CHECK_EVERY=20`). Das ergab die dokumentierten
+  "~5 min", solange ein Zyklus ~15 s dauerte. Mit `INTERVAL_S=0.5` dauert
+  ein Zyklus unter einer Sekunde — aus 5 Minuten wurden 10-25 Sekunden und
+  aus ~300 Calls/Tag mehrere tausend. Das Kontingent war damit vormittags
+  verbraucht, und weil der Kreuz-Check den Cooldown ausdruecklich uebergeht,
+  lief er danach ungebremst in die 429er.
+- Der Kreuz-Check haelt jetzt einen ZEITLICHEN Mindestabstand:
+  `CROSS_CHECK_S` (Standard 300 s = 288 Kreuz-Checks/Tag, wieder im
+  dokumentierten Budget). Der Zyklen-Zaehler ist ersatzlos entfallen: als
+  zusaetzliche UND-Bedingung erzeugte er eine Schwebung — faellt das
+  Zyklen-Vielfache knapp vor Ablauf der Zeit, wird eine ganze Periode
+  uebersprungen (bei ~15 s Zykluszeit halbiert das die Rate).
+- QUOTA-BREMSE: Antworten `GEMINI_TRIES` (3) Kombinationen hintereinander
+  mit 429, ist das kein Einzelfehler, sondern ein leeres Kontingent. Dann
+  bricht die Rotation ab und pausiert — 5 min, danach verdoppelnd bis
+  60 min; ein einziger Erfolg setzt alles zurueck. Waehrend der Pause geht
+  keine einzige Anfrage mehr raus (auch nicht fuer den Kreuz-Check).
+- Ein einzelner Aufruf verbrennt hoechstens `GEMINI_TRIES` Kombinationen
+  statt aller zehn. Der Rotationsindex laeuft ueber Aufrufe hinweg weiter,
+  es werden also weiterhin alle Kombinationen erreicht — nur nicht alle auf
+  einmal im selben Regelzyklus.
+- Am Regelverhalten aendert sich nichts: das lokale OCR ist der Primaerleser
+  und liest waehrend der Pause unveraendert weiter. Gemini bleibt Berater.
+- Gezaehlt werden GESENDETE Anfragen, nicht Schleifendurchlaeufe: ein
+  totes Modell (404) belegt eine Kombination JE KEY, uebersprungene
+  Kombinationen duerfen das Versuchsbudget also nicht aufbrauchen — sonst
+  waere die Pause bei einem 404-Modell nie ausgeloest worden.
+- Die Pause zaehlt als Gemini-AUSFALL. Sonst haette die Bremse still die
+  Uhr des 6h-Notauswegs angehalten (Fehlerzaehler < 20) und ein vergifteter
+  Zaehlerstand haette statt 6 h ueber 16 h nicht heilen koennen.
+- Ohne konfigurierte Modelle/Keys gibt es eine klare Fehlermeldung statt
+  einer Division durch Null.
+- tests/test_gemini_quota.py deckt Abstand, Rotationsgrenze, Pause,
+  Verdopplung, Ruecksetzung, totes Modell, leere Konfiguration und den
+  lokalen Weiterbetrieb ab.
+
+## 1.8.0
+
+- MEHR EIGENVERBRAUCH: Der Regler kannte unterhalb des Sustain-Floors nur
+  zwei Antworten — Limit HALTEN (Ueberschuss ins Netz) oder Inverter
+  SCHLAFEN legen (Netz zahlt). Bei 150 W Hauslast ist beides falsch: das
+  eine verschenkt 275 W, das andere kauft 150 W. Genau das war das
+  beobachtete Bild ("zu viel ins Netz" UND "Akku bei 50 % steht daneben").
+- Die dritte Antwort steckte in den eigenen Logs: der HMS hat ein STABILES
+  PLATEAU bei ~160 W. Landeplatz-Tabelle ueber 36 Tage / 96412 Kommandos
+  (nur Befehle gewertet, die >= 60 s stehen blieben):
+    Befehl  50 W    -> 98 % aus (37 W)
+    Befehl 100-249W -> 72-83 % aus (zu tief, reisst ihn ganz ab)
+    Befehl 250-399W -> 62-66 % LANDEN BEI 120-210 W (Median ~160 W)
+    Befehl 400-449W -> 81 % bei 350-460 W (Median 422 W)
+    ab 500 W        -> 85-97 % folgen sauber
+  Das Plateau streut innerhalb einer Ruhelage nur 5,6 W und haengt NICHT an
+  der Busspannung (48 V: 155 W, 51 V: 162 W, 55 V: 152 W).
+- Neue Option `low_points` (Standard `300:160`): Arbeitspunkt-Leiter. Der
+  Regler waehlt unterhalb des Floors den guenstigsten erreichbaren Punkt.
+  Kosten = fehlende Watt (kauft das Netz) + ueberschuessige Watt
+  (verschenkte Akku-Energie); bei vollem Akku entfaellt der zweite Term,
+  dann wird wie bisher immer gehalten (1.7.23 bleibt gueltig). Daraus
+  folgen die Schwellen von selbst: der 160-W-Punkt schlaegt den Schlaf ab
+  80 W Bedarf und den Floor bis 292 W Bedarf.
+- JEDER Punkt wird verifiziert: 25 s nach dem Befehl wird die AC-Leistung
+  geprueft. Treffer -> die Erwartung zieht per EMA nach (Selbstkalibrierung).
+  Fehlschlag -> zweiter Anlauf, danach 15 min Sperre und Rueckfall auf Floor
+  oder Schlaf. Der schlechteste Fall ist damit EXAKT das alte Verhalten.
+  Dazu 120 s Mindest-Standzeit und 20 W Hysterese auf der Kostendifferenz —
+  Plateaus brauchen Ruhe, jedes Kommando stoert den MPPT.
+- Neuer HA-Sensor "Arbeitspunkt". `low_points` leeren = alte Logik.
+- NETZ-SOLLWERT FOLGT DEM LADESTAND, nicht mehr linear der Spannung. Bei
+  LiFePO4 ist die Kennlinie zwischen 20 und 90 % fast flach: mit den
+  Stuetzstellen 47,0/54,4 V las der Regler bei 52,7 V "77 % voll" und
+  stellte das Ziel auf -34 W — Dauereinspeisung aus einem halb leeren
+  Speicher. Ueber soc_estimate (lastkorrigiert) sind es 50 % und -14 W;
+  20 W ueber 24 h sind ~0,5 kWh. Faellt die Schaetzung aus, gilt weiter die
+  lineare Rechnung.
+- ANTI-ZAPPEL auf dem Hoch-Pfad: 43 % aller "hoch"-Befehle wurden binnen
+  30 s wieder zurueckgenommen (Median 68 W), und die Ausfluege ueber den
+  Floor dauerten im Median 4 SEKUNDEN — kuerzer als die Totzeit des HMS.
+  Diese 952 Kommandos in 7 Tagen konnten nichts bewirken, haben aber den
+  MPPT aus seinem Arbeitspunkt geworfen. Jetzt muessen sich kleine Schritte
+  (<= 150 W bei Fehler < 45 W) UP_CONFIRM_S (3 s) lang halten; grosse
+  Lastspruenge gehen unveraendert sofort raus.
+- TELEMETRIE-HERZSCHLAG: ctl_tick schrieb bisher nur rund um Limit-Befehle.
+  Ausgerechnet die langen Schlafphasen (7 Tage: 61,9 h am Stueck) waren
+  dadurch unbelegt — die teuerste Zeit war die unsichtbare. Jetzt geht alle
+  CTL_HEARTBEAT_S (30 s) ein Tick raus (Feld "hb"), ~250 kB/Tag.
+- Neue Werkzeuge:
+  * `scripts/analyze_selfuse.py` — wo der Eigenverbrauch verloren geht,
+    Landeplatz-Tabelle, Monte-Carlo der Ersparnis aus den echten Daten.
+  * `scripts/probe_operating_points.py` — misst die Arbeitspunkte auf der
+    eigenen Hardware aus (Treppe abfahren, jede Stufe stehen lassen) und
+    druckt die fertige `low_points`-Zeile. Bricht ab, wenn ein zweiter
+    Regler mitfunkt, und stellt das alte Limit immer wieder her.
+  * `tests/test_low_points.py` — 20 Tests fuer Leiter, SoC-Ziel und
+    Anti-Zappel.
+- Analyse und offene Punkte (u.a.: 58 % des Netzbezugs entstehen, waehrend
+  der HMS schon an seiner ~1400-W-Decke laeuft — das ist Hardware, kein
+  Regelproblem): docs/eigenverbrauch.md
+- Aus dem Review vor dem Merge, alle mit Test abgedeckt:
+  * MPPT-KICK BEHAELT VORRANG. Klemmt der Inverter (liefert weit weniger
+    als sein Limit, waehrend das Haus kauft), uebernimmt die Leiter gar
+    nicht erst — sonst haette sie den Klemmwert als Arbeitspunkt
+    dazugelernt und der Inverter waere unten geblieben. Ein angefangener
+    Kick laeuft immer zu Ende (sonst fehlte das kick_result, aus dem die
+    Eskalationstreppe kalibriert ist). Geprueft wird am ROHEN Fehler: die
+    Pending-Kompensation zieht den kompensierten Fehler waehrend eines
+    Kicks weit ins Negative.
+  * pv_hist und up_since werden beim Wechsel in die Leiter zurueckgesetzt.
+    Sonst galt eine alte Historie spaeter als "seit STUCK_S flach" (Kick
+    nach 5 s statt 25 s) und ein alter Zeitstempel als bereits bestaetigt.
+  * Anti-Zappel misst am FEHLER statt an der Schrittweite. Wegen
+    wanted = PV + Fehler ist wanted - Limit immer <= Fehler, die
+    Schrittbedingung war also nie bindend — und liess genau die
+    68-W-Zappler durch, um die es geht.
+  * Ladestand fuers Ziel wird ueber 5 min geglaettet: er haengt ueber die
+    Lastkorrektur an der Ausgangsleistung, ohne Glaettung wanderte das
+    Ziel im Sekundentakt mit der Last (schwache Mitkopplung).
+  * Herzschlag-Ticks wurden doppelt geschrieben (sofort UND spaeter aus
+    dem Ringpuffer). Sie sind jetzt mit "hb" markiert und werden beim
+    Nachschreiben uebersprungen.
+  * probe_operating_points bricht ab, wenn das aktuelle Limit nicht
+    auslesbar ist (sonst waere der Inverter am Ende auf der letzten
+    Messstufe stehen geblieben) — oder nimmt --restore <Watt>; der
+    Restore versucht es jetzt dreimal.
 
 ## 1.7.43
 
