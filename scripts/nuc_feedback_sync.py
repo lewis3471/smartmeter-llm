@@ -40,6 +40,24 @@ def run(args, cwd: Path, check=True):
                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
+def fremde_aenderungen(repo: Path) -> list:
+    """Alles im Index, was NICHT unter training-data liegt.
+
+    SICHERUNG (6.9.2026): Ein Lauf dieses Skripts hat den KOMPLETTEN Code
+    aus main geloescht — 68 Dateien, eine Stunde nach dem Merge von PR #3.
+    Zurueck blieb ein Repository, das nur noch training-data enthielt;
+    damit war das Add-on-Repository fuer Home Assistant unbrauchbar. Der
+    genaue Mechanismus liess sich nachtraeglich nicht rekonstruieren
+    (Verdacht: Rebase auf einem shallow/blobless Klon).
+
+    Statt weiter zu suchen: eine Invariante, die es unmoeglich macht.
+    Dieser Sync fasst ausschliesslich training-data an — alles andere ist
+    ein Abbruchgrund, nie ein Commit."""
+    stufe = run(["git", "diff", "--cached", "--name-only"], repo).stdout
+    return [z for z in stufe.split("\n")
+            if z.strip() and not z.startswith("training-data/")]
+
+
 def changed(repo: Path, path: str) -> bool:
     return bool(run(["git", "status", "--porcelain", "--", path], repo).stdout.strip())
 
@@ -157,6 +175,14 @@ def main():
 
     if changed(repo, "training-data"):
         run(["git", "add", "-f", "training-data"], repo)
+        fremd = fremde_aenderungen(repo)
+        if fremd:
+            log(f"ABBRUCH: Sync wuerde {len(fremd)} Datei(en) ausserhalb "
+                f"training-data aendern ({', '.join(fremd[:5])}"
+                f"{' ...' if len(fremd) > 5 else ''}) — nichts committet, "
+                f"nichts gepusht. Repo-Zustand pruefen.", err=True)
+            run(["git", "reset"], repo, check=False)
+            return
         run(["git", "commit", "-m", "ocr: sync evidence"], repo)
         log("Commit erstellt")
     if args.push:

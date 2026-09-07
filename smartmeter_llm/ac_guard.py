@@ -768,7 +768,15 @@ class AcGuard:
                 # Victron ODER eine erholte Ruhespannung an seine Stelle —
                 # der Schutz darf nicht daran haengen, dass die
                 # Victron-Topics ueberhaupt konfiguriert sind.
-                ziel_ah = ON_AH or (0.35 * CAPACITY_AH if CAPACITY_AH else 0)
+                # Der Nachweis ist eine GEGENPROBE gegen einen luegenden
+                # SoC, nicht das eigentliche Tor — er darf nie strenger
+                # sein als die SoC-Forderung, die er absichert. Deshalb
+                # die HALBE Delta-Forderung: faelschen laesst sich das
+                # nicht (Ladestrom ueber Zeit), aber es blockiert auch
+                # keinen 17-kWh-Pack tagelang, nur weil er gross ist.
+                # (0,35 x C waren bei 334 Ah 117 Ah = 6 kWh Nachladung.)
+                ziel_ah = ON_AH or (ON_DSOC / 200 * CAPACITY_AH
+                                    if CAPACITY_AH else 0)
                 if ziel_ah:
                     if self.ah_since_off < ziel_ah:
                         f.append(f"erst {self.ah_since_off:.1f} von "

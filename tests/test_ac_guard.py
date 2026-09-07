@@ -375,6 +375,43 @@ def test_tagesbudget_bremst_flattern():
     check("und_sagt_warum", "Tagesbudget" in g.block, g.block)
 
 
+# --- 9b. Grosse Packs duerfen nicht laenger warten muessen -------------
+def test_ladungsnachweis_skaliert_mit_der_soc_forderung():
+    """Der Ah-Nachweis ist eine Gegenprobe gegen einen luegenden SoC — er
+    darf nie strenger sein als die SoC-Forderung, die er absichert.
+    Bei einem 334-Ah-Pack (17 kWh) verlangte die alte Ableitung 0,35 x C
+    = 117 Ah = 6 kWh Nachladung und wurde damit zur bindenden Bedingung:
+    im Winter haette der Wechselrichter tagelang stillgestanden."""
+    alt = ag.CAPACITY_AH
+    ag.CAPACITY_AH = 334.0
+    try:
+        uhr = Uhr()
+        g, ha, bms, _, _ = bau(ha=FakeHa(an=False), uhr=uhr,
+                               st={"acs": "ac_aus", "acofs": uhr.w - 10_000,
+                                   "acsoc": 18.0, "acah": 45.0})
+        bms.d.update(cell_min=3340.0, soc=60.0, current=1.0,
+                     cs="Absorption", ppv=600.0)
+        takte(g, uhr, 400)
+        check("45_ah_genuegen_bei_334_ah_pack", ha.zustand == "on",
+              f"{g.state} / {g.block}")
+
+        # ... aber gar nichts nachgeladen reicht weiterhin nicht.
+        uhr2 = Uhr()
+        g2, ha2, bms2, _, _ = bau(ha=FakeHa(an=False), uhr=uhr2,
+                                  st={"acs": "ac_aus",
+                                      "acofs": uhr2.w - 10_000,
+                                      "acsoc": 18.0, "acah": 2.0})
+        bms2.d.update(cell_min=3340.0, soc=60.0, current=0.5,
+                      cs="Absorption", ppv=600.0)
+        takte(g2, uhr2, 400)
+        check("ohne_ladung_keine_freigabe", ha2.zustand == "off",
+              f"{g2.state} / {g2.block}")
+        check("und_nennt_die_fehlenden_ah", "Ah nachgeladen" in g2.block,
+              g2.block)
+    finally:
+        ag.CAPACITY_AH = alt
+
+
 # --- 10. Regressionen aus der adversarialen Pruefung --------------------
 def test_einschalten_gewinnt_kein_rennen():
     """DER schlimmste gefundene Fehler: der Ist-Zustand der Dose wird nur
