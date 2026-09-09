@@ -103,6 +103,60 @@ def test_sync_committet_nicht_bei_fremdaenderung():
           "Code fehlt im HEAD-Baum")
 
 
+def test_reste_der_panne_werden_erkannt():
+    """Rueckstand vom 6.9.: Code liegt unversioniert herum und blockiert
+    den Pull. Erkannt werden darf NUR, was ausserhalb training-data liegt."""
+    repo = baue_repo()
+    (repo / "scripts" / "uebrig.py").write_text("# Altlast\n")
+    (repo / "neue_datei.txt").write_text("x")
+    (repo / "training-data" / "frisch.json").write_text("{}")
+    reste = sync.reste_ausserhalb_evidence(repo)
+    check("altlasten_ausserhalb_werden_gefunden",
+          sorted(reste) == ["neue_datei.txt", "scripts/uebrig.py"], str(reste))
+    check("evidence_wird_nie_angefasst",
+          not any(r.startswith("training-data/") for r in reste), str(reste))
+
+
+def test_blockierter_pull_heilt_sich_selbst():
+    """End-to-end mit echtem Remote: der Pull scheitert an einer
+    unversionierten Altdatei, der Sync raeumt sie weg und zieht durch."""
+    fern = baue_repo()
+    git(fern, "config", "receive.denyCurrentBranch", "ignore")
+    # Auf dem Remote kommt eine Datei dazu, die lokal unversioniert
+    # herumliegt — genau die Konstellation aus Papas Log.
+    (fern / "scripts" / "ac_guard.py").write_text("# echte Fassung\n")
+    git(fern, "add", "-A"); git(fern, "commit", "-q", "-m", "code zurueck")
+
+    lokal = Path(tempfile.mkdtemp()) / "klon"
+    subprocess.run(["git", "clone", "-q", str(fern), str(lokal)], check=True)
+    git(lokal, "config", "user.email", "t@t"); git(lokal, "config", "user.name", "t")
+    git(lokal, "reset", "-q", "--hard", "HEAD~1")          # Stand vor dem Code
+    (lokal / "scripts" / "ac_guard.py").write_text("# Altlast\n")   # unversioniert
+
+    vorher = subprocess.run(["git", "pull", "--rebase", "origin", "HEAD"],
+                            cwd=lokal, text=True, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    check("pull_scheitert_ohne_heilung", vorher.returncode != 0
+          and "would be overwritten" in vorher.stdout,
+          vorher.stdout.strip()[-120:])
+
+    proben = Path(tempfile.mkdtemp()); (proben / "events").mkdir()
+    (proben / "events" / "20260909_120000.json").write_text('{"ev":"t"}')
+    sys.argv = ["x", "--repo", str(lokal), "--samples", str(proben), "--push"]
+    try:
+        sync.main()
+    except SystemExit:
+        pass
+    inhalt = (lokal / "scripts" / "ac_guard.py").read_text()
+    check("altlast_ersetzt_durch_echte_fassung", "echte Fassung" in inhalt,
+          repr(inhalt))
+    # ls-tree, nicht ls-files: der Remote ist nicht bare, sein Index
+    # bleibt beim Push unberuehrt — gepusht wurde trotzdem.
+    check("evidence_wurde_gepusht",
+          "20260909" in git(fern, "ls-tree", "-r", "--name-only", "HEAD").stdout,
+          "kein Push angekommen")
+
+
 for fn in [v for k, v in sorted(globals().items()) if k.startswith("test_")]:
     print(f"\n{fn.__name__}:")
     fn()
