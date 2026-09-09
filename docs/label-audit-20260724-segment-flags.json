@@ -1,0 +1,2843 @@
+[
+ {
+  "file": "auto/20260712_002921.json",
+  "stored_kwh": 35714,
+  "stored_w": null,
+  "seg_kwh": "035715",
+  "seg_w": null,
+  "min_conf_mismatch": 1.694,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "4",
+    "seg": "5",
+    "conf": 1.694
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35714.0,
+  "dev_label": 0.0,
+  "dev_seg": 1.0,
+  "seg_more_plausible": false,
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '4' vs Seg '5' (conf 1.69) | Treppe (Median Zeitnachbarn +-3h = 35714): Label weicht 0 ab, Seg 1 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "20260711/162619.json",
+  "stored_kwh": 35708,
+  "stored_w": 730,
+  "seg_kwh": "035706",
+  "seg_w": "__730",
+  "min_conf_mismatch": 1.689,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 1.689
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 1.69) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "20260711/162556.json",
+  "stored_kwh": 35708,
+  "stored_w": 755,
+  "seg_kwh": "035706",
+  "seg_w": "__755",
+  "min_conf_mismatch": 1.472,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 1.472
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 1.47) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/164441.json",
+  "stored_kwh": 35708,
+  "stored_w": 2055,
+  "seg_kwh": "035706",
+  "seg_w": "_2055",
+  "min_conf_mismatch": 1.471,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 1.471
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 1.47) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/163741.json",
+  "stored_kwh": 35708,
+  "stored_w": 905,
+  "seg_kwh": "035706",
+  "seg_w": "__905",
+  "min_conf_mismatch": 1.451,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 1.451
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 1.45) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/175417.json",
+  "stored_kwh": 35709,
+  "stored_w": 351,
+  "seg_kwh": "035705",
+  "seg_w": "__351",
+  "min_conf_mismatch": 1.343,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 1.343
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 3.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 1.34) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 3 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "auto/20260717_204112.json",
+  "stored_kwh": 35808,
+  "stored_w": null,
+  "seg_kwh": "035806",
+  "seg_w": null,
+  "min_conf_mismatch": 1.268,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 1.268
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35807.0,
+  "dev_label": 1.0,
+  "dev_seg": 1.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 1.27) | Treppe (Median Zeitnachbarn +-3h = 35807): Label weicht 1 ab, Seg 1 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260717/204112.json",
+  "stored_kwh": 35808,
+  "stored_w": null,
+  "seg_kwh": "035806",
+  "seg_w": null,
+  "min_conf_mismatch": 1.268,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 1.268
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35807.0,
+  "dev_label": 1.0,
+  "dev_seg": 1.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 1.27) | Treppe (Median Zeitnachbarn +-3h = 35807): Label weicht 1 ab, Seg 1 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/175119.json",
+  "stored_kwh": 35709,
+  "stored_w": 423,
+  "seg_kwh": "035705",
+  "seg_w": "__423",
+  "min_conf_mismatch": 1.237,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 1.237
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 3.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 1.24) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 3 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/165208.json",
+  "stored_kwh": 35708,
+  "stored_w": 2115,
+  "seg_kwh": "035706",
+  "seg_w": "_2115",
+  "min_conf_mismatch": 1.226,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 1.226
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 1.23) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "auto/20260716_164105.json",
+  "stored_kwh": 35779,
+  "stored_w": null,
+  "seg_kwh": "035719",
+  "seg_w": null,
+  "min_conf_mismatch": 1.209,
+  "slots": [
+   {
+    "slot": 4,
+    "stored": "7",
+    "seg": "1",
+    "conf": 1.209
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35780.0,
+  "dev_label": 1.0,
+  "dev_seg": 61.0,
+  "seg_more_plausible": false,
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "kWh-Ziffernkonflikt: Slot4 Label '7' vs Seg '1' (conf 1.21) | Treppe (Median Zeitnachbarn +-3h = 35780): Label weicht 1 ab, Seg 61 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "20260711/164558.json",
+  "stored_kwh": 35708,
+  "stored_w": 1685,
+  "seg_kwh": "035706",
+  "seg_w": "88665",
+  "min_conf_mismatch": 1.2,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 1.2
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 1.20) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260717/211056.json",
+  "stored_kwh": 35808,
+  "stored_w": 874,
+  "seg_kwh": "035806",
+  "seg_w": "__874",
+  "min_conf_mismatch": 1.155,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 1.155
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35807.0,
+  "dev_label": 1.0,
+  "dev_seg": 1.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 1.16) | Treppe (Median Zeitnachbarn +-3h = 35807): Label weicht 1 ab, Seg 1 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/171333.json",
+  "stored_kwh": 35709,
+  "stored_w": 650,
+  "seg_kwh": "035705",
+  "seg_w": "__650",
+  "min_conf_mismatch": 1.127,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 1.127
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 3.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 1.13) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 3 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260716/111457.json",
+  "stored_kwh": 35774,
+  "stored_w": 283,
+  "seg_kwh": "035775",
+  "seg_w": "__283",
+  "min_conf_mismatch": 1.058,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "4",
+    "seg": "5",
+    "conf": 1.058
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35774.0,
+  "dev_label": 0.0,
+  "dev_seg": 1.0,
+  "seg_more_plausible": false,
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '4' vs Seg '5' (conf 1.06) | Treppe (Median Zeitnachbarn +-3h = 35774): Label weicht 0 ab, Seg 1 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "20260711/162606.json",
+  "stored_kwh": 35708,
+  "stored_w": 720,
+  "seg_kwh": "035706",
+  "seg_w": "__720",
+  "min_conf_mismatch": 1.022,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 1.022
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 1.02) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "auto/20260717_104108.json",
+  "stored_kwh": 35795,
+  "stored_w": null,
+  "seg_kwh": "035755",
+  "seg_w": null,
+  "min_conf_mismatch": 1.013,
+  "slots": [
+   {
+    "slot": 4,
+    "stored": "9",
+    "seg": "5",
+    "conf": 1.013
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35796.0,
+  "dev_label": 1.0,
+  "dev_seg": 41.0,
+  "seg_more_plausible": false,
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "kWh-Ziffernkonflikt: Slot4 Label '9' vs Seg '5' (conf 1.01) | Treppe (Median Zeitnachbarn +-3h = 35796): Label weicht 1 ab, Seg 41 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "20260711/180331.json",
+  "stored_kwh": 35709,
+  "stored_w": 523,
+  "seg_kwh": "035705",
+  "seg_w": "__523",
+  "min_conf_mismatch": 0.999,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.999
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 3.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 1.00) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 3 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/162656.json",
+  "stored_kwh": 35708,
+  "stored_w": 810,
+  "seg_kwh": "035706",
+  "seg_w": "1_810",
+  "min_conf_mismatch": 0.993,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 0.993
+   },
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.278
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 0.99), Slot6 Label '_' vs Seg '1' (conf 1.28) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "auto/20260716_224335.json",
+  "stored_kwh": 35790,
+  "stored_w": null,
+  "seg_kwh": "035750",
+  "seg_w": null,
+  "min_conf_mismatch": 0.987,
+  "slots": [
+   {
+    "slot": 4,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.987
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35790.5,
+  "dev_label": 0.5,
+  "dev_seg": 40.5,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot4 Label '9' vs Seg '5' (conf 0.99) | Treppe (Median Zeitnachbarn +-3h = 35790): Label weicht 0 ab, Seg 40 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/175245.json",
+  "stored_kwh": 35709,
+  "stored_w": 349,
+  "seg_kwh": "035705",
+  "seg_w": "__349",
+  "min_conf_mismatch": 0.975,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.975
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 3.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 0.97) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 3 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260723/211153.json",
+  "stored_kwh": 35869,
+  "stored_w": 581,
+  "seg_kwh": "035865",
+  "seg_w": "__581",
+  "min_conf_mismatch": 0.964,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.964
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35869.0,
+  "dev_label": 0.0,
+  "dev_seg": 4.0,
+  "seg_more_plausible": false,
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 0.96) | Treppe (Median Zeitnachbarn +-3h = 35869): Label weicht 0 ab, Seg 4 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "auto/20260711_174821.json",
+  "stored_kwh": 35709,
+  "stored_w": -162,
+  "seg_kwh": "035705",
+  "seg_w": "_-162",
+  "min_conf_mismatch": 0.962,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.962
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 3.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 0.96) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 3 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/113304.json",
+  "stored_kwh": 35706,
+  "stored_w": 52,
+  "seg_kwh": "075706",
+  "seg_w": "10-52",
+  "min_conf_mismatch": 0.962,
+  "slots": [
+   {
+    "slot": 1,
+    "stored": "3",
+    "seg": "7",
+    "conf": 0.962
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35706.0,
+  "dev_label": 0.0,
+  "dev_seg": 40000.0,
+  "seg_more_plausible": false,
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "kWh-Ziffernkonflikt: Slot1 Label '3' vs Seg '7' (conf 0.96) | Treppe (Median Zeitnachbarn +-3h = 35706): Label weicht 0 ab, Seg 40000 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "20260711/174821.json",
+  "stored_kwh": 35709,
+  "stored_w": -162,
+  "seg_kwh": "035705",
+  "seg_w": "_-162",
+  "min_conf_mismatch": 0.962,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.962
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 3.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 0.96) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 3 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/164805.json",
+  "stored_kwh": 35708,
+  "stored_w": 1651,
+  "seg_kwh": "035706",
+  "seg_w": "_1651",
+  "min_conf_mismatch": 0.945,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 0.945
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 0.94) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/170908.json",
+  "stored_kwh": 35709,
+  "stored_w": 762,
+  "seg_kwh": "636109",
+  "seg_w": "1_7-2",
+  "min_conf_mismatch": 0.945,
+  "slots": [
+   {
+    "slot": 0,
+    "stored": "0",
+    "seg": "6",
+    "conf": 1.4
+   },
+   {
+    "slot": 2,
+    "stored": "5",
+    "seg": "6",
+    "conf": 1.8
+   },
+   {
+    "slot": 3,
+    "stored": "7",
+    "seg": "1",
+    "conf": 0.945
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 600401.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot0 Label '0' vs Seg '6' (conf 1.40), Slot2 Label '5' vs Seg '6' (conf 1.80), Slot3 Label '7' vs Seg '1' (conf 0.94) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 600401 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "auto/20260719_011750.json",
+  "stored_kwh": 35828,
+  "stored_w": null,
+  "seg_kwh": "035826",
+  "seg_w": null,
+  "min_conf_mismatch": 0.934,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 0.934
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35828.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 0.93) | Treppe (Median Zeitnachbarn +-3h = 35828): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "auto/20260717_000605.json",
+  "stored_kwh": 35791,
+  "stored_w": null,
+  "seg_kwh": "035751",
+  "seg_w": null,
+  "min_conf_mismatch": 0.905,
+  "slots": [
+   {
+    "slot": 4,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.905
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35791.0,
+  "dev_label": 0.0,
+  "dev_seg": 40.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot4 Label '9' vs Seg '5' (conf 0.91) | Treppe (Median Zeitnachbarn +-3h = 35791): Label weicht 0 ab, Seg 40 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/162600.json",
+  "stored_kwh": 35708,
+  "stored_w": 732,
+  "seg_kwh": "035706",
+  "seg_w": "__732",
+  "min_conf_mismatch": 0.901,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 0.901
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 0.90) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "auto/20260717_063707.json",
+  "stored_kwh": 35793,
+  "stored_w": null,
+  "seg_kwh": "035753",
+  "seg_w": null,
+  "min_conf_mismatch": 0.887,
+  "slots": [
+   {
+    "slot": 4,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.887
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35793.0,
+  "dev_label": 0.0,
+  "dev_seg": 40.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot4 Label '9' vs Seg '5' (conf 0.89) | Treppe (Median Zeitnachbarn +-3h = 35793): Label weicht 0 ab, Seg 40 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260717/133103.json",
+  "stored_kwh": 35797,
+  "stored_w": 639,
+  "seg_kwh": "035757",
+  "seg_w": "__635",
+  "min_conf_mismatch": 0.881,
+  "slots": [
+   {
+    "slot": 4,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.881
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35797.0,
+  "dev_label": 0.0,
+  "dev_seg": 40.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot4 Label '9' vs Seg '5' (conf 0.88) | Treppe (Median Zeitnachbarn +-3h = 35797): Label weicht 0 ab, Seg 40 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "auto/20260711_174338.json",
+  "stored_kwh": 35709,
+  "stored_w": -583,
+  "seg_kwh": "035705",
+  "seg_w": "_-583",
+  "min_conf_mismatch": 0.88,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.88
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 3.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 0.88) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 3 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/174338.json",
+  "stored_kwh": 35709,
+  "stored_w": -583,
+  "seg_kwh": "035705",
+  "seg_w": "_-583",
+  "min_conf_mismatch": 0.88,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.88
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 3.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 0.88) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 3 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "auto/20260717_064107.json",
+  "stored_kwh": 35793,
+  "stored_w": null,
+  "seg_kwh": "035753",
+  "seg_w": null,
+  "min_conf_mismatch": 0.867,
+  "slots": [
+   {
+    "slot": 4,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.867
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35793.0,
+  "dev_label": 0.0,
+  "dev_seg": 40.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot4 Label '9' vs Seg '5' (conf 0.87) | Treppe (Median Zeitnachbarn +-3h = 35793): Label weicht 0 ab, Seg 40 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/171829.json",
+  "stored_kwh": 35709,
+  "stored_w": 625,
+  "seg_kwh": "035705",
+  "seg_w": "__625",
+  "min_conf_mismatch": 0.82,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.82
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 3.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 0.82) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 3 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260711/180512.json",
+  "stored_kwh": 35709,
+  "stored_w": 614,
+  "seg_kwh": "035705",
+  "seg_w": "__614",
+  "min_conf_mismatch": 0.819,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.819
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35708.0,
+  "dev_label": 1.0,
+  "dev_seg": 3.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '9' vs Seg '5' (conf 0.82) | Treppe (Median Zeitnachbarn +-3h = 35708): Label weicht 1 ab, Seg 3 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260718/233039.json",
+  "stored_kwh": 35828,
+  "stored_w": 469,
+  "seg_kwh": "035826",
+  "seg_w": "__465",
+  "min_conf_mismatch": 0.815,
+  "slots": [
+   {
+    "slot": 5,
+    "stored": "8",
+    "seg": "6",
+    "conf": 0.815
+   }
+  ],
+  "category": "A_kwh_digit_conflict",
+  "neighbour_kwh_median_3h": 35828.0,
+  "dev_label": 0.0,
+  "dev_seg": 2.0,
+  "seg_more_plausible": false,
+  "reason": "kWh-Ziffernkonflikt: Slot5 Label '8' vs Seg '6' (conf 0.81) | Treppe (Median Zeitnachbarn +-3h = 35828): Label weicht 0 ab, Seg 2 -> LABEL plausibler, Seg-Lesung unvereinbar mit der monotonen Treppe"
+ },
+ {
+  "file": "20260713/215659.json",
+  "stored_kwh": 35735,
+  "stored_w": 619,
+  "seg_kwh": "035735",
+  "seg_w": "__611",
+  "min_conf_mismatch": 2.832,
+  "slots": [
+   {
+    "slot": 10,
+    "stored": "9",
+    "seg": "1",
+    "conf": 2.832
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "W-Ziffernkonflikt: Slot10 Label '9' vs Seg '1' (conf 2.83) | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "20260722/163143.json",
+  "stored_kwh": 35861,
+  "stored_w": 989,
+  "seg_kwh": "035861",
+  "seg_w": "__949",
+  "min_conf_mismatch": 1.781,
+  "slots": [
+   {
+    "slot": 9,
+    "stored": "8",
+    "seg": "4",
+    "conf": 1.781
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "W-Ziffernkonflikt: Slot9 Label '8' vs Seg '4' (conf 1.78) | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "20260717/191845.json",
+  "stored_kwh": 35807,
+  "stored_w": 849,
+  "seg_kwh": "035807",
+  "seg_w": "__841",
+  "min_conf_mismatch": 1.767,
+  "slots": [
+   {
+    "slot": 10,
+    "stored": "9",
+    "seg": "1",
+    "conf": 1.767
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "W-Ziffernkonflikt: Slot10 Label '9' vs Seg '1' (conf 1.77) | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "auto/20260713_012046.json",
+  "stored_kwh": 35726,
+  "stored_w": 297,
+  "seg_kwh": "035726",
+  "seg_w": "__247",
+  "min_conf_mismatch": 1.488,
+  "slots": [
+   {
+    "slot": 9,
+    "stored": "9",
+    "seg": "4",
+    "conf": 1.488
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "reason": "W-Ziffernkonflikt: Slot9 Label '9' vs Seg '4' (conf 1.49)"
+ },
+ {
+  "file": "20260713/012046.json",
+  "stored_kwh": 35726,
+  "stored_w": 297,
+  "seg_kwh": "035726",
+  "seg_w": "__247",
+  "min_conf_mismatch": 1.488,
+  "slots": [
+   {
+    "slot": 9,
+    "stored": "9",
+    "seg": "4",
+    "conf": 1.488
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "W-Ziffernkonflikt: Slot9 Label '9' vs Seg '4' (conf 1.49) | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "20260711/135700.json",
+  "stored_kwh": 35707,
+  "stored_w": 538,
+  "seg_kwh": "035707",
+  "seg_w": "__532",
+  "min_conf_mismatch": 1.482,
+  "slots": [
+   {
+    "slot": 10,
+    "stored": "8",
+    "seg": "2",
+    "conf": 1.482
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "W-Ziffernkonflikt: Slot10 Label '8' vs Seg '2' (conf 1.48) | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "auto/20260711_214156.json",
+  "stored_kwh": 35712,
+  "stored_w": 751,
+  "seg_kwh": "035712",
+  "seg_w": "__0_0",
+  "min_conf_mismatch": 1.415,
+  "slots": [
+   {
+    "slot": 8,
+    "stored": "7",
+    "seg": "0",
+    "conf": 1.439
+   },
+   {
+    "slot": 9,
+    "stored": "5",
+    "seg": "_",
+    "conf": 3.738
+   },
+   {
+    "slot": 10,
+    "stored": "1",
+    "seg": "0",
+    "conf": 1.415
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "reason": "W-Ziffernkonflikt: Slot8 Label '7' vs Seg '0' (conf 1.44), Slot9 Label '5' vs Seg '_' (conf 3.74), Slot10 Label '1' vs Seg '0' (conf 1.42)"
+ },
+ {
+  "file": "auto/20260713_130953.json",
+  "stored_kwh": 35730,
+  "stored_w": 468,
+  "seg_kwh": "035730",
+  "seg_w": "__462",
+  "min_conf_mismatch": 0.982,
+  "slots": [
+   {
+    "slot": 10,
+    "stored": "8",
+    "seg": "2",
+    "conf": 0.982
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "reason": "W-Ziffernkonflikt: Slot10 Label '8' vs Seg '2' (conf 0.98)"
+ },
+ {
+  "file": "20260722/162620.json",
+  "stored_kwh": 35861,
+  "stored_w": 579,
+  "seg_kwh": "035861",
+  "seg_w": "__575",
+  "min_conf_mismatch": 0.944,
+  "slots": [
+   {
+    "slot": 10,
+    "stored": "9",
+    "seg": "5",
+    "conf": 0.944
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "visual_check": "Label korrekt, Dekoder falsch (Crop geprueft)",
+  "reason": "W-Ziffernkonflikt: Slot10 Label '9' vs Seg '5' (conf 0.94) | VISUELL GEPRUEFT: Label korrekt, Dekoder falsch"
+ },
+ {
+  "file": "auto/20260711_081334.json",
+  "stored_kwh": 35706,
+  "stored_w": 151,
+  "seg_kwh": "411140",
+  "seg_w": "77101",
+  "min_conf_mismatch": 0.881,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "7",
+    "conf": 1.339
+   },
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "7",
+    "conf": 0.881
+   },
+   {
+    "slot": 9,
+    "stored": "5",
+    "seg": "0",
+    "conf": 1.012
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "reason": "W-Ziffernkonflikt: Slot6 Label '_' vs Seg '7' (conf 1.34), Slot7 Label '_' vs Seg '7' (conf 0.88), Slot9 Label '5' vs Seg '0' (conf 1.01)"
+ },
+ {
+  "file": "20260711/081334.json",
+  "stored_kwh": 35706,
+  "stored_w": 151,
+  "seg_kwh": "411140",
+  "seg_w": "77101",
+  "min_conf_mismatch": 0.881,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "7",
+    "conf": 1.339
+   },
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "7",
+    "conf": 0.881
+   },
+   {
+    "slot": 9,
+    "stored": "5",
+    "seg": "0",
+    "conf": 1.012
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "reason": "W-Ziffernkonflikt: Slot6 Label '_' vs Seg '7' (conf 1.34), Slot7 Label '_' vs Seg '7' (conf 0.88), Slot9 Label '5' vs Seg '0' (conf 1.01)"
+ },
+ {
+  "file": "20260711_fix/20260711_081334.json",
+  "stored_kwh": 35706,
+  "stored_w": 151,
+  "seg_kwh": "411140",
+  "seg_w": "77101",
+  "min_conf_mismatch": 0.881,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "7",
+    "conf": 1.339
+   },
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "7",
+    "conf": 0.881
+   },
+   {
+    "slot": 9,
+    "stored": "5",
+    "seg": "0",
+    "conf": 1.012
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "reason": "W-Ziffernkonflikt: Slot6 Label '_' vs Seg '7' (conf 1.34), Slot7 Label '_' vs Seg '7' (conf 0.88), Slot9 Label '5' vs Seg '0' (conf 1.01)"
+ },
+ {
+  "file": "20260711_v9/20260711_081334.json",
+  "stored_kwh": 35706,
+  "stored_w": 151,
+  "seg_kwh": "411140",
+  "seg_w": "77101",
+  "min_conf_mismatch": 0.881,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "7",
+    "conf": 1.339
+   },
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "7",
+    "conf": 0.881
+   },
+   {
+    "slot": 9,
+    "stored": "5",
+    "seg": "0",
+    "conf": 1.012
+   }
+  ],
+  "category": "B_w_digit_conflict",
+  "reason": "W-Ziffernkonflikt: Slot6 Label '_' vs Seg '7' (conf 1.34), Slot7 Label '_' vs Seg '7' (conf 0.88), Slot9 Label '5' vs Seg '0' (conf 1.01)"
+ },
+ {
+  "file": "auto/20260714_122549.json",
+  "stored_kwh": 35741,
+  "stored_w": -45,
+  "seg_kwh": "035741",
+  "seg_w": "_1-45",
+  "min_conf_mismatch": 3.898,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 3.898
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 3.90)"
+ },
+ {
+  "file": "20260710/204608.json",
+  "stored_kwh": 35702,
+  "stored_w": 575,
+  "seg_kwh": "035702",
+  "seg_w": "1_575",
+  "min_conf_mismatch": 3.45,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 3.45
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 3.45)"
+ },
+ {
+  "file": "20260710_dim/204608_b60.json",
+  "stored_kwh": 35702,
+  "stored_w": 575,
+  "seg_kwh": "035702",
+  "seg_w": "1_575",
+  "min_conf_mismatch": 3.45,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 3.45
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 3.45)"
+ },
+ {
+  "file": "auto/20260714_123914.json",
+  "stored_kwh": 35741,
+  "stored_w": 41,
+  "seg_kwh": "035743",
+  "seg_w": "_1_41",
+  "min_conf_mismatch": 2.989,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.989
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.99)"
+ },
+ {
+  "file": "20260710/171754.json",
+  "stored_kwh": 35699,
+  "stored_w": 999,
+  "seg_kwh": "035695",
+  "seg_w": "1_999",
+  "min_conf_mismatch": 2.914,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.914
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 2.91)"
+ },
+ {
+  "file": "auto/20260714_114340.json",
+  "stored_kwh": 35741,
+  "stored_w": 78,
+  "seg_kwh": "035741",
+  "seg_w": "_1_78",
+  "min_conf_mismatch": 2.809,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.809
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.81)"
+ },
+ {
+  "file": "20260720/172655.json",
+  "stored_kwh": 35844,
+  "stored_w": 73,
+  "seg_kwh": "035844",
+  "seg_w": "_1_73",
+  "min_conf_mismatch": 2.734,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.734
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.73)"
+ },
+ {
+  "file": "20260722/180313.json",
+  "stored_kwh": 35862,
+  "stored_w": 26,
+  "seg_kwh": "035862",
+  "seg_w": "_1_26",
+  "min_conf_mismatch": 2.715,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.715
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.71)"
+ },
+ {
+  "file": "auto/20260714_134012.json",
+  "stored_kwh": 35741,
+  "stored_w": 97,
+  "seg_kwh": "035741",
+  "seg_w": "_1_97",
+  "min_conf_mismatch": 2.643,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.643
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.64)"
+ },
+ {
+  "file": "auto/20260714_124556.json",
+  "stored_kwh": 35741,
+  "stored_w": 18,
+  "seg_kwh": "035746",
+  "seg_w": "_1_18",
+  "min_conf_mismatch": 2.565,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.565
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.56)"
+ },
+ {
+  "file": "20260710/200040.json",
+  "stored_kwh": 35701,
+  "stored_w": 648,
+  "seg_kwh": "035701",
+  "seg_w": "1_648",
+  "min_conf_mismatch": 2.562,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.562
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 2.56)"
+ },
+ {
+  "file": "20260710/171240.json",
+  "stored_kwh": 35699,
+  "stored_w": 341,
+  "seg_kwh": "035695",
+  "seg_w": "1_341",
+  "min_conf_mismatch": 2.485,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.485
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 2.48)"
+ },
+ {
+  "file": "20260710/193504.json",
+  "stored_kwh": 35701,
+  "stored_w": 509,
+  "seg_kwh": "035701",
+  "seg_w": "1_509",
+  "min_conf_mismatch": 2.375,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.375
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 2.38)"
+ },
+ {
+  "file": "20260720/190422.json",
+  "stored_kwh": 35844,
+  "stored_w": 47,
+  "seg_kwh": "035844",
+  "seg_w": "_1_47",
+  "min_conf_mismatch": 2.326,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.326
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.33)"
+ },
+ {
+  "file": "20260723/202820.json",
+  "stored_kwh": 35869,
+  "stored_w": 17,
+  "seg_kwh": "035869",
+  "seg_w": "_1_17",
+  "min_conf_mismatch": 2.316,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.316
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.32)"
+ },
+ {
+  "file": "20260723/174325.json",
+  "stored_kwh": 35869,
+  "stored_w": 21,
+  "seg_kwh": "035869",
+  "seg_w": "_1_21",
+  "min_conf_mismatch": 2.27,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.27
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.27)"
+ },
+ {
+  "file": "20260720/172530.json",
+  "stored_kwh": 35844,
+  "stored_w": 64,
+  "seg_kwh": "035844",
+  "seg_w": "_1_64",
+  "min_conf_mismatch": 2.212,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.212
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.21)"
+ },
+ {
+  "file": "20260710/184933.json",
+  "stored_kwh": 35701,
+  "stored_w": 90,
+  "seg_kwh": "035701",
+  "seg_w": "11_90",
+  "min_conf_mismatch": 2.184,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.184
+   },
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.808
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 2.18), Slot7 Label '_' vs Seg '1' (conf 2.81)"
+ },
+ {
+  "file": "auto/20260713_182753.json",
+  "stored_kwh": 35733,
+  "stored_w": 76,
+  "seg_kwh": "035733",
+  "seg_w": "_1_76",
+  "min_conf_mismatch": 2.138,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.138
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.14)"
+ },
+ {
+  "file": "20260710/202615.json",
+  "stored_kwh": 35702,
+  "stored_w": 542,
+  "seg_kwh": "035702",
+  "seg_w": "1_542",
+  "min_conf_mismatch": 2.105,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.105
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 2.10)"
+ },
+ {
+  "file": "auto/20260714_135414.json",
+  "stored_kwh": 35741,
+  "stored_w": 90,
+  "seg_kwh": "035741",
+  "seg_w": "_1_90",
+  "min_conf_mismatch": 2.097,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.097
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.10)"
+ },
+ {
+  "file": "20260722/195821.json",
+  "stored_kwh": 35862,
+  "stored_w": 15,
+  "seg_kwh": "035862",
+  "seg_w": "_1_15",
+  "min_conf_mismatch": 2.073,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.073
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.07)"
+ },
+ {
+  "file": "20260722/160047.json",
+  "stored_kwh": 35861,
+  "stored_w": 53,
+  "seg_kwh": "035861",
+  "seg_w": "_1_53",
+  "min_conf_mismatch": 2.008,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.008
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 2.01)"
+ },
+ {
+  "file": "20260711/180034.json",
+  "stored_kwh": 35709,
+  "stored_w": 491,
+  "seg_kwh": "035705",
+  "seg_w": "4_491",
+  "min_conf_mismatch": 1.941,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "4",
+    "conf": 1.941
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '4' (conf 1.94)"
+ },
+ {
+  "file": "20260720/181914.json",
+  "stored_kwh": 35844,
+  "stored_w": 40,
+  "seg_kwh": "035844",
+  "seg_w": "_1_40",
+  "min_conf_mismatch": 1.922,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.922
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.92)"
+ },
+ {
+  "file": "20260723/182700.json",
+  "stored_kwh": 35869,
+  "stored_w": 46,
+  "seg_kwh": "035869",
+  "seg_w": "_1_46",
+  "min_conf_mismatch": 1.913,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.913
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.91)"
+ },
+ {
+  "file": "20260723/184901.json",
+  "stored_kwh": 35869,
+  "stored_w": 52,
+  "seg_kwh": "035869",
+  "seg_w": "_1_52",
+  "min_conf_mismatch": 1.901,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.901
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.90)"
+ },
+ {
+  "file": "20260710/165736.json",
+  "stored_kwh": 35699,
+  "stored_w": 111,
+  "seg_kwh": "035699",
+  "seg_w": "1_111",
+  "min_conf_mismatch": 1.881,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.881
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.88)"
+ },
+ {
+  "file": "20260710/191944.json",
+  "stored_kwh": 35701,
+  "stored_w": 306,
+  "seg_kwh": "035701",
+  "seg_w": "1_306",
+  "min_conf_mismatch": 1.843,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.843
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.84)"
+ },
+ {
+  "file": "20260710/204716.json",
+  "stored_kwh": 35702,
+  "stored_w": 590,
+  "seg_kwh": "035702",
+  "seg_w": "1_590",
+  "min_conf_mismatch": 1.779,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.779
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.78)"
+ },
+ {
+  "file": "20260710_dim/204716_b60.json",
+  "stored_kwh": 35702,
+  "stored_w": 590,
+  "seg_kwh": "035702",
+  "seg_w": "1_590",
+  "min_conf_mismatch": 1.779,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.779
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.78)"
+ },
+ {
+  "file": "20260720/181154.json",
+  "stored_kwh": 35844,
+  "stored_w": 43,
+  "seg_kwh": "035844",
+  "seg_w": "_1_43",
+  "min_conf_mismatch": 1.709,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.709
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.71)"
+ },
+ {
+  "file": "20260713/122000.json",
+  "stored_kwh": 35730,
+  "stored_w": -19,
+  "seg_kwh": "035730",
+  "seg_w": "_1-19",
+  "min_conf_mismatch": 1.69,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.69
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.69)"
+ },
+ {
+  "file": "20260720/182309.json",
+  "stored_kwh": 35844,
+  "stored_w": 52,
+  "seg_kwh": "035844",
+  "seg_w": "_1_52",
+  "min_conf_mismatch": 1.671,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.671
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.67)"
+ },
+ {
+  "file": "20260721/130225.json",
+  "stored_kwh": 35852,
+  "stored_w": 50,
+  "seg_kwh": "035852",
+  "seg_w": "_1_50",
+  "min_conf_mismatch": 1.671,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.671
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.67)"
+ },
+ {
+  "file": "20260723/200534.json",
+  "stored_kwh": 35869,
+  "stored_w": 71,
+  "seg_kwh": "035869",
+  "seg_w": "_1_71",
+  "min_conf_mismatch": 1.669,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.669
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.67)"
+ },
+ {
+  "file": "20260710/170655.json",
+  "stored_kwh": 35699,
+  "stored_w": 39,
+  "seg_kwh": "035699",
+  "seg_w": "_1_39",
+  "min_conf_mismatch": 1.646,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.646
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.65)"
+ },
+ {
+  "file": "20260710/204642.json",
+  "stored_kwh": 35702,
+  "stored_w": 546,
+  "seg_kwh": "035702",
+  "seg_w": "1_546",
+  "min_conf_mismatch": 1.627,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.627
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.63)"
+ },
+ {
+  "file": "20260710_dim/204642_b60.json",
+  "stored_kwh": 35702,
+  "stored_w": 546,
+  "seg_kwh": "035702",
+  "seg_w": "1_546",
+  "min_conf_mismatch": 1.627,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.627
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.63)"
+ },
+ {
+  "file": "20260710/200547.json",
+  "stored_kwh": 35702,
+  "stored_w": 633,
+  "seg_kwh": "035702",
+  "seg_w": "1_633",
+  "min_conf_mismatch": 1.605,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.605
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.60)"
+ },
+ {
+  "file": "20260722/194412.json",
+  "stored_kwh": 35862,
+  "stored_w": 43,
+  "seg_kwh": "035862",
+  "seg_w": "_4_43",
+  "min_conf_mismatch": 1.6,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "4",
+    "conf": 1.6
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '4' (conf 1.60)"
+ },
+ {
+  "file": "auto/20260720_150742.json",
+  "stored_kwh": 35843,
+  "stored_w": 99,
+  "seg_kwh": "035843",
+  "seg_w": "_1_99",
+  "min_conf_mismatch": 1.598,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.598
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.60)"
+ },
+ {
+  "file": "20260710/183045.json",
+  "stored_kwh": 35700,
+  "stored_w": 304,
+  "seg_kwh": "035700",
+  "seg_w": "1_304",
+  "min_conf_mismatch": 1.598,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.598
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.60)"
+ },
+ {
+  "file": "20260712/180041.json",
+  "stored_kwh": 35720,
+  "stored_w": 52,
+  "seg_kwh": "035720",
+  "seg_w": "_1_52",
+  "min_conf_mismatch": 1.582,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.582
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.58)"
+ },
+ {
+  "file": "20260711/105108.json",
+  "stored_kwh": 35706,
+  "stored_w": -43,
+  "seg_kwh": "035706",
+  "seg_w": "4_-43",
+  "min_conf_mismatch": 1.579,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "4",
+    "conf": 1.579
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '4' (conf 1.58)"
+ },
+ {
+  "file": "20260710/185408.json",
+  "stored_kwh": 35701,
+  "stored_w": 199,
+  "seg_kwh": "035701",
+  "seg_w": "1_199",
+  "min_conf_mismatch": 1.574,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.574
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.57)"
+ },
+ {
+  "file": "20260720/194122.json",
+  "stored_kwh": 35844,
+  "stored_w": 69,
+  "seg_kwh": "035844",
+  "seg_w": "_1_69",
+  "min_conf_mismatch": 1.561,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.561
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.56)"
+ },
+ {
+  "file": "20260710/170311.json",
+  "stored_kwh": 35699,
+  "stored_w": -8,
+  "seg_kwh": "035699",
+  "seg_w": "_11-8",
+  "min_conf_mismatch": 1.552,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.552
+   },
+   {
+    "slot": 8,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.585
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.55), Slot8 Label '_' vs Seg '1' (conf 1.58)"
+ },
+ {
+  "file": "20260720/141730.json",
+  "stored_kwh": 35842,
+  "stored_w": 60,
+  "seg_kwh": "035842",
+  "seg_w": "_1_60",
+  "min_conf_mismatch": 1.544,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.544
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.54)"
+ },
+ {
+  "file": "20260720/195958.json",
+  "stored_kwh": 35844,
+  "stored_w": 61,
+  "seg_kwh": "035844",
+  "seg_w": "_0_61",
+  "min_conf_mismatch": 1.541,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "0",
+    "conf": 1.541
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '0' (conf 1.54)"
+ },
+ {
+  "file": "20260723/193400.json",
+  "stored_kwh": 35869,
+  "stored_w": 51,
+  "seg_kwh": "035869",
+  "seg_w": "_1_51",
+  "min_conf_mismatch": 1.499,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.499
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.50)"
+ },
+ {
+  "file": "auto/20260713_173551.json",
+  "stored_kwh": 35732,
+  "stored_w": 55,
+  "seg_kwh": "035732",
+  "seg_w": "_1_55",
+  "min_conf_mismatch": 1.479,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.479
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.48)"
+ },
+ {
+  "file": "20260721/161036.json",
+  "stored_kwh": 35853,
+  "stored_w": 47,
+  "seg_kwh": "035853",
+  "seg_w": "_1_47",
+  "min_conf_mismatch": 1.47,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.47
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.47)"
+ },
+ {
+  "file": "20260723/171732.json",
+  "stored_kwh": 35869,
+  "stored_w": 41,
+  "seg_kwh": "035869",
+  "seg_w": "_1_41",
+  "min_conf_mismatch": 1.462,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.462
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.46)"
+ },
+ {
+  "file": "20260710/170426.json",
+  "stored_kwh": 35699,
+  "stored_w": -87,
+  "seg_kwh": "035695",
+  "seg_w": "_1-87",
+  "min_conf_mismatch": 1.45,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.45
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.45)"
+ },
+ {
+  "file": "20260710/184655.json",
+  "stored_kwh": 35701,
+  "stored_w": 143,
+  "seg_kwh": "035701",
+  "seg_w": "1_143",
+  "min_conf_mismatch": 1.381,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.381
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.38)"
+ },
+ {
+  "file": "20260710/182807.json",
+  "stored_kwh": 35700,
+  "stored_w": 321,
+  "seg_kwh": "035700",
+  "seg_w": "8_321",
+  "min_conf_mismatch": 1.377,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "8",
+    "conf": 1.377
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '8' (conf 1.38)"
+ },
+ {
+  "file": "20260711/063137.json",
+  "stored_kwh": 35706,
+  "stored_w": 272,
+  "seg_kwh": "035706",
+  "seg_w": "11272",
+  "min_conf_mismatch": 1.359,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.359
+   },
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.071
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.36), Slot7 Label '_' vs Seg '1' (conf 2.07)"
+ },
+ {
+  "file": "20260721/130942.json",
+  "stored_kwh": 35852,
+  "stored_w": 25,
+  "seg_kwh": "035852",
+  "seg_w": "_1_25",
+  "min_conf_mismatch": 1.346,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.346
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.35)"
+ },
+ {
+  "file": "20260722/150100.json",
+  "stored_kwh": 35861,
+  "stored_w": 17,
+  "seg_kwh": "035861",
+  "seg_w": "_1_17",
+  "min_conf_mismatch": 1.317,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.317
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.32)"
+ },
+ {
+  "file": "20260723/190506.json",
+  "stored_kwh": 35869,
+  "stored_w": 43,
+  "seg_kwh": "035869",
+  "seg_w": "_1_43",
+  "min_conf_mismatch": 1.29,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.29
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.29)"
+ },
+ {
+  "file": "20260723/202559.json",
+  "stored_kwh": 35869,
+  "stored_w": 50,
+  "seg_kwh": "035869",
+  "seg_w": "_1_50",
+  "min_conf_mismatch": 1.288,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.288
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.29)"
+ },
+ {
+  "file": "20260722/193400.json",
+  "stored_kwh": 35862,
+  "stored_w": 53,
+  "seg_kwh": "035862",
+  "seg_w": "_4_53",
+  "min_conf_mismatch": 1.285,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "4",
+    "conf": 1.285
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '4' (conf 1.28)"
+ },
+ {
+  "file": "auto/20260721_164505.json",
+  "stored_kwh": 35853,
+  "stored_w": 60,
+  "seg_kwh": "035853",
+  "seg_w": "_1_60",
+  "min_conf_mismatch": 1.226,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.226
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.23)"
+ },
+ {
+  "file": "20260711/120220.json",
+  "stored_kwh": 35706,
+  "stored_w": -46,
+  "seg_kwh": "035706",
+  "seg_w": "1_-46",
+  "min_conf_mismatch": 1.225,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.225
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.23)"
+ },
+ {
+  "file": "20260711/212825.json",
+  "stored_kwh": 35712,
+  "stored_w": 786,
+  "seg_kwh": "035712",
+  "seg_w": "1_786",
+  "min_conf_mismatch": 1.22,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.22
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.22)"
+ },
+ {
+  "file": "20260720/125251.json",
+  "stored_kwh": 35842,
+  "stored_w": 55,
+  "seg_kwh": "035842",
+  "seg_w": "_1_55",
+  "min_conf_mismatch": 1.22,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.22
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.22)"
+ },
+ {
+  "file": "20260722/182103.json",
+  "stored_kwh": 35862,
+  "stored_w": 29,
+  "seg_kwh": "035862",
+  "seg_w": "_1_29",
+  "min_conf_mismatch": 1.193,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.193
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.19)"
+ },
+ {
+  "file": "20260710/201054.json",
+  "stored_kwh": 35702,
+  "stored_w": 587,
+  "seg_kwh": "035702",
+  "seg_w": "11587",
+  "min_conf_mismatch": 1.188,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.622
+   },
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.188
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.62), Slot7 Label '_' vs Seg '1' (conf 1.19)"
+ },
+ {
+  "file": "20260724/124319.json",
+  "stored_kwh": 35876,
+  "stored_w": 56,
+  "seg_kwh": "035876",
+  "seg_w": "_4_56",
+  "min_conf_mismatch": 1.138,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "4",
+    "conf": 1.138
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '4' (conf 1.14)"
+ },
+ {
+  "file": "20260723/181612.json",
+  "stored_kwh": 35869,
+  "stored_w": 52,
+  "seg_kwh": "035869",
+  "seg_w": "_1_52",
+  "min_conf_mismatch": 1.129,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.129
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.13)"
+ },
+ {
+  "file": "20260710/173058.json",
+  "stored_kwh": 35699,
+  "stored_w": 915,
+  "seg_kwh": "035695",
+  "seg_w": "1_915",
+  "min_conf_mismatch": 1.123,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.123
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.12)"
+ },
+ {
+  "file": "20260710/185915.json",
+  "stored_kwh": 35701,
+  "stored_w": 224,
+  "seg_kwh": "035701",
+  "seg_w": "1_224",
+  "min_conf_mismatch": 1.123,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.123
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.12)"
+ },
+ {
+  "file": "auto/20260722_150506.json",
+  "stored_kwh": 35861,
+  "stored_w": 51,
+  "seg_kwh": "035861",
+  "seg_w": "_1_51",
+  "min_conf_mismatch": 1.118,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.118
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.12)"
+ },
+ {
+  "file": "20260710/203629.json",
+  "stored_kwh": 35702,
+  "stored_w": 606,
+  "seg_kwh": "035702",
+  "seg_w": "1_606",
+  "min_conf_mismatch": 1.111,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.111
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.11)"
+ },
+ {
+  "file": "20260720/183229.json",
+  "stored_kwh": 35844,
+  "stored_w": 45,
+  "seg_kwh": "035844",
+  "seg_w": "_1_45",
+  "min_conf_mismatch": 1.099,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.099
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.10)"
+ },
+ {
+  "file": "20260721/142759.json",
+  "stored_kwh": 35852,
+  "stored_w": 53,
+  "seg_kwh": "035852",
+  "seg_w": "_1_53",
+  "min_conf_mismatch": 1.095,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.095
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.09)"
+ },
+ {
+  "file": "20260710/180946.json",
+  "stored_kwh": 35700,
+  "stored_w": 334,
+  "seg_kwh": "035700",
+  "seg_w": "1_334",
+  "min_conf_mismatch": 1.069,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.069
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.07)"
+ },
+ {
+  "file": "20260711/083203.json",
+  "stored_kwh": 35706,
+  "stored_w": 19,
+  "seg_kwh": "035706",
+  "seg_w": "_3_19",
+  "min_conf_mismatch": 1.027,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "3",
+    "conf": 1.027
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '3' (conf 1.03)"
+ },
+ {
+  "file": "20260720/151931.json",
+  "stored_kwh": 35843,
+  "stored_w": 49,
+  "seg_kwh": "035843",
+  "seg_w": "_1_49",
+  "min_conf_mismatch": 1.004,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.004
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 1.00)"
+ },
+ {
+  "file": "20260710/202108.json",
+  "stored_kwh": 35702,
+  "stored_w": 598,
+  "seg_kwh": "035702",
+  "seg_w": "1_598",
+  "min_conf_mismatch": 0.946,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 0.946
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 0.95)"
+ },
+ {
+  "file": "20260710/201601.json",
+  "stored_kwh": 35702,
+  "stored_w": 587,
+  "seg_kwh": "035702",
+  "seg_w": "11587",
+  "min_conf_mismatch": 0.943,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 2.628
+   },
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 0.943
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 2.63), Slot7 Label '_' vs Seg '1' (conf 0.94)"
+ },
+ {
+  "file": "20260720/162437.json",
+  "stored_kwh": 35843,
+  "stored_w": 48,
+  "seg_kwh": "035843",
+  "seg_w": "_1_48",
+  "min_conf_mismatch": 0.934,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 0.934
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 0.93)"
+ },
+ {
+  "file": "20260711/162625.json",
+  "stored_kwh": 35708,
+  "stored_w": 745,
+  "seg_kwh": "035708",
+  "seg_w": "1_745",
+  "min_conf_mismatch": 0.926,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 0.926
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 0.93)"
+ },
+ {
+  "file": "auto/20260714_110155.json",
+  "stored_kwh": 35741,
+  "stored_w": 63,
+  "seg_kwh": "035741",
+  "seg_w": "_1_63",
+  "min_conf_mismatch": 0.916,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 0.916
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 0.92)"
+ },
+ {
+  "file": "20260710/165813.json",
+  "stored_kwh": 35699,
+  "stored_w": 107,
+  "seg_kwh": "035699",
+  "seg_w": "7_107",
+  "min_conf_mismatch": 0.895,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "7",
+    "conf": 0.895
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '7' (conf 0.90)"
+ },
+ {
+  "file": "20260721/122800.json",
+  "stored_kwh": 35852,
+  "stored_w": 22,
+  "seg_kwh": "035852",
+  "seg_w": "_8_22",
+  "min_conf_mismatch": 0.886,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "8",
+    "conf": 0.886
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '8' (conf 0.89)"
+ },
+ {
+  "file": "20260710/204744.json",
+  "stored_kwh": 35702,
+  "stored_w": 525,
+  "seg_kwh": "035707",
+  "seg_w": "11525",
+  "min_conf_mismatch": 0.878,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.2
+   },
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 0.878
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.20), Slot7 Label '_' vs Seg '1' (conf 0.88)"
+ },
+ {
+  "file": "20260710_dim/204744_b30.json",
+  "stored_kwh": 35702,
+  "stored_w": 525,
+  "seg_kwh": "035707",
+  "seg_w": "11525",
+  "min_conf_mismatch": 0.878,
+  "slots": [
+   {
+    "slot": 6,
+    "stored": "_",
+    "seg": "1",
+    "conf": 1.2
+   },
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 0.878
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot6 Label '_' vs Seg '1' (conf 1.20), Slot7 Label '_' vs Seg '1' (conf 0.88)"
+ },
+ {
+  "file": "20260720/184515.json",
+  "stored_kwh": 35844,
+  "stored_w": 47,
+  "seg_kwh": "035844",
+  "seg_w": "_1_47",
+  "min_conf_mismatch": 0.807,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "1",
+    "conf": 0.807
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '1' (conf 0.81)"
+ },
+ {
+  "file": "20260724/131209.json",
+  "stored_kwh": 35876,
+  "stored_w": 48,
+  "seg_kwh": "035876",
+  "seg_w": "_0_48",
+  "min_conf_mismatch": 0.8,
+  "slots": [
+   {
+    "slot": 7,
+    "stored": "_",
+    "seg": "0",
+    "conf": 0.8
+   }
+  ],
+  "category": "C_blank_bleed_leading",
+  "reason": "leere W-Fuehrungszelle -> Geisterziffer (bekanntes Artefakt): Slot7 Label '_' vs Seg '0' (conf 0.80)"
+ }
+]
