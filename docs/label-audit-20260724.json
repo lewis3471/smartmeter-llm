@@ -1,0 +1,1363 @@
+[
+ {
+  "file": "training-data/20260710/204210.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35,
+   "w": 55
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260710/204210.jpg",
+  "_reason": "Frame ist rechts komplett im Dunkeln: Tinten-Skala 12 (typisch 41), visuell sind nur die ersten drei Ziffern '035' erkennbar, Slots 3-5 nicht. Die beiden Bild-Schiedsrichter widersprechen sich (Seg 035706, LDO-kNN 35702, kNN-Vollmodell 35705); nur die Zeitachse stuetzt 35702 (Klammer 20:36=35702 / 20:46=35702). Ein Label, dessen Ziffern im Bild nicht sichtbar sind, gehoert nicht ins Zellentraining -> Quarantaene statt Umlabeln."
+ },
+ {
+  "file": "training-data/20260711/080213.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3570,
+   "w": 171
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/080213.jpg",
+  "_reason": "Display praktisch aus: Tinten-Skala 13/41, im geflatteten Zoom ist keine einzige Ziffer sicher erkennbar. Pose zusaetzlich kaputt (Seg-Pose-Refine landet bei dx=-31, dy=-11, Pitch 35.8). Seg liest 241199 = Muell, kNN-Vollmodell 3570/70, LDO-kNN 35703, Zeitachse 35706 -> kein Schiedsrichter bestaetigt einen Wert."
+ },
+ {
+  "file": "training-data/20260711/111629.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 17253,
+   "w": 0
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/111629.jpg",
+  "_reason": "Tinten-Skala 11/41, im geflatteten 3x-Zoom ist die kWh-Zeile leer/rauschen — keine Ziffer erkennbar. Anker-Drift rastet auf den Suchrand (-24,0) ein. Seg _70770, kNN 11200, LDO-kNN unplausibel; nur die Zeitachse liefert 35706. Kein Bild-Schiedsrichter -> Quarantaene."
+ },
+ {
+  "file": "training-data/20260711/114320.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 1719,
+   "w": 0
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/114320.jpg",
+  "_reason": "Tinten-Skala 12/41, Display visuell praktisch aus, Anker-Drift am Suchrand (-24,0). Seg 0708_7, kNN 1250 — Muell. Korrekturwert 35706 stammt nur aus der Zeitachse."
+ },
+ {
+  "file": "training-data/20260711/125235.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 73570,
+   "w": 0
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/125235.jpg",
+  "_reason": "Tinten-Skala 13/41, keine Ziffer sicher lesbar, Anker-Drift (-24,5) am Suchrand. Seg 010000, kNN 73210 — kein Schiedsrichter bestaetigt einen Wert."
+ },
+ {
+  "file": "training-data/20260711/140526.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 10359,
+   "w": 451
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/140526.jpg",
+  "_reason": "Frame ist unbrauchbar, nicht nur falsch gelabelt: Tinten-Skala 5 von typisch 41, der aufgehellte Display-Ausschnitt zeigt reines JPEG-Blockrauschen ohne erkennbare Ziffern; Zwangsdekodierung bei allen 10 getesteten Posen liefert Muell ('8-6_60', '44-_87', '28--_6'). Label 10359 ist eine Halluzination (Zaehler steht bei 35707), aber der vom Auditor vorgeschlagene Wert 35707 stammt nur aus der Interpolation — auf diesem Bild ist nichts zu lernen -> Quarantaene."
+ },
+ {
+  "file": "training-data/20260711/154142.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35,
+   "w": 1589
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/154142.jpg",
+  "_reason": "Schlechtester Frame der Gruppe: Tinten-Skala 8/41, Anker-Match nur 0.342 (< Schwelle 0.4, Drift wird auf 0 gesetzt). Visuell nur '035' schemenhaft. Seg 0355-_ (unvollstaendig), Label 35 ist Muell, Korrekturwert nur aus der Zeitachse."
+ },
+ {
+  "file": "training-data/20260711/165525.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 173570,
+   "w": 0
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/165525.jpg",
+  "_reason": "Tinten-Skala 12/41, visuell leer. Seg 216883 = Muell (alle conf < 1.9), kNN 3570. Label 173570 hat 6 Stellen ohne fuehrende 0 — Halluzination. Kein bildgestuetzter Ersatzwert."
+ },
+ {
+  "file": "training-data/20260711/171055.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 7572,
+   "w": 0
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/171055.jpg",
+  "_reason": "Tinten-Skala 12/41, visuell leer. Seg 610180, kNN 3570 — widerspruechlich. Nur Zeitachsen-Interpolation 35709, kein Bildbeleg."
+ },
+ {
+  "file": "training-data/20260711/175113.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "pose_kaputt",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 0,
+   "w": 0
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/175113.jpg",
+  "_reason": "Tinten-Skala 12/41 und Pose kaputt: Anker-Drift (-24,24) am Suchrand, Seg-Pose-Refine dx=-34. Label kwh=0 ist reine Halluzination, kein Schiedsrichter liefert einen belegbaren Wert."
+ },
+ {
+  "file": "training-data/20260711/175319.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "lcd_segmenttest",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 888888,
+   "w": 888888
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/175319.jpg",
+  "_reason": "Sichtpruefung des aufgehellten Displays bestaetigt den LCD-Segmenttest: alle Zellen beider Zeilen zeigen die volle 8. Das Label bildet den Frame zwar korrekt ab, ist aber kein Zaehlerstand (W-Zeile hat im Normalbetrieb 5 Zellen, das Label braucht 6) -> gehoert in die Quarantaene, nicht ins Trainingsset."
+ },
+ {
+  "file": "training-data/20260711/180133.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "lcd_segmenttest",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 888888,
+   "w": 888888
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/180133.jpg",
+  "_reason": "Bild zeigt den LCD-Segmenttest: beide Zeilen komplett 888888/88888 (visuell eindeutig). Das Label bildet den Frame zwar ab, ist aber kein Zaehlerstand, und w=888888 passt strukturell nicht in die 5 Zellen der W-Zeile. Kein korrigierbarer Wert -> Quarantaene."
+ },
+ {
+  "file": "training-data/20260711/180543.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "lcd_segmenttest",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 888888,
+   "w": 888888
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/180543.jpg",
+  "_reason": "Sichtpruefung des aufgehellten Displays bestaetigt den LCD-Segmenttest: alle Zellen beider Zeilen zeigen die volle 8. Das Label bildet den Frame zwar korrekt ab, ist aber kein Zaehlerstand (W-Zeile hat im Normalbetrieb 5 Zellen, das Label braucht 6) -> gehoert in die Quarantaene, nicht ins Trainingsset."
+ },
+ {
+  "file": "training-data/20260711/205512.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "lcd_segmenttest",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 888888,
+   "w": 888889
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/205512.jpg",
+  "_reason": "Sichtpruefung des aufgehellten Displays bestaetigt den LCD-Segmenttest: alle Zellen beider Zeilen zeigen die volle 8. Das Label bildet den Frame zwar korrekt ab, ist aber kein Zaehlerstand (W-Zeile hat im Normalbetrieb 5 Zellen, das Label braucht 6) -> gehoert in die Quarantaene, nicht ins Trainingsset."
+ },
+ {
+  "file": "training-data/20260711/212100.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 0,
+   "w": 0
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/212100.jpg",
+  "_reason": "Tinten-Skala 10/41, Nachtaufnahme ohne erkennbare Ziffern, Anker-Drift (24,3) am Suchrand. Label kwh=0 falsch, Ersatzwert 35712 nur aus der Zeitachse."
+ },
+ {
+  "file": "training-data/20260711/212712.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "lcd_segmenttest",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 888888,
+   "w": 888888
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/212712.jpg",
+  "_reason": "Sichtpruefung des aufgehellten Displays bestaetigt den LCD-Segmenttest: alle Zellen beider Zeilen zeigen die volle 8. Das Label bildet den Frame zwar korrekt ab, ist aber kein Zaehlerstand (W-Zeile hat im Normalbetrieb 5 Zellen, das Label braucht 6) -> gehoert in die Quarantaene, nicht ins Trainingsset."
+ },
+ {
+  "file": "training-data/20260712/100439.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3571,
+   "w": 120
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260712/100439.jpg",
+  "_reason": "Frame unbrauchbar: Tinte 13 von typisch 41, der aggressiv gespreizte Ausschnitt ist JPEG-Matsch ohne lesbare Ziffer, Zwangsdekodierung liefert je nach Pose 015711 / 1_7701 / 1_4040 — kein stabiler Wert. Zusaetzlich ist die Klammer selbst unsicher: der auto-Nachbar 09:25:02 traegt Label 35717, der Seg-Dekoder liest dort aber 035716. Label 3571 ist eine Trunkierung, der korrekte Wert (35716 oder 35717) ist nicht eindeutig -> Quarantaene."
+ },
+ {
+  "file": "training-data/20260713/105038.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 8850,
+   "w": 0
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260713/105038.jpg",
+  "_reason": "Tinten-Skala 13/41, Ziffern nur als Schemen, Anker-Drift (-22,0) am Suchrand. Seg -10180, kNN wirft 'W-Zeile unlesbar'. Label 8850 falsch, kein Bildbeleg fuer 35730."
+ },
+ {
+  "file": "training-data/20260715/043641.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "jpeg_abgeschnitten",
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35754,
+   "w": 209
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260715/043641.jpg",
+  "_reason": "Frame kaputt, nicht das Label: JPEG abgeschnitten (steht in truncated_jpegs.json) UND Pose ausserhalb des Fangbereichs — Anker-Match nur 0.327 (<0.4, also gar keine Drift-Korrektur), das Display sitzt rund 2 Zellenbreiten (~73 px) links/oben vom Nominalraster. Das Raster greift '754__' statt '035754', LDO-kNN liest 794426|0940_. Der Ablesewert 35754/209 ist im Bild zwar korrekt lesbar, als Trainingssample ordnet der Frame aber jeder Zelle die falsche Ziffer zu -> Quarantaene."
+ },
+ {
+  "file": "training-data/auto/20260711_140526.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 10359,
+   "w": 451
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260711_140526.jpg",
+  "_reason": "Frame ist unbrauchbar, nicht nur falsch gelabelt: Tinten-Skala 5 von typisch 41, der aufgehellte Display-Ausschnitt zeigt reines JPEG-Blockrauschen ohne erkennbare Ziffern; Zwangsdekodierung bei allen 10 getesteten Posen liefert Muell ('8-6_60', '44-_87', '28--_6'). Label 10359 ist eine Halluzination (Zaehler steht bei 35707), aber der vom Auditor vorgeschlagene Wert 35707 stammt nur aus der Interpolation — auf diesem Bild ist nichts zu lernen -> Quarantaene."
+ },
+ {
+  "file": "training-data/auto/20260712_134625.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "pose_kaputt",
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 70351,
+   "w": 141
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260712_134625.jpg",
+  "_reason": "Extremfall: Tinten-Skala 5/41, Anker-Match 0.099 (Anker gar nicht gefunden), JPEG-Blockartefakte dominieren. Seg 045-_8, kNN 35718/-89. Frame unbrauchbar; liegt bereits als Kopie in training-data/quarantine/."
+ },
+ {
+  "file": "training-data/auto/20260712_145808.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 80688,
+   "w": 0
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260712_145808.jpg",
+  "_reason": "Tinten-Skala 12/41, Anker-Match 0.537 mit Drift (-24,-2) am Suchrand -> Zellenraster unsicher. Visuell keine Ziffer lesbar, Seg 188790, kNN 'W-Zeile unlesbar'. Liegt bereits in quarantine/."
+ },
+ {
+  "file": "training-data/auto/20260714_165439.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "pose_kaputt",
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 33744,
+   "w": 848
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260714_165439.jpg",
+  "_reason": "POSE KAPUTT, obwohl hell (Tinte 41): Anker-Match nur 0.487 und rastet 32px falsch ein — _drift liefert (+19,1), die echte Verschiebung ist -13. Das Zellenraster der Trainings-Pipeline liegt damit um ~halbe Zellbreite daneben (kNN-Vollmodell liest folgerichtig 592444/8481). Visuell und per Zeitachse waere der Wert 35744 (16:53=35744, 17:08=35745), aber die Zellen sind fuer das Training unbrauchbar -> Quarantaene (Kopie liegt schon dort)."
+ },
+ {
+  "file": "training-data/auto/20260715_043641.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "jpeg_abgeschnitten",
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 35754,
+   "w": 209
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260715_043641.jpg",
+  "_reason": "Bitgleiche Kopie von 20260715/043641.jpg: abgeschnittenes JPEG plus Pose um ~2 Zellen verschoben (Anker-Match 0.327, keine Drift-Korrektur). Das Nominalraster liest '754__' statt '035754'; als Trainingssample unbrauchbar -> Quarantaene."
+ },
+ {
+  "file": "training-data/auto/20260715_132230.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 88988,
+   "w": 888
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260715_132230.jpg",
+  "_reason": "Seg (035768) und kNN-Vollmodell (35768) lesen einen Wert, der die Monotonie BRICHT: um 13:47 und in allen 20 Folgeframes steht der Zaehler auf 35761, vorher 08:29 auf 35756. 35768 um 13:22 ist damit physikalisch unmoeglich, die Klammer waere [35756,35761]. Im Zoom sind Slots 3-5 ausgewaschen (Seg-conf 0.3/2.9/1.4 bei Slot 3/4/5, Slot0 conf 0.4). Label 88988/888 ist ohnehin Muell, ein belastbarer Ersatzwert existiert nicht -> Quarantaene (Kopie liegt schon dort)."
+ },
+ {
+  "file": "training-data/auto/20260717_164155.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 358021,
+   "w": 1579
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260717_164155.jpg",
+  "_reason": "Tinten-Skala 15/41, Anker-Drift (-25,4) am Suchrand. Visuell allenfalls '0358' zu erahnen, Slots 4/5 nicht. Seg 076804, kNN 'W-Zeile unlesbar'. Label 358021 ist eine 6-stellige Halluzination; Ersatzwert 35802 nur aus der Zeitachse. Liegt bereits in quarantine/."
+ },
+ {
+  "file": "training-data/auto/20260717_223322.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 358104,
+   "w": 77
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260717_223322.jpg",
+  "_reason": "Nachtframe, Tinten-Skala 13/41, visuell keine Ziffer sicher. Seg 411019, kNN 'W-Zeile unlesbar'. Label 358104 halluziniert, Ersatzwert nur aus der Zeitachse. Liegt bereits in quarantine/."
+ },
+ {
+  "file": "training-data/auto/20260720_150107.json",
+  "action": "drop",
+  "new_label": null,
+  "_error_type": [
+   "unbrauchbarer Frame"
+  ],
+  "_drop_grund": "display_zu_dunkel",
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 75843,
+   "w": 10
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260720_150107.jpg",
+  "_reason": "Tinten-Skala 13/41 trotz Tageszeit (Display im Schatten), visuell nur '0358' zu erahnen. Seg 010018, kNN 3540/0 — kein Schiedsrichter bestaetigt 35843. Liegt bereits in quarantine/."
+ },
+ {
+  "file": "training-data/20260710/183321.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35701,
+   "w": 292
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3570,
+   "w": 292
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260710/183321.jpg",
+  "_reason": "Sichtpruefung: 035701, W-Zeile 292. Seg 035701 (conf 2.9-3.4), Anker 0.964. Nachbarn 18:30=35700, 18:35/18:38/18:41 gleiche Serie -> 35701. Label 3570 = 4-Stellen-Trunkierung von Gemini, w unveraendert korrekt."
+ },
+ {
+  "file": "training-data/20260710/183559.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35701,
+   "w": -5
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)",
+   "Vorzeichen"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3570,
+   "w": 5
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260710/183559.jpg",
+  "_reason": "Eigene Sichtpruefung (6x-Zoom, Hintergrund geflattet): kWh-Zeile zeigt eindeutig 035701, W-Zeile zeigt Minus + 5. Seg-Dekoder liest 035701 (conf 3.3/3.4/3.2/2.7/2.4), Anker-Match 0.943, Drift (0,0) -> keine Pose-Stoerung. Zeitachse: 18:30 = 35700, Folgeframes 35701. Gemini-Label 3570 ist der bekannte 4-Stellen-Trunkierungsfehler, das fehlende Minus der bekannte Vorzeichenfehler."
+ },
+ {
+  "file": "training-data/20260710/183836.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35701,
+   "w": 241
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3570,
+   "w": 241
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260710/183836.jpg",
+  "_reason": "Sichtpruefung: 035701, W-Zeile 241. Seg 035701, kNN-Vollmodell w=241. Anker 0.961, Drift 0. Gleiche Trunkierungs-Serie wie 183321/183559."
+ },
+ {
+  "file": "training-data/20260710/184112.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35701,
+   "w": 107
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3570,
+   "w": 107
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260710/184112.jpg",
+  "_reason": "Sichtpruefung: 035701, W-Zeile 107. Seg 035701 (conf 2.9-4.2), Anker 0.944. Gleiche Trunkierungs-Serie."
+ },
+ {
+  "file": "training-data/20260710/184349.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35701,
+   "w": 192
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3570,
+   "w": 192
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260710/184349.jpg",
+  "_reason": "Sichtpruefung: 03570 + schmale '1' vor dem kWh-Label. Seg 035701, Seg-W __192 = gespeichertes w. Anker 0.930."
+ },
+ {
+  "file": "training-data/20260710/184626.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35701,
+   "w": 129
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3570,
+   "w": 129
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260710/184626.jpg",
+  "_reason": "Sichtpruefung: 035701. Seg 035701, W-Ziffern 129 (Geisterziffer in Zelle 0), kNN-Vollmodell w=129 -> w bestaetigt. Anker 0.930."
+ },
+ {
+  "file": "training-data/20260711/065944.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35706
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher",
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35701,
+   "w": 334
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/065944.jpg",
+  "_reason": "Beide unmittelbaren Nachbarn sind bildseitig bestaetigt: 06:58:39 Seg=035706 (Tinte 41) und 07:05:23 Seg=035706 (Tinte 27). Zaehler monoton -> 06:59:44 muss 35706 sein; 35701 waere ein Ruecksprung um 5 kWh. Seg liest am Frame selbst 03570x (x='5' bei erzwungener Normalpose) — '5' vs '6' unterscheidet sich nur im blassen Segment E, 35705 waere aber ein Ruecksprung. W nicht reproduzierbar (Zwangsdekodierungen 334/364/365 uneinheitlich, Tinte 8) -> kWh-only."
+ },
+ {
+  "file": "training-data/20260711/114627.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35706
+  },
+  "_error_type": [
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35706,
+   "w": 71
+  },
+  "_confidence": "mittel",
+  "_jpg": "training-data/20260711/114627.jpg",
+  "_reason": "W-Zeile dieses Frames ist unlesbar (Blendfleck/Ueberstrahlung), kWh bleibt gueltig. Drei Verfahren widersprechen sich vollstaendig: Label 71, Seg-Dekoder 31977, LDO-kNN '____0'. Im seg-bestaetigten Referenzpool ist Slot9 mit 0.9185 ein LEERZEICHEN (bester Ziffern-Treffer nur 0.8151) und Slot10 erreicht als Bestwert nur 0.7414 — kein anderer Frame der Charge liegt unter 0.87. Sichtpruefung: reiner Helligkeits-gradient, keine Glyphe erkennbar. w unbelegbar -> kWh-only-Label (kWh 35706 vom Dekoder mit 035706 und von der Zeitachse 11:02/12:09 = 35706 gestuetzt)."
+ },
+ {
+  "file": "training-data/20260711/125428.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35706,
+   "w": 83
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35701,
+   "w": 83
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/125428.jpg",
+  "_reason": "Zeitachse dicht+bildbestaetigt: Nachbar 12:51:37 wird vom Seg-Dekoder unabhaengig als 035706 gelesen (Tinte 41, minconf 1.42); der Frame selbst dekodiert bei erzwungener Normalpose (dx 0..3, dy 3/4, pitch 35.8-36.4) in 6 von 6 Einstellungen stabil 035706. Label 35701 liegt ausserhalb der Monotonie-Klammer [35706,35706]. W-Zeile: alle 6 Zwangsdekodierungen enden auf '83', Zoom zeigt zwei Glyphen rechts, Zellen links leer -> w=83 bleibt."
+ },
+ {
+  "file": "training-data/20260711/141247.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35707
+  },
+  "_error_type": [
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35707,
+   "w": 89
+  },
+  "_confidence": "mittel",
+  "_jpg": "training-data/20260711/141247.jpg",
+  "_reason": "Label 89 ist an der Einerstelle nachweislich falsch, der richtige Wert ist aber nicht bestimmbar -> kWh-only. Slot10: Dekoder '1' (conf 1.28), LDO-kNN auf seg-bestaetigtem Pool einstimmig '1' (0.9500/0.9496/0.9495/0.9482, kein '9' unter den Top-Treffern), historischer Produktions-Reader (disagreements/20260711_141247.json) las w=1 — Sichtvergleich mit einer Referenz-'1' und einer Referenz-'9' bestaetigt den einzelnen Senkrechtstrich. Slot9 liegt unter einem Blendfleck (bester Treffer 0.8997 auf '0', danach '4','_','7') und ist nicht lesbar. kWh 35707 vom Dekoder (confs 1.57-3.11) und der Zeitachse gestuetzt."
+ },
+ {
+  "file": "training-data/20260711/144153.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35707
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3570
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/144153.jpg",
+  "_reason": "Klammer bildbestaetigt: 14:40:35 Seg=035707 (Tinte 41) und 14:43:57 Seg=035707 (Tinte 40) — 78 s davor und 124 s danach. Label 3570 ist eine 4-stellige Gemini-Trunkierung von 3570x. Der aufgehellte Zoom zeigt trotz Tinte 15 klar '035 70?'. Auditor-Hinweis 'nur Interpolation' ist zu pessimistisch: beide Klammer-Nachbarn sind vom Seg-Dekoder unabhaengig gelesen. Kein w im Label vorhanden."
+ },
+ {
+  "file": "training-data/20260711/162424.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35707,
+   "w": 1620
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3570,
+   "w": 1620
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/162424.jpg",
+  "_reason": "AUDITOR-WERT KORRIGIERT: vorgeschlagen war 35708, richtig ist 35707. Die direkten Nachbarn 16:22:55 (Seg=035707) und 16:24:39 — nur 15 s spaeter — (Seg=035707) klammern den Frame auf 35707; 35708 tritt erst ab 16:25:44 auf. Die Seg-Lesung '411189' des Auditors war ein Pose-Artefakt (Auto-Refine landete bei dy=-10); bei der Pose der Nachbarn (dx=3, dy=4, pitch 36.4) liest der Dekoder in 6 Einstellungen stabil 035707. Label 3570 = reine Ausgabe-Trunkierung, kein Lesefehler -> w=1620 bleibt (Nachbar +15 s hat 1660)."
+ },
+ {
+  "file": "training-data/20260711/164142.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35708
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher",
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35108,
+   "w": 216
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711/164142.jpg",
+  "_reason": "Klammer bildbestaetigt: 16:41:05 Seg=035708 (Tinte 40, minconf 1.06) und 16:42:44 Seg=035708 — 37 s davor und 62 s danach. Am Frame selbst liest der Dekoder in 7 von 7 Zwangsposen '0357_2', d.h. Slot 3 ist ein '7', nicht die '1' des Labels ('1'=BC vs '7'=ABC, nur Segment A). w=216 wird bewusst weggelassen: der Zoom der W-Zeile zeigt VIER Ziffern ('216' + schwaches '1'), Dekoder liest stabil 2161, Nachbarn 2174 / 2143 — 216 ist ein verschluckter Stelle, 2161 aber nicht eindeutig genug (Zellkonfidenz 0.27)."
+ },
+ {
+  "file": "training-data/20260711/170202.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35708,
+   "w": 551
+  },
+  "_error_type": [
+   "W-Geisterziffer"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35708,
+   "w": 55
+  },
+  "_confidence": "mittel",
+  "_jpg": "training-data/20260711/170202.jpg",
+  "_reason": "Strukturbeweis: die beiden '5' stehen in Zelle 8 und 9, Zelle 10 ist besetzt (schwache Tinte). Die W-Zeile ist immer rechtsbuendig — Kontrollen desselben Tages: 122559 w=26 -> Zellen 9/10, 122517 w=2 -> nur Zelle 10, 121640 w=-9 -> Zellen 9/10. Ein zweistelliger Wert kann also nicht in Zelle 8/9 stehen; dem Label fehlt die letzte Stelle (bekannter Gemini-Truncation-Fehler). Beide unabhaengigen Leser sehen dort '1': LDO-kNN slot10='1' (conf 0.839, top3 einstimmig) und Seg-Dekoder '1'. Die geringe Tinte passt zur '1' (nur 2 Segmente). kWh 35708 von LDO-kNN und Nachbarn bestaetigt."
+ },
+ {
+  "file": "training-data/20260711_fix/20260711_065944.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35706
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher",
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35701,
+   "w": 334
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711_fix/20260711_065944.jpg",
+  "_reason": "Beide unmittelbaren Nachbarn sind bildseitig bestaetigt: 06:58:39 Seg=035706 (Tinte 41) und 07:05:23 Seg=035706 (Tinte 27). Zaehler monoton -> 06:59:44 muss 35706 sein; 35701 waere ein Ruecksprung um 5 kWh. Seg liest am Frame selbst 03570x (x='5' bei erzwungener Normalpose) — '5' vs '6' unterscheidet sich nur im blassen Segment E, 35705 waere aber ein Ruecksprung. W nicht reproduzierbar (Zwangsdekodierungen 334/364/365 uneinheitlich, Tinte 8) -> kWh-only."
+ },
+ {
+  "file": "training-data/20260711_fix/20260711_125428.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35706,
+   "w": 83
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35701,
+   "w": 83
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711_fix/20260711_125428.jpg",
+  "_reason": "Zeitachse dicht+bildbestaetigt: Nachbar 12:51:37 wird vom Seg-Dekoder unabhaengig als 035706 gelesen (Tinte 41, minconf 1.42); der Frame selbst dekodiert bei erzwungener Normalpose (dx 0..3, dy 3/4, pitch 35.8-36.4) in 6 von 6 Einstellungen stabil 035706. Label 35701 liegt ausserhalb der Monotonie-Klammer [35706,35706]. W-Zeile: alle 6 Zwangsdekodierungen enden auf '83', Zoom zeigt zwei Glyphen rechts, Zellen links leer -> w=83 bleibt."
+ },
+ {
+  "file": "training-data/20260711_fix/20260711_141247.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35707
+  },
+  "_error_type": [
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35707,
+   "w": 89
+  },
+  "_confidence": "mittel",
+  "_jpg": "training-data/20260711_fix/20260711_141247.jpg",
+  "_reason": "Label 89 ist an der Einerstelle nachweislich falsch, der richtige Wert ist aber nicht bestimmbar -> kWh-only. Slot10: Dekoder '1' (conf 1.28), LDO-kNN auf seg-bestaetigtem Pool einstimmig '1' (0.9500/0.9496/0.9495/0.9482, kein '9' unter den Top-Treffern), historischer Produktions-Reader (disagreements/20260711_141247.json) las w=1 — Sichtvergleich mit einer Referenz-'1' und einer Referenz-'9' bestaetigt den einzelnen Senkrechtstrich. Slot9 liegt unter einem Blendfleck (bester Treffer 0.8997 auf '0', danach '4','_','7') und ist nicht lesbar. kWh 35707 vom Dekoder (confs 1.57-3.11) und der Zeitachse gestuetzt."
+ },
+ {
+  "file": "training-data/20260711_v9/20260711_065944.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35706
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher",
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35701,
+   "w": 334
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711_v9/20260711_065944.jpg",
+  "_reason": "Beide unmittelbaren Nachbarn sind bildseitig bestaetigt: 06:58:39 Seg=035706 (Tinte 41) und 07:05:23 Seg=035706 (Tinte 27). Zaehler monoton -> 06:59:44 muss 35706 sein; 35701 waere ein Ruecksprung um 5 kWh. Seg liest am Frame selbst 03570x (x='5' bei erzwungener Normalpose) — '5' vs '6' unterscheidet sich nur im blassen Segment E, 35705 waere aber ein Ruecksprung. W nicht reproduzierbar (Zwangsdekodierungen 334/364/365 uneinheitlich, Tinte 8) -> kWh-only."
+ },
+ {
+  "file": "training-data/20260711_v9/20260711_125428.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35706,
+   "w": 83
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35701,
+   "w": 83
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260711_v9/20260711_125428.jpg",
+  "_reason": "Zeitachse dicht+bildbestaetigt: Nachbar 12:51:37 wird vom Seg-Dekoder unabhaengig als 035706 gelesen (Tinte 41, minconf 1.42); der Frame selbst dekodiert bei erzwungener Normalpose (dx 0..3, dy 3/4, pitch 35.8-36.4) in 6 von 6 Einstellungen stabil 035706. Label 35701 liegt ausserhalb der Monotonie-Klammer [35706,35706]. W-Zeile: alle 6 Zwangsdekodierungen enden auf '83', Zoom zeigt zwei Glyphen rechts, Zellen links leer -> w=83 bleibt."
+ },
+ {
+  "file": "training-data/20260711_v9/20260711_141247.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35707
+  },
+  "_error_type": [
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35707,
+   "w": 89
+  },
+  "_confidence": "mittel",
+  "_jpg": "training-data/20260711_v9/20260711_141247.jpg",
+  "_reason": "Label 89 ist an der Einerstelle nachweislich falsch, der richtige Wert ist aber nicht bestimmbar -> kWh-only. Slot10: Dekoder '1' (conf 1.28), LDO-kNN auf seg-bestaetigtem Pool einstimmig '1' (0.9500/0.9496/0.9495/0.9482, kein '9' unter den Top-Treffern), historischer Produktions-Reader (disagreements/20260711_141247.json) las w=1 — Sichtvergleich mit einer Referenz-'1' und einer Referenz-'9' bestaetigt den einzelnen Senkrechtstrich. Slot9 liegt unter einem Blendfleck (bester Treffer 0.8997 auf '0', danach '4','_','7') und ist nicht lesbar. kWh 35707 vom Dekoder (confs 1.57-3.11) und der Zeitachse gestuetzt."
+ },
+ {
+  "file": "training-data/20260711_v9/20260711_170202.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35708,
+   "w": 551
+  },
+  "_error_type": [
+   "W-Geisterziffer"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 35708,
+   "w": 55
+  },
+  "_confidence": "mittel",
+  "_jpg": "training-data/20260711_v9/20260711_170202.jpg",
+  "_reason": "Bitgleiche Kopie von 20260711/170202.jpg (md5 identisch). Die beiden '5' stehen in Zelle 8/9, Zelle 10 traegt eine schwache Ziffer; bei rechtsbuendiger Anzeige ist ein zweistelliges Label unmoeglich. LDO-kNN und Seg-Dekoder lesen dort unabhaengig '1' -> 551."
+ },
+ {
+  "file": "training-data/20260712/191045.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35721,
+   "w": 1787
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3572,
+   "w": 1787
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260712/191045.jpg",
+  "_reason": "Zoom auf Slots 3-5 zeigt '7','2' und die schmale '1' -> 035721. Der Seg-Dekoder liest Slot5 als '6' (conf 0.2, bekannte Schwaeche in der rechten Schattenzone), LDO-kNN liest 35721 (conf .995) und alle auto-Nachbarn 18:46-19:25 stehen auf 35721. W-Zeile 1787 von Seg (_1787) und kNN bestaetigt."
+ },
+ {
+  "file": "training-data/20260713/144113.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35731,
+   "w": -162
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3573,
+   "w": -162
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260713/144113.jpg",
+  "_reason": "Zoom Slots 3-5: '7','3', schmale '1' -> 035731. Seg 035731 direkt, LDO-kNN 35731. Zeitachse: 14:29=35730, 14:43:44=35731. W-Zeile -162 von Seg (_-162) und kNN bestaetigt. Label 3573 = 4-Stellen-Trunkierung."
+ },
+ {
+  "file": "training-data/20260713/150652.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35731,
+   "w": 225
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3573,
+   "w": 225
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260713/150652.jpg",
+  "_reason": "Zoom Slots 3-5: '7','3', schmale '1'. Seg-Slot5 '6' (conf 0.5) ist der bekannte Schattenzonen-Fehler; LDO-kNN 35731, auto-Nachbarn 15:04 und 15:11 = 35731. W 225 von Seg und kNN bestaetigt."
+ },
+ {
+  "file": "training-data/20260713/152147.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35731,
+   "w": 374
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3573,
+   "w": 374
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260713/152147.jpg",
+  "_reason": "Zoom Slots 3-5: '7','3','1'. Seg-Slot5 '3' (conf 0.1) unzuverlaessig; LDO-kNN 35731; Zeitachse-Klammer 35731. W 374 (Seg __374) bestaetigt."
+ },
+ {
+  "file": "training-data/20260713/152456.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35731,
+   "w": 1177
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3573,
+   "w": 1177
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260713/152456.jpg",
+  "_reason": "Zoom Slots 3-5: '7','3','1'. Seg-Slot5 '6' (conf 0.4) verworfen, LDO-kNN 35731, Nachbarn 35731. W 1177 (Seg _1177, kNN 1177) bestaetigt."
+ },
+ {
+  "file": "training-data/20260713/153050.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35731,
+   "w": 317
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3573,
+   "w": 317
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260713/153050.jpg",
+  "_reason": "Zoom Slots 3-5: '7','3','1'. Seg-Slot5 conf 0.1 -> unbrauchbar, LDO-kNN 35731, Zeitachse 35731. W 317 (Seg __317) bestaetigt."
+ },
+ {
+  "file": "training-data/20260713/154327.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35731,
+   "w": 324
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3573,
+   "w": 324
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260713/154327.jpg",
+  "_reason": "Zoom Slots 3-5: '7','3','1'. Seg-Slot5 conf 0.1, LDO-kNN 35731, Nachbarn 15:45 = 35731. W 324 (Seg __324) bestaetigt."
+ },
+ {
+  "file": "training-data/20260713/155508.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35731,
+   "w": 414
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3573,
+   "w": 414
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260713/155508.jpg",
+  "_reason": "Zoom Slots 3-5: '7','3','1'. Seg-Slot5 conf 0.4, LDO-kNN 35731, auto-Nachbar 15:59 = 35731. W 414 (Seg __414, kNN 414) bestaetigt."
+ },
+ {
+  "file": "training-data/20260713/160329.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35731,
+   "w": -96
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)",
+   "W-Dreher"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3573,
+   "w": -98
+  },
+  "_confidence": "mittel",
+  "_jpg": "training-data/20260713/160329.jpg",
+  "_reason": "kWh: Zoom Slots 3-5 zeigt '7','3','1' -> 35731 (Seg direkt 035731, LDO-kNN 35731, Nachbarn 15:59 und 16:12 = 35731) -> hoch. W: das Label sagt -98, die letzte Zelle hat aber Aktivierungen A.84 B.39 C1.09 D1.12 E.95 F.76 G.85 = ACDEFG -> '6' (conf 3.31); zum Vergleich hat eine echte '8' in derselben Zelle B~1.0. Die kNN-Nachbarn dieser Zelle sind nach dem Selbsttreffer (Trainingskontamination, sim 1.0) siebenmal '6' bei 0.946-0.956. Zwei unabhaengige Leser sagen 6 -> w=-96; Vorzeichen durch die Serie (16:12=-63, 16:19=-36) gestuetzt."
+ },
+ {
+  "file": "training-data/20260713/161237.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35731,
+   "w": -63
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3573,
+   "w": -63
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260713/161237.jpg",
+  "_reason": "Derselbe Frame liegt als training-data/auto/20260713_161237.json mit Konsens-Label {kwh:35731, w:-63} vor — direkter Beleg fuer die Korrektur. Zusaetzlich Zoom Slots 3-5 '7','3','1' und LDO-kNN 35731. Seg-Slot5 '6' (conf 0.0) verworfen."
+ },
+ {
+  "file": "training-data/20260713/162201.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35731,
+   "w": -56
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3573,
+   "w": -56
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260713/162201.jpg",
+  "_reason": "Zoom Slots 3-5: '7','3','1'. Seg liest 035731 direkt, LDO-kNN 35731, Nachbarn 16:19 = 35731. W -56 (Seg __-56) bestaetigt."
+ },
+ {
+  "file": "training-data/20260716/032728.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35771,
+   "w": 642
+  },
+  "_error_type": [
+   "kWh-Trunkierung (4-stellig)"
+  ],
+  "_pool": "tagesordner",
+  "_old_label": {
+   "kwh": 3577,
+   "w": 642
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/20260716/032728.jpg",
+  "_reason": "Derselbe Frame existiert als training-data/auto/20260716_032728.json mit Konsens-Label {kwh:35771, w:642} — unabhaengiger Beleg. Zoom Slots 3-5 zeigt '7','7', schmale '1'; LDO-kNN 35771 (conf .996); Nachbarn 03:20 und 03:34 = 35771. Seg-Slot5 '6' (conf 0.5) ist wieder der Schattenzonen-Fehler."
+ },
+ {
+  "file": "training-data/auto/20260711_065944.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35706
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher",
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 35701,
+   "w": 334
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260711_065944.jpg",
+  "_reason": "Beide unmittelbaren Nachbarn sind bildseitig bestaetigt: 06:58:39 Seg=035706 (Tinte 41) und 07:05:23 Seg=035706 (Tinte 27). Zaehler monoton -> 06:59:44 muss 35706 sein; 35701 waere ein Ruecksprung um 5 kWh. Seg liest am Frame selbst 03570x (x='5' bei erzwungener Normalpose) — '5' vs '6' unterscheidet sich nur im blassen Segment E, 35705 waere aber ein Ruecksprung. W nicht reproduzierbar (Zwangsdekodierungen 334/364/365 uneinheitlich, Tinte 8) -> kWh-only."
+ },
+ {
+  "file": "training-data/auto/20260711_125428.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35706,
+   "w": 83
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 35701,
+   "w": 83
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260711_125428.jpg",
+  "_reason": "Zeitachse dicht+bildbestaetigt: Nachbar 12:51:37 wird vom Seg-Dekoder unabhaengig als 035706 gelesen (Tinte 41, minconf 1.42); der Frame selbst dekodiert bei erzwungener Normalpose (dx 0..3, dy 3/4, pitch 35.8-36.4) in 6 von 6 Einstellungen stabil 035706. Label 35701 liegt ausserhalb der Monotonie-Klammer [35706,35706]. W-Zeile: alle 6 Zwangsdekodierungen enden auf '83', Zoom zeigt zwei Glyphen rechts, Zellen links leer -> w=83 bleibt."
+ },
+ {
+  "file": "training-data/auto/20260711_141247.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35707
+  },
+  "_error_type": [
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 35707,
+   "w": 89
+  },
+  "_confidence": "mittel",
+  "_jpg": "training-data/auto/20260711_141247.jpg",
+  "_reason": "Label 89 ist an der Einerstelle nachweislich falsch, der richtige Wert ist aber nicht bestimmbar -> kWh-only. Slot10: Dekoder '1' (conf 1.28), LDO-kNN auf seg-bestaetigtem Pool einstimmig '1' (0.9500/0.9496/0.9495/0.9482, kein '9' unter den Top-Treffern), historischer Produktions-Reader (disagreements/20260711_141247.json) las w=1 — Sichtvergleich mit einer Referenz-'1' und einer Referenz-'9' bestaetigt den einzelnen Senkrechtstrich. Slot9 liegt unter einem Blendfleck (bester Treffer 0.8997 auf '0', danach '4','_','7') und ist nicht lesbar. kWh 35707 vom Dekoder (confs 1.57-3.11) und der Zeitachse gestuetzt."
+ },
+ {
+  "file": "training-data/auto/20260711_164142.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35708
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher",
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 35108,
+   "w": 216
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260711_164142.jpg",
+  "_reason": "Klammer bildbestaetigt: 16:41:05 Seg=035708 (Tinte 40, minconf 1.06) und 16:42:44 Seg=035708 — 37 s davor und 62 s danach. Am Frame selbst liest der Dekoder in 7 von 7 Zwangsposen '0357_2', d.h. Slot 3 ist ein '7', nicht die '1' des Labels ('1'=BC vs '7'=ABC, nur Segment A). w=216 wird bewusst weggelassen: der Zoom der W-Zeile zeigt VIER Ziffern ('216' + schwaches '1'), Dekoder liest stabil 2161, Nachbarn 2174 / 2143 — 216 ist ein verschluckter Stelle, 2161 aber nicht eindeutig genug (Zellkonfidenz 0.27)."
+ },
+ {
+  "file": "training-data/auto/20260711_170202.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35708,
+   "w": 551
+  },
+  "_error_type": [
+   "W-Geisterziffer"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 35708,
+   "w": 55
+  },
+  "_confidence": "mittel",
+  "_jpg": "training-data/auto/20260711_170202.jpg",
+  "_reason": "Bitgleiche Kopie von 20260711/170202.jpg. Zelle 8 und 9 tragen die beiden '5', Zelle 10 eine schwache dritte Ziffer — bei rechtsbuendiger W-Zeile (per Kontrollframes desselben Tages belegt) kann das Label nicht zweistellig sein. LDO-kNN (0.839) und Seg-Dekoder lesen unabhaengig '1' -> 551."
+ },
+ {
+  "file": "training-data/auto/20260713_145036.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35731,
+   "w": 689
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 35771,
+   "w": 689
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260713_145036.jpg",
+  "_reason": "Zeitachse ist hier zwingend: 14:43:44 = 35731 und 14:57:42 = 35731, der Zaehler kann zwischendurch nicht auf 35771 springen und zurueckfallen. Zoom Slots 3-5 zeigt '7','3','1'; Seg liest 035731; LDO-kNN 35731 (conf .988). Gemini hat die '3' in Slot4 als '7' gelesen. W 689 (Seg __689) bestaetigt."
+ },
+ {
+  "file": "training-data/auto/20260714_012154.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35737,
+   "w": 442
+  },
+  "_error_type": [
+   "W-Dreher"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 35737,
+   "w": 448
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260714_012154.jpg",
+  "_reason": "Label ist falsch: Einerstelle ist eine '2', nicht '8'. Drei unabhaengige Belege: (1) Seg-Dekoder liest 442 mit conf 2.42, C=0.40 und F=0.41 klar unter den Schwellen (einer '8' fehlen damit beide rechten/linken Unterstriche); (2) LDO-kNN auf seg-bestaetigtem Referenzpool: Top-1 '2' 0.9486 vor '8' 0.9361, danach durchgehend '2'; (3) disagreements/20260714_012154.json — der Produktions-Reader las damals w=442 (conf 0.956) gegen Geminis 448. Sichtpruefung der vergroesserten W-Zeile: klar '442' (offene 2-Form ohne rechten Unterstrich). kWh 35737 unveraendert."
+ },
+ {
+  "file": "training-data/auto/20260714_190505.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35749
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher",
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 85949,
+   "w": 0
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260714_190505.jpg",
+  "_reason": "kWh-Zeile visuell 035749; Seg-Slot5-Aktivierungen A.81 B.84 C1.07 D.94 E.22 F.70 G1.04 = ABCDFG -> '9' (eine '8' braeuchte E). kNN-Nachbarn von Slot5: 7 von 8 = '9'. LDO-kNN 35749 (conf .987). Zeitachse 18:10=35747, 20:10=35749 -> 35749 zulaessig. W-Zeile dagegen ausgewaschen (Seg 80803 conf 0.2-1.8, kNN 68888, visuell zwei unscharfe Glyphen in Zelle 2/3 statt einer '0' rechts) -> gespeichertes w=0 ist widerlegt und nicht ersetzbar: kWh-only-Label."
+ },
+ {
+  "file": "training-data/auto/20260715_045210.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35754,
+   "w": 645
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 33754,
+   "w": 645
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260715_045210.jpg",
+  "_reason": "Eigene Sichtpruefung des aufgehellten Displays liest eindeutig '035754' und W='645'. Die Muell-Lesung '055_51' des Auditors war ein Pose-Artefakt (Kamera verschoben, Anker bei dx=-16). Zeitachse stuetzt: 04:36:41 (auto) und 04:40:59 (Seg=035754) davor, 05:39:45 (Seg=035755) danach. Label 33754 hat nur die 2. Ziffer falsch ('3' statt '5'). W=645 vom Seg-Dekoder unabhaengig bestaetigt (Zellen '__645', Konfidenzen 3.6/3.2/3.2)."
+ },
+ {
+  "file": "training-data/auto/20260715_062058.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35755,
+   "w": 575
+  },
+  "_error_type": [
+   "W-Dreher"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 35755,
+   "w": 585
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260715_062058.jpg",
+  "_reason": "Label ist falsch: Zehnerstelle ist eine '7', nicht '8'. (1) Seg-Dekoder liest 575 mit conf 1.42, D=0.42/E=0.15/G=0.49 alle unter den Schwellen — an einer '8' waeren Mittel-, Unter- und linker Unterstrich gesetzt; (2) LDO-kNN auf seg-bestaetigtem Pool liefert ausschliesslich '7' (0.9507 abwaerts), die beiden '8'-Nachbarn des rohen Pools sind selbst nicht seg-bestaetigt; (3) disagreements/20260715_062058.json — Produktions-Reader las w=575 (conf 0.957) gegen Geminis 585. Sichtpruefung: klar '575'. kWh 35755 unveraendert."
+ },
+ {
+  "file": "training-data/auto/20260716_193935.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35785
+  },
+  "_error_type": [
+   "W unlesbar -> Feld entfernt"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 35785,
+   "w": 1998
+  },
+  "_confidence": "mittel",
+  "_jpg": "training-data/auto/20260716_193935.jpg",
+  "_reason": "kWh 35785 ist bestaetigt (Seg liest 035785, Pose sicher) — nur w=1998 ist falsch. Eigener Zoom der W-Zeile zeigt '1 9 x y': die 3. Glyphe hat eine untere Querleiste und ist damit keine '9', die 4. ist nicht voll ausgeleuchtet und damit keine '8'. Der exakte Wert bleibt aber strittig (Seg-Dekoder 1954, Auditor-Sichtpruefung 1959) -> kWh-only statt Rateversuch. Nachbar 20:11:58 hat 1846, beide Kandidaten sind physikalisch plausibel."
+ },
+ {
+  "file": "training-data/auto/20260718_004325.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35811,
+   "w": 404
+  },
+  "_error_type": [
+   "kWh-Geisterziffer"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 358110,
+   "w": 404
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260718_004325.jpg",
+  "_reason": "Eigene Sichtpruefung liest '035811' und W='404'. Kamera an diesem Frame stark nach links versetzt (Anker dx=-37), daher die Auditor-Lesung '5877__' — das ist die um zwei Zellen verschobene wahre Ziffernfolge (Zellen 2..5), die '77' vs '11' unterscheiden sich nur in Segment A. Klammer bildbestaetigt: 00:41:15 Seg=035811 und 00:59:49 Seg=035811. Label 358110 = 35811 mit angehaengter Extra-Null; W=404 bleibt (im verschobenen Seg-Read als '404' enthalten und im Zoom klar lesbar)."
+ },
+ {
+  "file": "training-data/auto/20260719_021442.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35828
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 35820
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260719_021442.jpg",
+  "_reason": "Eigene Sichtpruefung des Displays liest gestochen '035828' (heller Frame, Tinte 41); der Seg-Dekoder bestaetigt 035828 mit hohen Konfidenzen (Slot 4 = 6.11). Zeitachse: 01:59:02 (auto) 35828 davor, 02:41:13 (auto) 35829 danach — 35820 liegt ausserhalb. Kein Rollover, kein Pose-Problem. W liest sichtbar 372, wird aber nicht ergaenzt, da das Ursprungslabel kWh-only ist."
+ },
+ {
+  "file": "training-data/auto/20260721_110807.json",
+  "action": "relabel",
+  "new_label": {
+   "kwh": 35851,
+   "w": 649
+  },
+  "_error_type": [
+   "kWh-Ziffern-Dreher"
+  ],
+  "_pool": "auto",
+  "_old_label": {
+   "kwh": 39851,
+   "w": 649
+  },
+  "_confidence": "hoch",
+  "_jpg": "training-data/auto/20260721_110807.jpg",
+  "_reason": "Visuell 035851; Seg-Slot2 = '5' mit conf 2.67 (B nur 0.27), kNN-Nachbarn Slot2 acht von acht '5' -> Gemini hat die '5' als '9' gelesen. LDO-kNN 35851 (conf .980). Zeitachse: 10:48=35851, 11:13=35851, also eingeklemmt. W-Zeile visuell klar '649' -> gespeichertes w=649 bestaetigt (die Seg-Lesung 645 ist hier der Fehler, nicht das Label)."
+ }
+]

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run smartmeter feedback sync shortly after each captured error
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=30s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

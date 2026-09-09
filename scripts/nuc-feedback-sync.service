@@ -1,0 +1,9 @@
+[Unit]
+Description=Synchronize smartmeter OCR evidence and retrained model to Git
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/smartmeter-llm
+ExecStart=/usr/bin/python3 /opt/smartmeter-llm/scripts/nuc_feedback_sync.py --samples /opt/smartmeter-llm/samples --min-new-labels 10 --push
