@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.8.3
+
+- URSACHE DER SYNC-PANNE GEFUNDEN — durch das Protokoll auf dem NUC:
+  `git pull fehlgeschlagen: ... would be overwritten by merge. Aborting`.
+  Damit ist der Ablauf vom 6.9. rekonstruiert: Der Code verschwand aus
+  dem INDEX des Feedback-Klons, blieb aber auf der Platte liegen. Der
+  Sync committete die Loeschungen (main verlor 68 Dateien), waehrend
+  dieselben Dateien lokal unversioniert weiter herumlagen. Nach der
+  Wiederherstellung von main wollte `git pull` sie schreiben — und brach
+  ab. Der Evidence-Sync stand seitdem stuendlich still, ohne dass es
+  jemandem auffiel.
+- SELBSTHEILUNG statt Handarbeit auf dem NUC: Scheitert der Pull an
+  "would be overwritten", entfernt der Sync genau diese unversionierten
+  Altlasten und zieht erneut. `training-data` wird dabei NIEMALS
+  angefasst — die gueltige Fassung des Codes liegt im Repository und
+  wird ohnehin gleich ausgecheckt.
+- Zwei neue Tests, einer davon end-to-end gegen ein echtes Remote: der
+  Pull scheitert nachweislich, der Sync raeumt auf, der Push kommt an.
+  Zusammen mit der Invariante aus 1.8.2 (kein Commit, wenn etwas
+  ausserhalb von training-data im Index steht) ist der Weg damit in
+  beide Richtungen dicht.
+
 ## 1.8.2
 
 - TIEFENTLADESCHUTZ ZWEITER STUFE: Der Wechselrichter wird bei leerem Akku

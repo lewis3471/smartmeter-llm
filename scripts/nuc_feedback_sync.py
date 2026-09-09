@@ -40,6 +40,24 @@ def run(args, cwd: Path, check=True):
                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
+def reste_ausserhalb_evidence(repo: Path) -> list:
+    """Unversionierte Dateien ausserhalb von training-data.
+
+    DAS IST DER RUECKSTAND DER PANNE VOM 6.9.: Damals verschwand der Code
+    aus dem INDEX, blieb aber auf der Platte liegen. Der Sync committete
+    die Loeschungen (main verlor 68 Dateien), waehrend der Klon des NUC
+    dieselben Dateien weiter unversioniert herumliegen hatte. Nach der
+    Wiederherstellung will `git pull` sie schreiben und bricht ab:
+    "untracked working tree files would be overwritten by merge".
+
+    Damit steht der Evidence-Sync — stundlich, ohne dass jemand es
+    merkt. training-data wird hier NIEMALS angefasst."""
+    roh = run(["git", "ls-files", "--others", "--exclude-standard"],
+              repo).stdout
+    return [z for z in roh.split("\n")
+            if z.strip() and not z.startswith("training-data/")]
+
+
 def fremde_aenderungen(repo: Path) -> list:
     """Alles im Index, was NICHT unter training-data liegt.
 
@@ -164,6 +182,24 @@ def main():
 
     if args.push:
         r = run(["git", "pull", "--rebase", "origin", "HEAD"], repo, check=False)
+        if r.returncode and "would be overwritten" in r.stdout:
+            # Selbstheilung statt Handarbeit auf dem NUC: die Reste der
+            # Sync-Panne blockieren den Pull. Sie sind reine Altlast — die
+            # gueltige Fassung liegt im Repository und wird gleich
+            # ausgecheckt. Evidence bleibt unangetastet.
+            reste = reste_ausserhalb_evidence(repo)
+            if reste:
+                log(f"Pull blockiert von {len(reste)} unversionierten "
+                    f"Altdateien ausserhalb training-data — werden entfernt "
+                    f"({', '.join(reste[:3])}"
+                    f"{' ...' if len(reste) > 3 else ''})")
+                for rel in reste:
+                    try:
+                        (repo / rel).unlink()
+                    except OSError as e:
+                        log(f"  {rel}: {e}", err=True)
+                r = run(["git", "pull", "--rebase", "origin", "HEAD"],
+                        repo, check=False)
         if r.returncode:
             log(f"git pull fehlgeschlagen, Lauf uebersprungen: "
                 f"{r.stdout.strip()[-200:]}", err=True)
