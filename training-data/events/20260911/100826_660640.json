@@ -1,0 +1,1 @@
+{"accepted_kwh": 36174, "error": "500 Server Error: Internal Server Error for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent", "failures": 2, "kind": "rejected_reading", "timestamp": "2026-09-11T10:08:26+0200"}
