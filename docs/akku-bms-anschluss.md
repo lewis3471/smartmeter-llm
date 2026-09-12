@@ -160,7 +160,9 @@ je nach Kabelende vertauscht (Cross-over!).
    Leistungsbegrenzer deaktivieren) — unser Add-on regelt das Limit,
    zwei Regler am selben Limit pendeln gegeneinander.
 2. Add-on-Optionen (HA): `batt_strings: "1,4"`, `batt_low_v`/`batt_high_v`
-   nach Chemie/Zellenzahl (Default 36/38), `batt_release_s: 300`.
+   nach Chemie/Zellenzahl (Default 36/38). Die Freigabe (`batt_low_v` +
+   2,0 V für 10 min) ist kein Option, sondern Env-Default
+   (`BATT_RECOVER_V`/`BATT_RELEASE_S`, siehe `.env.example`).
 3. In HA erscheinen „Akku-Spannung" und „Akku-Schutz aktiv" automatisch
    (MQTT-Discovery); SoC/Zellen liefert OpenDTU-oB zusätzlich über dessen
    eigene MQTT-Topics.

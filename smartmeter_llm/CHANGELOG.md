@@ -1,5 +1,112 @@
 # Changelog
 
+## 1.9.0
+
+- AC-SCHUTZ AUF EINE OPTION EINGEDAMPFT: `ac_switch_entity`, sonst
+  nichts. Die 19 weiteren Optionen aus 1.8.x, der 14-Zustands-Automat, BMS- und
+  Victron-Daten per MQTT, Zellspannungen, SoC-Nachweis, Ah-Integral,
+  Totmann, Tagesbudget, Hand-Freigabe und Quittier-Knopf sind weg
+  (1281 -> 220 Zeilen). Die Dose folgt jetzt dem vorhandenen
+  Akku-Waechter: AUS, sobald er haelt (`batt_low_v`), EIN, sobald er
+  freigibt — fruehestens 30 min nach dem Aus. Alte Optionen in einer
+  gespeicherten Konfiguration sind harmlos, der Supervisor ignoriert
+  unbekannte Schluessel mit einer Warnung.
+- WARUM DAS REICHT — Beleg aus der Anlage (12.09., Dose 15:22-16:58 von
+  Hand aus): bei stromloser AC-Seite bleibt der HMS ueber die DTU
+  erreichbar und meldet weiter die Akkuspannung (AC 1,4 V, DC 50,7 ->
+  52,1 V, reachable=on). Der Waechter sieht also auch im Aus. Die zweite
+  Spannungsquelle, auf der 1.8.x aufbaute, war nie noetig — und deshalb
+  blieb der Schutz drei Tage unkonfiguriert, waehrend der Akku jede
+  Nacht bis zur BMS-Abschaltung leerlief.
+- WARUM ES NOETIG IST — Beleg 11./12.09.: der Waechter griff 18:07 bei
+  48 V, Limit 50 W. Der HMS zog trotzdem bis 03:36 durchgehend ~35 W,
+  BMS-Abschaltung bei 41,5 V (2,6 V/Zelle). Vierte Nacht in Folge; die
+  Victron-Historie zeigt seit 28.08. an 10 von 15 Naechten "min. 1,9 V".
+  Morgens flatterte der HMS dann 90 min im 20-s-Takt (BMS gibt frei,
+  HMS startet, Bus bricht ein, BMS trennt), und nachmittags pumpte der
+  Limit-Waechter die Nachladung ins Haus (Freigabe 49,5 V, 700 W, nach
+  30 min wieder 48 V). Die Mindest-Aus-Zeit der Dose daempft genau das.
+- Vor dem Aus wird das Limit PERSISTENT auf 50 W gesetzt: nach dem
+  Einschalten kommt der HMS sanft hoch, nicht mit dem letzten Tageswert
+  (488 W standen im Flash).
+- Eingefrorene DTU-Werte (Inverter nicht erreichbar oder data_age >
+  60 s) gelten jetzt auch im Regelzyklus als "keine Messung": der
+  Waechter haelt seinen Zustand, statt auf einem Altwert auszuloesen
+  oder freizugeben. Bisher galt das nur im AC-Automaten.
+- Solange die Dose aus ist, regelt der Regler nicht (keine Limits an
+  einen stillen Wechselrichter, keine Phantom-Kicks beim Wiedereinschalten),
+  der Waechter liest aber weiter — genau der Unterschied zu 1.8.x, das im
+  Aus die DTU gar nicht mehr fragte.
+- FREIGABE 2,0 V / 10 min statt 1,5 V / 5 min (`BATT_RECOVER_V`,
+  `BATT_RELEASE_S`, Env-Defaults, keine Option). Grund aus der Messung:
+  ein Pack, das unter 400 W bei 50 V ausloest, ruht binnen 20 min bei
+  51,0-51,3 V. Mit +1,5 V (51,5 V) haette die Ruhespannung nachts fast
+  fuer die Freigabe gereicht — die Dose haette bis zum Morgen stuendlich
+  geklappert, ohne dass eine Wattstunde nachgekommen waere. Mit +2,0 V
+  braucht es echte Nachladung (~1 kWh dieses Packs). Das ist die einzige
+  Aenderung an einer Schwelle; `batt_low_v`/`batt_high_v` bleiben, wie
+  die Familie sie gesetzt hat.
+- Aus der adversarialen Review (34 Pruefer, 11 bestaetigte Funde):
+  (a) Die Mindest-Aus-Sperre zaehlt ab dem Aus-BEFEHL, nicht ab der
+  Antwort der Dose — die P100 oeffnet das Relais auch dann, wenn ihre
+  Antwort erst nach dem 8-s-Timeout kommt; vorher blieb die Sperre in
+  dem Fall unbewaffnet. (b) Ein WLAN-Aussetzer der Dose loescht das
+  Wissen ueber ihren Zustand nicht mehr (HA "unavailable" bewegt kein
+  Relais) — vorher regelte der Regler in der Zeit gegen den stromlosen
+  HMS. (c) Nach dem Einschalten regelt der Regler erst, wenn OpenDTU
+  `producing` meldet: der HMS beobachtet ~60 s das Netz, und in der
+  Zeit hielt der Regler den Tracker fuer verklemmt und eskalierte den
+  MPPT-Kick auf +400/+800 W. (d) Ein Aus von Hand oder ein beim Start
+  vorgefundenes Aus ohne gespeicherten Zeitpunkt startet die Sperre —
+  vorher haette 1.9.0 direkt nach dem Update eingeschaltet, obwohl die
+  Dose eine Minute zuvor bewusst gezogen wurde. (e) Beim Start wird nur
+  ein gesichertes HALTEN durchgereicht; "frei" gibt es erst nach der
+  ersten echten Messung. (f) Der Failsafe (Kamera tot) schickt kein
+  Limit mehr an einen stromlosen HMS und auch sonst hoechstens alle
+  2 s statt jeden Zyklus. (g) Der Discovery-Sensor wird nur angemeldet,
+  wenn der Schalter wirklich gebaut wurde.
+- Zweite Review-Runde auf die Fixes (15 Pruefer, 5 bestaetigte Funde):
+  (h) Der Dosenzustand wird vom ersten Takt an gelesen, auch ohne Urteil
+  des Waechters; solange er unbekannt ist, regelt der Regler nicht —
+  vorher schickte der erste Takt nach einem Neustart ein Limit an den
+  moeglicherweise stromlosen HMS, das der im RAM behielt. (i) EIN gilt
+  erst, wenn HA "on" liest; ein wirkungsloser EIN-Befehl wird nach einer
+  Minute wiederholt statt als Hand-Aus mit 30-min-Sperre gedeutet.
+  (j) Das Minimum wird je Halte-Episode nur EINMAL in den HMS-Flash
+  geschrieben — ein Schaltkonflikt (Zeitplan, Automation) haette sonst
+  minuetlich geschrieben. (k) Beim Wiederanlauf liest der Regler das
+  Limit, das der HMS wirklich faehrt, aus `/api/limit/status`, statt das
+  persistierte Minimum anzunehmen: ein gescheiterter Persist oder ein
+  DC-Verlust (Flash-Wert 488 W) haette sonst ein Limit ergeben, das der
+  Regler fuer 50 W haelt und nie nach unten korrigiert. (l) Der
+  Aus-Zeitpunkt wird sofort gesichert und ein bestaetigtes EIN loescht
+  den alten Anker — sonst deckte nach einem Absturz ein alter Anker das
+  frische Aus.
+- Dritte Runde (5 Pruefer + Kritiker): (m) BEIDE Schutzebenen duerfen
+  nie gleichzeitig schweigen — ist die Dose seit dem Start unlesbar
+  (HA-Neustart, Tippfehler in der Option, Token kaputt) und der Waechter
+  haelt, geht wenigstens das Minimum an den HMS, wie in 1.8.3; vorher
+  haette der unbekannte Dosenzustand auch das Limit unterdrueckt.
+  (n) Die DTU-Abfrage beim Wiederanlauf wird bis zu dreimal wiederholt,
+  statt nach einem Timeout fuer immer bei der Annahme zu bleiben.
+  (o) `limit_relative: 0` (DTU frisch gestartet, SystemConfigPara noch
+  nicht gelesen) gilt nicht als Limit; die Seriennummer wird
+  gross/klein-unabhaengig gesucht. (p) Der Persist wird je Episode einmal
+  UND bei weiteren Aus fruehestens nach 10 min wiederholt — die DTU
+  bestaetigt nur das Einreihen, nicht die Ankunft im HMS. (q) Ist der
+  HMS nicht erreichbar (BMS hat abgeschaltet), friert OpenDTU `producing`
+  samt letztem AC-Wert ein; der Regler schweigt jetzt auch dann, statt
+  auf Altwerten in die Funkstille zu regeln, und liest nach der
+  Rueckkehr das echte Limit.
+- Tests: `test_ac_guard.py` und `test_ac_integration.py` ersetzt durch
+  `test_ac_schalter.py` (28 Faelle, 107 Pruefungen, darunter die
+  Integration "Dose aus, Regler schweigt, Waechter gibt frei, Dose
+  schaltet ein, HMS beobachtet das Netz, Regler startet vom echten
+  DTU-Limit").
+- Bewusst NICHT mehr dabei: ein Totmann. Stirbt das Add-on bei Dose EIN,
+  schaltet niemand ab. Preis der Einfachheit; batt_hold ueberlebt
+  Neustarts, der HA-Watchdog startet neu.
+
 ## 1.8.3
 
 - URSACHE DER SYNC-PANNE GEFUNDEN — durch das Protokoll auf dem NUC:
