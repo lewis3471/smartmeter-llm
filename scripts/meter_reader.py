@@ -154,12 +154,18 @@ BATT_HIGH_V = float(os.environ.get("BATT_HIGH_V", "38"))
 # Entprellung: so lange muss die Spannung unter BATT_LOW_V liegen, bevor
 # abgeschaltet wird (Lastsprung != leerer Akku)
 BATT_TRIP_S = float(os.environ.get("BATT_TRIP_S", "15"))
-# Freigabe-Schwelle liegt knapp UEBER der Ausloese-Schwelle — frueher war es
-# BATT_HIGH_V (Zielspannung "voll"), was den Schutz praktisch nie loeste
-BATT_RECOVER_V = float(os.environ.get("BATT_RECOVER_V", "1.5"))
+# Freigabe-Schwelle liegt UEBER der Ausloese-Schwelle — frueher war es
+# BATT_HIGH_V (Zielspannung "voll"), was den Schutz praktisch nie loeste.
+# 2,0 V statt 1,5 V seit 1.9.0: ein Pack, das unter 400 W bei 50 V
+# ausloest, ruht binnen 20 min bei ~51,0-51,3 V. Bei +1,5 V (51,5 V)
+# reichte das nachts fast fuer die Freigabe — die Dose haette dann bis
+# zum Morgen stuendlich geklappert, ohne dass eine Wattstunde nachkam.
+# Bei +2,0 V braucht es echte Nachladung (~1 kWh dieses Packs).
+BATT_RECOVER_V = float(os.environ.get("BATT_RECOVER_V", "2.0"))
 # Freigabe erst nach durchgehend gehaltener Spannung: die Victron-LADE-
-# Spannung liegt sonst sofort ueber der Schwelle, obwohl der Akku leer ist
-BATT_RELEASE_S = float(os.environ.get("BATT_RELEASE_S", "300"))
+# Spannung liegt sonst sofort ueber der Schwelle, obwohl der Akku leer
+# ist. 10 min statt 5: ein Wolkenloch hebt den Bus fuer Minuten.
+BATT_RELEASE_S = float(os.environ.get("BATT_RELEASE_S", "600"))
 # --- Zweite Quelle: Deye-Balkonwechselrichter (SUN600G3) lokal auslesen.
 # Der Solarman-Logger liefert seine Werte ohne Cloud auf /status.html als
 # JS-Variablen (webdata_now_p usw.). Rein lesend. Leer = aus.
@@ -1827,7 +1833,7 @@ def save_state(state: dict, bye: bool = False) -> None:
         "bos": state.get("batt_ok_since"),
     }
     if _ac is not None:
-        _ac.store(data, bye=bye)        # Zustand des AC-Automaten mitsichern
+        _ac.store(data)                 # Aus-Zeitpunkt der Dose mitsichern
     tmp = STATE_FILE.with_suffix(".tmp")
     with open(tmp, "w") as fh:
         fh.write(json.dumps(data))
@@ -1925,19 +1931,11 @@ def load_state() -> dict:
             state["cycle"] = raw["cycle"]
         if isinstance(raw.get("segw"), int):
             state["seg_warn"] = raw["segw"]
-        # Felder des AC-Automaten unveraendert durchreichen — geprueft
-        # werden sie in AcGuard.load(), das die Uhren-Plausibilitaet kennt.
-        for _k, _t in (("acs", str), ("acr", str), ("acent", str),
-                       ("acd", str), ("aca", bool), ("acx", bool),
-                       ("acofs", (int, float)), ("acanl", (int, float)),
-                       ("acmu", (int, float)), ("acsoc", (int, float)),
-                       ("accell", (int, float)), ("acah", (int, float)),
-                       ("acn", (int, float)), ("acbl", (int, float))):
-            if isinstance(raw.get(_k), _t):
-                state[_k] = raw[_k]
-        if isinstance(raw.get("acst"), list):
-            state["acst"] = [t for t in raw["acst"]
-                             if isinstance(t, (int, float))][-10:]
+        # Aus-Zeitpunkt der Steckdose unveraendert durchreichen — die
+        # Plausibilitaet (0..48 h alt) prueft AcSwitch.load(). Weitere
+        # ac*-Schluessel aus 1.8.x (Zustandsautomat) werden ignoriert.
+        if isinstance(raw.get("aco"), (int, float)):
+            state["aco"] = raw["aco"]
         # Akku-Schutz wiederherstellen. Die UHREN nur, wenn sie frisch sind:
         # ein alter batt_ok_since wuerde nach dem Neustart sofort freigeben
         # (unsichere Richtung), ein alter batt_low_since sofort ausloesen.
@@ -1972,10 +1970,6 @@ def load_state() -> dict:
         state = {"kwh": None, "kwh_floor": heal,
                  "kwh_floor_ts": time.time(), **keep}
     return state
-
-
-class _AcAus(Exception):
-    """Interner Sprung: im AC-Aus wird kein Limit gesendet."""
 
 
 _livedata_cache: tuple[float, tuple] | None = None
@@ -2167,77 +2161,43 @@ except ImportError:                     # Modul optional (Alt-Installation)
         sys.exit("FATAL: ac_switch_entity ist gesetzt, aber ac_guard.py "
                  "fehlt im Image — der Tiefentladeschutz waere AUS.")
 
-_ac = None          # AcGuard-Instanz, erst in main() gebaut
-
-
-def ac_gate() -> dict:
-    """Snapshot des AC-Automaten — reine Dict-Lesung.
-
-    Der Regelzyklus (0,5 s) darf NIEMALS auf Home Assistant oder die
-    Steckdose warten: ein haengender HTTP-Aufruf im WLAN wuerde die
-    Nulleinspeisung anhalten. Der Automat laeuft deshalb in einem eigenen
-    Thread und legt hier nur sein Ergebnis ab."""
-    return _ac.gate() if _ac is not None else {"gate": "frei", "cap": None}
-
-
-def _ac_dtu_meta() -> dict:
-    """Frischer Blick auf die DTU — auch wenn der Regler gerade schweigt.
-
-    Ohne das koennte der Widerspruchstest ("speist der Inverter, obwohl
-    die Dose aus meldet?") im abgeschalteten Zustand nie anschlagen: die
-    Meta-Daten kommen sonst nur aus dem Regelzyklus, und der laeuft dort
-    nicht. Der Aufruf haengt im ac-Thread, nie im 0,5-s-Takt."""
-    if time.time() - (_livedata_meta.get("ts") or 0) > 30:
-        try:
-            get_livedata()
-        except Exception:
-            pass
-    if livedata_stale(60):
-        # EHRLICH sein statt Altwerte durchreichen: ein eingefrorenes
-        # "reachable: true" waere ein falscher Widerspruchszeuge und
-        # wuerde die Freigabe grundlos blockieren.
-        return {"reachable": False, "stale": True}
-    return _livedata_meta
+_ac = None          # AcSwitch-Instanz, erst in main() gebaut
 
 
 def ac_start(state: dict):
-    """AC-Automaten bauen und in einem eigenen Thread starten."""
+    """Steckdosen-Schalter bauen und in einem eigenen Thread starten.
+
+    Der Regelzyklus (0,5 s) darf NIEMALS auf Home Assistant oder die
+    Steckdose warten: ein haengender HTTP-Aufruf im WLAN wuerde die
+    Nulleinspeisung anhalten. Der Schalter laeuft deshalb in einem
+    eigenen Thread; der Regelzyklus reicht ihm nur das Urteil des
+    Waechters (want) und liest seinen Zustand (on)."""
     global _ac
     if ac_guard is None or not ac_guard.enabled():
         print("AC-Schutz AUS (ac_switch_entity leer) — es gilt nur der "
               "Limit-Waechter ueber die Packspannung")
         return
     if not BATT_STRINGS:
-        print("WARNUNG: AC-Schutz konfiguriert, aber batt_strings ist leer "
-              "— dann gibt es keine Rueckfallebene ueber die Packspannung",
-              file=sys.stderr)
-    letzte = [0.0]
-
-    def _sichern():
-        # Zustandswechsel sollen sofort auf Platte, aber die eMMC des NUC
-        # soll ein Flattern nicht ausbaden muessen.
-        if time.time() - letzte[0] > 30:
-            letzte[0] = time.time()
-            try:
-                save_state(state)
-            except Exception:
-                pass
-
-    _ac = ac_guard.AcGuard(
-        ac_guard.Ha(), ac_guard.Bms(),
-        brake=lambda: set_limit(MIN_LIMIT_W),
-        persist=lambda w: set_limit(w, persistent=True),
-        save=_sichern,
+        print("FEHLER: ac_switch_entity ist gesetzt, aber batt_strings ist "
+              "leer — ohne Packspannung gibt es kein Urteil; die Dose "
+              "bleibt unangetastet", file=sys.stderr)
+        return
+    _ac = ac_guard.AcSwitch(
+        ac_guard.Ha(), ac_guard.SWITCH_ENTITY,
         log=lambda m: print(m, flush=True),
-        dtu_meta=_ac_dtu_meta,
-        dtu_power=lambda: _livedata_meta.get("ac_w"),
-        min_limit_w=MIN_LIMIT_W)
+        persist=lambda: set_limit(MIN_LIMIT_W, persistent=True))
     _ac.load(state)
+    # Nur ein gesichertes HALTEN sofort durchreichen: nach einem Neustart
+    # im Schutz muss die Dose aus bleiben, ohne auf den ersten Regelzyklus
+    # (Kamera, Gemini, DTU) zu warten. Ein fehlendes Urteil bleibt eins —
+    # "frei" gibt es erst nach der ersten echten Messung.
+    if state.get("batt_hold"):
+        _ac.want(True)
     ac_guard.start(_ac, lambda m: print(m, flush=True))
-    print(f"AC-Schutz aktiv: Dose {ac_guard.SWITCH_ENTITY}, abschalten unter "
-          f"{ac_guard.OFF_CELL_MV} mV/Zelle bzw. {ac_guard.OFF_SOC} % SoC, "
-          f"Freigabe ab {ac_guard.ON_CELL_MV} mV und {ac_guard.ON_SOC} %, "
-          f"Totmann {ac_guard.DEADMAN_S/60:.0f} min")
+    print(f"AC-Schutz aktiv: {ac_guard.SWITCH_ENTITY} folgt dem "
+          f"Akku-Waechter — aus unter {BATT_LOW_V:.1f} V, ein ab "
+          f"{BATT_LOW_V + BATT_RECOVER_V:.1f} V ({BATT_RELEASE_S:.0f} s "
+          f"gehalten), Mindest-Aus {ac_guard.OFF_MIN_S / 60:.0f} min")
 
 
 def guarded_limit(state: dict, wunsch: int) -> int:
@@ -2253,15 +2213,16 @@ def guarded_limit(state: dict, wunsch: int) -> int:
     Ist die DTU nicht erreichbar, kann der Waechter nicht urteilen: dann
     gilt der zuletzt bekannte Schutzzustand, und im Zweifel das Minimum."""
     cap = wunsch
-    g = ac_gate()
-    if g.get("cap") is not None:        # Drossel-/Anlauf-Deckel des Automaten
-        cap = min(cap, int(g["cap"]))
-    if g.get("gate") == "stumm":
-        cap = MIN_LIMIT_W
     if BATT_STRINGS:
         try:
             pv_w, dc = get_livedata()
+            if livedata_stale(60):
+                dc = {}                 # Altwerte sind keine Messwerte (A3)
             cap = min(cap, battery_guard(state, pv_w, dc, time.time()))
+            if _ac is not None:
+                # Auch im Failsafe (Kamera tot, control() laeuft nicht)
+                # muss die Dose dem Waechter folgen.
+                _ac.want(bool(state.get("batt_hold")))
         except Exception as e:
             # Ohne Livedata kann der Waechter nicht urteilen. Dann gilt das
             # Minimum — ein zu niedriges Limit kostet ein paar Wattstunden,
@@ -2270,6 +2231,69 @@ def guarded_limit(state: dict, wunsch: int) -> int:
                   file=sys.stderr)
             cap = MIN_LIMIT_W
     return int(max(MIN_LIMIT_W, min(wunsch, cap)))
+
+
+def read_limit_w() -> int | None:
+    """Das Limit, das der HMS laut DTU wirklich faehrt (absolut, W).
+    None, wenn die DTU nicht antwortet oder die Antwort nicht passt —
+    dann bleibt es bei der Annahme des Aufrufers. Nach einem DTU-Neustart
+    steht limit_relative bis zur ersten SystemConfigPara-Antwort (alle
+    2 min) auf 0 — das ist kein Limit (der HMS kann nicht unter 2 %),
+    sondern "noch nicht gelesen"."""
+    try:
+        r = requests.get(f"{OPENDTU_URL}/api/limit/status",
+                         auth=OPENDTU_AUTH, timeout=5)
+        r.raise_for_status()
+        data = r.json()
+        d = (data.get(INVERTER_SERIAL) or data.get(INVERTER_SERIAL.lower())
+             or data.get(INVERTER_SERIAL.upper()) or {})
+        rel, maxp = float(d["limit_relative"]), float(d["max_power"])
+        if maxp <= 0 or not 0 < rel <= 100:
+            return None
+        return int(round(rel / 100 * maxp))
+    except Exception:
+        return None
+
+
+def _send_min(state: dict, now: float, grund: str):
+    """Minimum an den HMS, hoechstens alle 2 s (RF-Warteschlange der DTU).
+    Fuer die Faelle, in denen der Schalter nicht trennen kann."""
+    if now - state.get("limit_sent_ts", 0) < 2.0:
+        return
+    state["limit_sent_ts"] = now
+    try:
+        set_limit(MIN_LIMIT_W)
+        state["limit_w"] = MIN_LIMIT_W
+    except Exception as e:
+        print(f"Minimum an HMS ({grund}) fehlgeschlagen: {e}", file=sys.stderr)
+
+
+def failsafe_limit(state: dict) -> int | None:
+    """Failsafe-Limit bestimmen und — wenn es Sinn hat — senden.
+
+    Gesendet wird nur an eine SICHER eingeschaltete Dose (aus: nichts;
+    unbekannt: nur das Minimum, und nur wenn der Waechter haelt — beide
+    Schutzebenen duerfen nie gleichzeitig schweigen), und auch dann nicht
+    im 0,5-s-Takt: die DTU ist ein ESP32 mit einer RF-Warteschlange,
+    deshalb derselbe 2-s-Abstand wie im Regler — auch nach einem
+    Fehlschlag, sonst haemmert der Fehlerpfad auf eine DTU ein, die
+    gerade nicht kann. Das Urteil des Waechters (und damit die Dose)
+    laeuft in guarded_limit() trotzdem jeden Zyklus. Rueckgabe: das
+    Limit, das jetzt gilt (limit_w wird nur bei einem tatsaechlichen
+    Senden gesetzt)."""
+    fs = guarded_limit(state, FAILSAFE_LIMIT_W)
+    now = time.time()
+    if _ac is not None and _ac.on is not True:
+        if _ac.on is False:
+            state["limit_w"] = MIN_LIMIT_W   # persistiertes Minimum (s. control)
+        elif state.get("batt_hold"):
+            _send_min(state, now, "Dose unlesbar, Failsafe")
+        return state.get("limit_w")
+    if now - state.get("limit_sent_ts", 0) >= 2.0:
+        state["limit_sent_ts"] = now
+        set_limit(fs)
+        state["limit_w"] = fs
+    return state.get("limit_w")
 
 
 _mqtt = None
@@ -2303,11 +2327,6 @@ def _get_mqtt():
             try:
                 if suffix == "deye_limit":
                     deye_limit_set(int(float(nutz)))
-                elif suffix.startswith("ac_") and _ac is not None:
-                    _ac.on_command(suffix, nutz)
-                elif _ac is not None and msg.topic.startswith(
-                        ac_guard.BATT_PREFIX):
-                    _ac.bms.on_message(msg.topic, nutz, msg.retain)
             except Exception as e:
                 print(f"MQTT-Befehl {msg.topic}: {e}", file=sys.stderr)
 
@@ -2316,15 +2335,6 @@ def _get_mqtt():
             # hierher und nicht neben connect_async().
             if DEYE_HOST:
                 client.subscribe(f"{TOPIC}/deye_limit/set")
-            if _ac is not None:
-                for t in ("ac_automatik", "ac_freigabe_min", "ac_quittieren"):
-                    client.subscribe(f"{TOPIC}/{t}/set")
-                # Wildcard: die JK-spezifischen Topicnamen sind in der
-                # OpenDTU-oB-Doku als unvollstaendig markiert. Lieber alles
-                # abonnieren und beim Start protokollieren, was WIRKLICH
-                # ankommt, als auf geratenen Namen einen Schutz zu bauen.
-                client.subscribe(ac_guard.BATT_PREFIX + "battery/#", qos=1)
-                client.subscribe(ac_guard.BATT_PREFIX + "victron/#", qos=1)
             client.publish(f"{TOPIC}/availability", "online", qos=1,
                            retain=True)
             _mqtt_last.clear()          # nach Reconnect alles neu senden
@@ -2649,30 +2659,8 @@ def publish(reading: dict | None, status: str, limit: int | None,
             if BATT_CAPACITY_KWH > 0:
                 msgs.append((f"{TOPIC}/batt_kwh",
                              f"{soc / 100 * BATT_CAPACITY_KWH:.1f}"))
-    if _ac is not None and ac_guard is not None and ac_guard.enabled():
-        a = _ac.gate()
-        msgs += [(f"{TOPIC}/ac_state", a.get("state", "?")),
-                 (f"{TOPIC}/ac_reason", a.get("reason") or "-"),
-                 (f"{TOPIC}/ac_block", a.get("block") or "-"),
-                 (f"{TOPIC}/ac_on", "ON" if a.get("on") else "OFF"),
-                 (f"{TOPIC}/ac_fault", "ON" if a.get("fault") else "OFF"),
-                 (f"{TOPIC}/ac_deadman", a.get("deadman", "?")),
-                 (f"{TOPIC}/ac_switches_today",
-                  str(a.get("switches_today", 0))),
-                 (f"{TOPIC}/ac_automatik",
-                  "ON" if a.get("automatik") else "OFF"),
-                 (f"{TOPIC}/batt_soc_valid",
-                  "ON" if a.get("soc_valid") else "OFF"),
-                 (f"{TOPIC}/batt_ah_seit_aus",
-                  f"{a.get('ah_since_off', 0):.2f}")]
-        for k, t in (("cell_min", "batt_cell_min_mv"),
-                     ("cell_diff", "batt_cell_diff_mv"),
-                     ("soc_bms", "batt_soc_bms"),
-                     ("data_age", "batt_data_age")):
-            if a.get(k) is not None:
-                msgs.append((f"{TOPIC}/{t}", f"{a[k]:.0f}"))
-        if a.get("deadman_at"):
-            msgs.append((f"{TOPIC}/ac_deadman_at", str(a["deadman_at"])))
+    if _ac is not None:
+        msgs.append((f"{TOPIC}/ac_state", _ac.snapshot()["text"]))
     # Herzschlag: die Payload aendert sich per Definition und laeuft damit
     # durch die Gleichheits-Unterdrueckung. So sieht man auch einen
     # HAENGENDEN Prozess, der kein LWT ausloest.
@@ -2772,81 +2760,13 @@ def publish_discovery():
                                  "state_class": "total_increasing",
                                  "icon": "mdi:counter"}
     msgs = []
-    if ac_guard is not None and ac_guard.enabled():
-        sensors.update({
-            "ac_state": {"name": "AC-Schutz Zustand", "icon": "mdi:state-machine"},
-            "ac_reason": {"name": "AC-Schutz Grund", "icon": "mdi:comment-alert"},
-            "ac_block": {"name": "AC-Freigabe blockiert durch",
-                         "icon": "mdi:gate-alert"},
-            "ac_deadman": {"name": "AC-Totmann", "icon": "mdi:timer-lock"},
-            "ac_deadman_at": {"name": "AC-Totmann faellig",
-                              "device_class": "timestamp",
-                              "icon": "mdi:timer-sand"},
-            "ac_switches_today": {"name": "AC-Schaltungen heute",
-                                  "state_class": "measurement",
-                                  "icon": "mdi:counter"},
-            "batt_cell_min_mv": {"name": "Zellspannung Minimum",
-                                 "unit_of_measurement": "mV",
-                                 "device_class": "voltage",
-                                 "state_class": "measurement",
-                                 "icon": "mdi:battery-low"},
-            "batt_cell_diff_mv": {"name": "Zell-Drift",
-                                  "unit_of_measurement": "mV",
-                                  "state_class": "measurement",
-                                  "icon": "mdi:arrow-expand-vertical"},
-            "batt_soc_bms": {"name": "Akku-Ladestand (BMS)",
-                             "unit_of_measurement": "%",
-                             "device_class": "battery",
-                             "state_class": "measurement",
-                             "icon": "mdi:battery"},
-            "batt_data_age": {"name": "BMS-Datenalter",
-                              "unit_of_measurement": "s",
-                              "state_class": "measurement",
-                              "icon": "mdi:timer-outline"},
-            "batt_ah_seit_aus": {"name": "Nachgeladen seit AC-Aus",
-                                 "unit_of_measurement": "Ah",
-                                 "state_class": "measurement",
-                                 "icon": "mdi:battery-charging"},
-        })
-        for key, name, dc, icon in (
-                ("ac_on", "Wechselrichter am Netz", "power", "mdi:power-plug"),
-                ("ac_fault", "AC-Schutz Stoerung", "problem", "mdi:alert"),
-                ("batt_soc_valid", "BMS-Ladestand glaubwuerdig", None,
-                 "mdi:check-decagram")):
-            cfg = {"name": name, "unique_id": f"smartmeter_llm_{key}",
-                   "state_topic": f"{TOPIC}/{key}",
-                   "availability_topic": f"{TOPIC}/availability",
-                   "icon": icon, "device": device}
-            if dc:
-                cfg["device_class"] = dc
-            msgs.append((f"homeassistant/binary_sensor/smartmeter_llm/"
-                         f"{key}/config", json.dumps(cfg), 1, True))
-        msgs.append((
-            "homeassistant/switch/smartmeter_llm/ac_automatik/config",
-            json.dumps({"name": "AC-Automatik",
-                        "unique_id": "smartmeter_llm_ac_automatik",
-                        "state_topic": f"{TOPIC}/ac_automatik",
-                        "command_topic": f"{TOPIC}/ac_automatik/set",
-                        "availability_topic": f"{TOPIC}/availability",
-                        "icon": "mdi:robot", "device": device}), 1, True))
-        msgs.append((
-            "homeassistant/number/smartmeter_llm/ac_freigabe_min/config",
-            json.dumps({"name": "AC-Hand-Freigabe",
-                        "unique_id": "smartmeter_llm_ac_freigabe_min",
-                        "command_topic": f"{TOPIC}/ac_freigabe_min/set",
-                        "availability_topic": f"{TOPIC}/availability",
-                        "min": 0, "max": 240, "step": 5,
-                        "unit_of_measurement": "min",
-                        "icon": "mdi:hand-back-right", "device": device}),
-            1, True))
-        msgs.append((
-            "homeassistant/button/smartmeter_llm/ac_quittieren/config",
-            json.dumps({"name": "AC-Stoerung quittieren",
-                        "unique_id": "smartmeter_llm_ac_quittieren",
-                        "command_topic": f"{TOPIC}/ac_quittieren/set",
-                        "availability_topic": f"{TOPIC}/availability",
-                        "icon": "mdi:check-decagram", "device": device}),
-            1, True))
+    if _ac is not None:
+        # ein / aus / aus (frei in N min) / unbekannt — mehr gibt es nicht.
+        # Gate ist die gebaute Instanz, nicht die Option: ohne batt_strings
+        # verweigert ac_start(), und dann darf HA keinen Sensor sehen, den
+        # nie jemand fuettert.
+        sensors["ac_state"] = {"name": "Wechselrichter-Steckdose",
+                               "icon": "mdi:power-socket-de"}
     if DEYE_HOST:
         # Regelbare Begrenzung als Schieberegler in HA (0-100 %)
         msgs.append((
@@ -3118,42 +3038,99 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
     """
     if not INVERTER_SERIAL or INVERTER_SERIAL == "CHANGE_ME":
         return None, None
-    # AC-Gate VOR get_livedata(): ist der Wechselrichter stromlos, gibt es
-    # nichts zu regeln, und jeder Limitbefehl liefe ins Leere. Die
-    # Zwischenstaende (pending, MPPT-Kick, Floor-Schlaf) werden dabei
-    # verworfen — sonst rechnet der Regler beim Wiedereinschalten mit
-    # minutenalten Werten weiter und feuert grundlos einen Kick.
-    _g = ac_gate()
-    if _g.get("gate") == "stumm":
-        for _k in ("pending", "pv_hist", "want_hist", "kick", "kick_ts",
-                   "floor_since", "floor_sleep",
-                   # batt_v/batt_pv stammen aus der DC-Seite des Inverters
-                   # und sind ohne ihn ungueltig. Stehen bleiben duerfen
-                   # sie nicht: sie wuerden als Phantomwert weiter nach HA
-                   # gehen und expire_after aushebeln.
-                   "batt_v", "batt_pv"):
-            state.pop(_k, None)
-        return None, None
     try:
         pv_w, dc = get_livedata()
     except Exception as e:
         print(f"OpenDTU nicht erreichbar: {e}", file=sys.stderr)
         return None, None
     now = time.time()
+    if livedata_stale(60):
+        # Eingefrorene DTU-Werte sind keine Messwerte (Test A3): nicht
+        # erreichbar oder data_age > 60 s heisst fuer den Waechter "keine
+        # Messung" — er haelt seinen Zustand, statt auf einem Altwert
+        # freizugeben oder auszuloesen.
+        dc = {}
     max_limit = MAX_LIMIT_W
     if BATT_STRINGS:
         max_limit = battery_guard(state, pv_w, dc, now)
-    if _g.get("cap") is not None:       # Anlauf-Deckel bzw. Drosselung
-        max_limit = min(max_limit, int(_g["cap"]))
+    if _ac is not None:
+        # Die Dose folgt dem Waechter. Hier nur das Flag setzen — mit HA
+        # spricht der ac-Thread, der 0,5-s-Takt wartet nie auf die Dose.
+        _ac.want(bool(state.get("batt_hold")))
     state["batt_pv"] = pv_w
-    if BATT_STRINGS and dc:
+    if dc:      # auch ohne Waechter mitschreiben, fuer die Auswertung
         v = [x[0] for x in dc.values() if x[0] > 5.0]
         if v:
             state["batt_v"] = min(v)
-    elif dc:   # ohne Waechter trotzdem mitschreiben, fuer die Auswertung
-        v = [x[0] for x in dc.values() if x[0] > 5.0]
-        if v:
-            state["batt_v"] = min(v)
+    dose_aus = _ac is not None and _ac.on is False
+    unbekannt = _ac is not None and _ac.on is None
+    stale = livedata_stale(60)
+    # Regeln nur, wenn die Dose SICHER an ist UND der HMS speist UND die
+    # DTU ihn erreicht:
+    # - unbekannt (seit dem Start noch nicht gelesen): lieber schweigen
+    #   als ein Limit an einen stromlosen HMS schicken, das er im RAM
+    #   behaelt und beim Einschalten sofort faehrt;
+    # - an, aber producing=false: nach dem Zuschalten beobachtet er ~60 s
+    #   das Netz (16:58:07 Dose ein, 16:59:13 producing). Wer in der Zeit
+    #   regelt, sieht pv=0 bei voller Hauslast, schickt "hoch", haelt den
+    #   Tracker nach 25 s fuer verklemmt und eskaliert den Kick auf
+    #   +400/+800 W — auf einen Wechselrichter, der noch nicht angefangen hat;
+    # - nicht erreichbar (BMS hat abgeschaltet): OpenDTU friert dann
+    #   `producing` samt letztem AC-Wert ein — ohne diese Bedingung
+    #   regelte der Regler auf Altwerten in eine Funkstille hinein.
+    hms_still = (_ac is not None and (
+        _ac.on is not True or stale
+        or not _livedata_meta.get("producing", True)))
+    if dose_aus or hms_still:
+        # Der Waechter hat oben geurteilt und sieht weiter (der HMS meldet
+        # seine DC-Seite auch ohne Netz), zu regeln gibt es nichts: keine
+        # Limits an einen stillen Wechselrichter. Die Zwischenstaende des
+        # Reglers verwerfen, sonst rechnet er beim Wiedereinschalten mit
+        # minutenalten Werten weiter und feuert grundlos einen Kick bzw.
+        # prueft einen laengst abgelaufenen Leiter-Schritt.
+        for _k in ("pending", "pv_hist", "want_hist", "kick", "kick_ts",
+                   "floor_since", "floor_sleep", "up_since",
+                   "lp_cmd", "lp_verify"):
+            state.pop(_k, None)
+        if stale:
+            # Ohne erreichbaren HMS ist die DC-Spannung ein Altwert —
+            # nicht als Phantom weiter nach HA melden.
+            state.pop("batt_v", None)
+            state.pop("batt_pv", None)
+        if dose_aus:
+            # Das Limit steht persistent auf dem Minimum (ac_guard setzt
+            # es vor dem Aus) — damit startet der HMS nach dem
+            # Einschalten. Annahme, keine Messung: beim Wiederanlauf
+            # fragt der Regler die DTU (s. ac_resume unten).
+            state["limit_w"] = MIN_LIMIT_W
+        elif unbekannt and state.get("batt_hold"):
+            # Beide Schutzebenen duerfen nie GLEICHZEITIG schweigen: ist
+            # die Dose nicht lesbar (HA-Neustart, Tippfehler in der
+            # Option, Token kaputt), kann der Schalter nicht trennen —
+            # dann muss wenigstens das Minimum an den HMS, wie in 1.8.3.
+            # Steht er stromlos, ist das harmlos (genau das persistiert
+            # der Schalter vor dem Aus ohnehin).
+            _send_min(state, now, "Dose unlesbar")
+        state["ac_resume"] = 3          # so viele Versuche fuer read_limit_w
+        return None, None
+    if state.get("ac_resume"):
+        # Erster Regeltakt nach Dose-aus/Netzbeobachtung/Funkstille: das
+        # Limit, das der HMS wirklich faehrt, aus der DTU lesen statt
+        # annehmen. Ein Persist konnte scheitern (S7), ein DC-Verlust
+        # laedt den Flash-Wert neu (heute 488 W), und ein zu niedrig
+        # geglaubtes Limit haette keinen Weg nach unten: der Regler sieht
+        # "will 310, habe 50" und schweigt, waehrend der HMS 471 W aus
+        # dem Akku zieht. Scheitert die Abfrage, naechster Takt noch mal
+        # (begrenzt: jede kostet bis zu 5 s).
+        echt = read_limit_w()
+        if echt is None and state["ac_resume"] > 1:
+            state["ac_resume"] -= 1
+            return None, None
+        state.pop("ac_resume", None)
+        if echt is not None and echt != state.get("limit_w"):
+            print(f"Wiederanlauf: HMS faehrt {echt} W (angenommen "
+                  f"{state.get('limit_w')}) — Ausgangswert korrigiert")
+            state["limit_w"] = echt
     horizon = PENDING_THETA_S + 4 * PENDING_TAU_S
     pend = [(ts, d) for ts, d in state.get("pending", [])
             if now - ts < horizon]
@@ -3567,14 +3544,7 @@ def main(once: bool = False):
                 # Failsafe: Inverter drosseln statt blind weiter einspeisen —
                 # aber NIE ueber das, was der Akku hergibt (s. guarded_limit).
                 try:
-                    if ac_gate().get("gate") == "stumm":
-                        # Kein Limit an einen stromlosen Wechselrichter —
-                        # das kWh-Konto laeuft trotzdem weiter.
-                        publish(None, "failsafe (AC aus)", None, state)
-                        raise _AcAus
-                    fs = guarded_limit(state, FAILSAFE_LIMIT_W)
-                    set_limit(fs)
-                    state["limit_w"] = fs
+                    fs = failsafe_limit(state)
                     if state["failures"] == FAILSAFE_AFTER:  # nur Eintritt
                         retrain_mark("failsafe")
                     # state MITGEBEN: ohne das schwiegen batt_v/batt_hold
@@ -3582,8 +3552,6 @@ def main(once: bool = False):
                     # stand eine eingefrorene Akkuspannung, waehrend der
                     # Akku real leerlief.
                     publish(None, "failsafe", fs, state)
-                except _AcAus:
-                    pass
                 except Exception as e2:
                     print(f"Failsafe fehlgeschlagen: {e2}", file=sys.stderr)
                     publish(None, "error", None, state)
@@ -3596,7 +3564,11 @@ def main(once: bool = False):
         # den Physik-Deckel) bzw. alle 30 s, solange Konsens-Zaehler
         # laufen (die 180s-Re-Baseline-Uhr muss Neustarts ueberleben).
         written = (state.get("kwh"), state.get("kwh_floor"),
-                   state.get("batt_hold"))
+                   state.get("batt_hold"),
+                   # Aus-Zeitpunkt der Dose sofort sichern: sonst deckt
+                   # nach einem Absturz ein alter, gesicherter Anker das
+                   # frische, ungesicherte Aus — und die Sperre faellt weg.
+                   _ac.off_wall if _ac is not None else None)
         pending = bool(state.get("rb_counts") or state.get("base_pend")
                        or state.get("esc_counts") or state.get("rb_confirm"))
         if (written != last_written_kwh

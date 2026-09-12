@@ -1,167 +1,120 @@
-# AC-seitiger Tiefentladeschutz — Einrichtung und Inbetriebnahme
+# AC-Tiefentladeschutz — eine Steckdose, ein Schalter
 
-## Warum
+## Das Problem
 
-Am 28.08. lief der Akku bis zur BMS-Abschaltung leer, obwohl der Wächter
-auf 47/48 V stand. Der Grund ist strukturell und nicht mit anderen Zahlen
-zu beheben:
+Ein Limit ist keine Abschaltung. Der HMS-2000-4T hat ein Mindestlimit
+von 50 W, und selbst damit zieht er weiter aus dem Akku. Gemessen in der
+Nacht vom 11. auf den 12.09.2026 (HA-Historie):
 
-**Ein Limit ist keine Abschaltung.** Das kleinste ansteuerbare Limit des
-HMS-2000-4T ist 50 W, und unterhalb von ~500 W folgt er einem Limitbefehl
-ohnehin nur unzuverlässig (eigene Messung an 929 Kommandos: 250–300 W zu
-25 %, 350–400 W zu 67 %). Er fällt stattdessen in einen Attraktor bei
-~157 W und speist die Nacht durch. Am Solarstrang war das folgenlos, am
-Akkubus entlädt es den Pack bis das BMS abschaltet.
+| Zeit | Was passierte |
+|---|---|
+| 18:07 | Akku-Wächter greift bei 48 V, Limit → 50 W |
+| 18:07–03:36 | HMS speist trotzdem durchgehend ~35 W ein, Bus sinkt 48 → 41,5 V |
+| 03:36 | BMS schaltet hart ab (2,6 V/Zelle). Victron-Log: „min. 1,9 V“ |
+| 07:08–08:47 | Morgens flattert der HMS im 20-s-Takt: BMS gibt frei, HMS startet, Bus bricht ein, BMS trennt … |
+| 14:00–18:07 | Nachmittags pumpt der Wächter die Nachladung ins Haus: Freigabe bei 49,5 V, 700 W Entnahme, 30 min später wieder 48 V |
 
-**Die Packspannung ist die falsche Messgröße.** Die LFP-Kurve ist im
-Betriebsbereich flach, der Victron zieht den Bus beim Laden sofort hoch
-(volle Spannung bei leerem Akku), und das BMS schützt auf die *schwächste
-Zelle*: bei 200 mV Drift steht die bei 2,6 V, während der Pack noch 48 V
-anzeigt. Der 47-V-Schutz konnte deshalb gar nicht vor dem BMS auslösen.
+Das war die vierte Nacht in Folge. Die Victron-Historie zeigt seit dem
+28.08. an 10 von 15 Nächten „min. 1,9 V“ — Akku vom BMS abgeklemmt.
+Das ist für LiFePO4 die schädlichste Betriebsart überhaupt.
 
-Der neue Schutz trennt die **AC-Seite über eine schaltbare Steckdose** und
-entscheidet anhand der **Zellspannung und des BMS-SoC**.
+Still ist der HMS nur **stromlos**.
 
-## Voraussetzungen — vor der ersten Zeile Konfiguration prüfen
+## Warum ein Schalter genügt
 
-| # | Punkt | Warum |
-|---|---|---|
-| V1 | **OpenDTU Fusion und NUC hängen NICHT an der geschalteten Dose** | Sonst verschwindet mit dem AC genau die Datenquelle, die das Wiedereinschalten erlauben müsste |
-| V2 | Dauerlast der Dose beachten: P100 = 10 A/2300 W, P110/P115 = 16 A/3680 W | Bei `max_limit_w: 1450` sind es ~6,3 A — für den P100 in Ordnung |
-| V3 | Tapo-App: **Third-Party Compatibility EIN**, Firmware-Auto-Update AUS, **Default State auf AUS** (nicht „letzter Zustand") | Nach einem Netzausfall darf nur eine Instanz einschalten, die frische BMS-Daten gesehen hat |
-| V4 | Steckerlage mit Phasenprüfer bestimmen und markieren | Das Relais ist einpolig; trennt es N statt L, bleibt der Wechselrichter phasenseitig am Netz |
-| V5 | Aufkleber „NUR WECHSELRICHTER — nichts dazustecken", keine Mehrfachsteckdose | Eine Fremdlast verfälscht jede Leistungsprüfung |
-| V6 | Einbauort ganzjährig ≥ 0 °C (TP-Link spezifiziert 0–35 °C) | Sonst gehört an die Stelle ein Installationsschütz im Verteiler |
-| V7 | In OpenDTU-oB unter „Battery" und „Solar Charger" die Option *publish updates only* abschalten | Sonst kommen Alarme und Ladezustand nach einem Broker-Reconnect nie wieder |
+Der HMS versorgt seine Elektronik aus der DC-Seite. Bei stromloser
+AC-Seite bleibt er über die DTU erreichbar und meldet weiter die
+Akkuspannung. Beleg vom 12.09.2026, Steckdose 15:22–16:58 von Hand aus:
 
-> „Steckdose aus" ist **nicht** „spannungsfrei": der P100 trägt die
-> Kennzeichnung *Micro-gap switch µ* (Kontaktabstand < 3 mm). Für den
-> Zweck reicht das völlig — der Wechselrichter geht über seinen NA-Schutz
-> aus. Wer am Gerät arbeitet, zieht trotzdem den Stecker.
+| | AC-Spannung | DC-Spannung (String 1) | `reachable` |
+|---|---|---|---|
+| vorher | 230 V | 50,3 V | on |
+| Dose aus | **1,4 V** | 50,7 → **52,1 V** (Victron lädt) | **on** |
+| nachher | 230 V | 51,9 V | on |
 
-## Inbetriebnahme in sieben Phasen
+Der Packspannungs-Wächter (`battery_guard`, Option `batt_strings`) sieht
+also auch im Aus weiter. Eine zweite Spannungsquelle (BMS, Victron per
+MQTT), auf der Version 1.8 aufbaute, war nie nötig — und die 19 Optionen
+dazu auch nicht.
 
-Zwischen den Phasen wird nichts übersprungen. Der Akku bleibt in jeder
-Phase außer der letzten unangetastet.
+## Einrichten
 
-### Phase 1 — Topics inventarisieren (ohne Code)
-
-```bash
-mosquitto_sub -h 192.168.178.64 -v -t 'solar/battery/#' -t 'solar/victron/#'
-```
-
-Notieren: die **echten** Namen für Zellspannung, Zell-Drift, Alarme und
-`BatteryOnline`, das **Vorzeichen** von `battery/current` beim Laden, und
-ob `retain` gesetzt ist. Das Add-on protokolliert dieselbe Liste eine
-Minute nach dem Start selbst und warnt für jedes konfigurierte Topic, das
-nie ankam.
-
-### Phase 2 — die Kernannahme prüfen (der entscheidende Test)
-
-Wechselrichter **von Hand** ausstecken, zwei Minuten warten.
-
-- `solar/battery/dataAge` muss klein bleiben, `solar/victron/<SN>/V` weiterlaufen.
-  Wenn nicht, wird der JK-RS485-Port mit dem Inverter stromlos — dann
-  fehlt die Freigabequelle und der Aufbau muss geändert werden.
-- `curl -s http://192.168.178.42/api/livedata/status | jq '.inverters[0] | {reachable, data_age}'`
-  → `reachable` muss auf 0 gehen. Das ist der physikalische Zeuge der
-  Abschalt-Quittung.
-
-### Phase 3 — Trockentest mit einer Tischlampe
-
-Dose in Betrieb nehmen, **eine Lampe** einstecken, nicht den Inverter.
-`ac_switch_entity`, `ac_power_entity` und die drei Totmann-Entitäten
-eintragen, `ac_off_cell_mv` auf 2700 (löst nie aus).
-
-Erwartet: `ac_state = normal`, `ac_on = ON`, `ac_deadman = ok`,
-`ac_deadman_at` springt alle 5 min ~15 min in die Zukunft.
-
-**Totmann-Test:** Add-on stoppen. Nach spätestens 15 min muss die Lampe
-von selbst ausgehen. Tut sie das nicht, steht `ac_deadman` in Wahrheit auf
-`unbestaetigt` — dann ist der Schutz auf die Zustellung eines Befehls
-angewiesen, und die BMS-Schwellen (unten) sind zwingend.
-
-### Phase 4 — Auslösung erzwingen, immer noch mit der Lampe
-
-`ac_off_cell_mv` vorübergehend **über** den aktuellen `batt_cell_min_mv`
-setzen. Erwartet: `normal → drossel → aus_angefordert → ac_aus`,
-`ac_switches_today` steigt um 1, `ac_reason` enthält Zahlen.
-Danach Schwelle zurücksetzen und `AC-Hand-Freigabe = 5 min` testen.
-
-Ebenfalls hier: Add-on-Neustart in jedem Zustand, Mosquitto-Neustart,
-Stecker der Dose ziehen (→ `getrennt`, **kein** Fehleralarm).
-
-### Phase 5 — mitschreiben, ohne Schaltlogik (mindestens 7 Tage)
-
-Inverter an die Dose, `ac_automatik = AUS`, Abschaltschwellen unerreichbar.
-Aufzeichnen: `cell_min` und `cell_diff` in Ruhe und unter Last, `soc_bms`,
-`battery/current`, WLAN-Pegel der Dose. Daraus `ac_on_diff_max_mv` und
-`batt_capacity_ah` festlegen. **RSSI schlechter als −70 dBm → erst die
-Funkstrecke verbessern.**
-
-### Phase 6 — persistentes Limit verifizieren
-
-Dose aus, 60 s warten, Dose an, die ersten 120 s die AC-Leistung
-mitschreiben. Stehen dort 1450 W statt 430 W, hat das persistente Limit
-nicht gegriffen → `ac_start_blind_s` kürzen und Freigabeschwellen
-konservativer setzen.
-
-### Phase 7 — scharfschalten
-
-Schwellen auf die Zielwerte, `ac_automatik` zunächst **AUS** (der Automat
-schaltet dann nur ab, nie ein). Von Hand einschalten, drei Zyklen
-beobachten, dann `ac_automatik` auf EIN.
-
-**Die Watchdog-Automation unten wird vor Phase 7 angelegt, nicht danach.**
-
-## Zweiter Pfad: HA-Automation, unabhängig vom Add-on
+Genau eine Option:
 
 ```yaml
-alias: Akku-Notabschaltung (unabhaengig vom Add-on)
-mode: single
-trigger:
-  - platform: numeric_state
-    entity_id: sensor.smartmeter_llm_zellspannung_minimum
-    below: 2950
-    for: "00:00:30"
-  - platform: state
-    entity_id: sensor.smartmeter_llm_zellspannung_minimum
-    to: ["unavailable", "unknown"]
-    for: "00:05:00"
-action:
-  - service: switch.turn_off
-    target: {entity_id: switch.wechselrichter_ac}
-  - service: notify.persistent_notification
-    data: {message: "Akku-Notabschaltung ausgeloest"}
+ac_switch_entity: switch.umnaia_rozetka_1
 ```
 
-Der zweite Trigger ist der wichtigere: **ein fehlender Sensor ist der
-gefährlichere Zustand als ein niedriger Messwert.** Er greift, weil das
-Add-on einen letzten Willen (`availability`) setzt und die Schutzsensoren
-mit `expire_after: 90` laufen.
+Voraussetzung ist der vorhandene Wächter (`batt_strings`, `batt_low_v`).
+Das Add-on hat `homeassistant_api: true` und ruft ausschließlich
+`switch.turn_on` / `switch.turn_off` und liest den Zustand der Entität.
 
-## BMS-Schwellen nachziehen (in der JK-App, nicht im Code)
+## Was dann passiert
 
-Das BMS ist die einzige Instanz, die auch bei totem Netzwerk noch
-abschaltet — und seine Werkseinstellungen sind der eigentliche Grund für
-die Tiefe der Entladung:
+- **Aus**, sobald der Wächter hält: Bus unter `batt_low_v` für 15 s.
+  Vorher setzt das Add-on das Limit *persistent* auf 50 W, damit der
+  HMS nach dem Einschalten sanft hochkommt statt mit dem letzten
+  Tageswert.
+- **Ein**, sobald der Wächter freigibt: Bus ≥ `batt_low_v` + 2,0 V für
+  10 min — frühestens aber **30 min** nach dem Aus. Beides gegen
+  Klappern: der Bus erholt sich ohne Last binnen 20 min um ~1 V (bei
+  +1,5 V hätte das nachts fast für die Freigabe gereicht, ohne dass eine
+  Wattstunde nachgekommen wäre), und ein Wolkenloch hebt ihn für
+  Minuten. Die Sperre zählt ab dem Aus-*Befehl*, nicht ab der Antwort
+  der Dose — die P100 öffnet das Relais auch dann, wenn ihre Antwort
+  erst nach dem Timeout kommt.
+- Nach dem Einschalten beobachtet der HMS ~60 s das Netz, bevor er
+  einspeist. Solange OpenDTU `producing: false` meldet, regelt der
+  Regler nicht — sonst hielte er den Tracker für verklemmt und schickte
+  Kicks an einen Wechselrichter, der noch gar nicht angefangen hat.
+- Solange die Dose aus ist — oder ihr Zustand nach dem Start noch nicht
+  gelesen wurde, oder die DTU den HMS nicht erreicht —, regelt der
+  Regler nicht (keine Limits an einen stillen Wechselrichter, auch nicht
+  im Failsafe), der Wächter liest aber weiter. Eine Ausnahme: Ist die
+  Dose unlesbar **und** der Wächter hält, geht wenigstens das 50-W-Limit
+  an den HMS — beide Schutzebenen dürfen nie gleichzeitig schweigen.
+  Beim Wiederanlauf fragt der Regler die DTU nach dem Limit, das der HMS
+  wirklich fährt (`/api/limit/status`, bis zu drei Versuche), statt das
+  persistierte Minimum anzunehmen.
+- Das Minimum wird je Halte-Episode einmal in den HMS-Flash geschrieben
+  und bei weiteren Aus frühestens nach 10 min wiederholt — auch wenn
+  eine Automation die Dose immer wieder einschaltet, bleibt es bei
+  höchstens sechs Schreibzyklen pro Stunde.
+- Sensor `Wechselrichter-Steckdose` in HA: `ein`, `aus`,
+  `aus (frei in N min)` oder `unbekannt`; bei WLAN-Aussetzer der Dose
+  mit Zusatz `, Dose nicht lesbar`.
+- Nie mehr als ein Schaltbefehl pro Minute. Ist die Dose in HA
+  `unavailable` (WLAN-Aussetzer der P100, ~5× täglich für 5–20 s),
+  behält der Schalter den zuletzt gelesenen Zustand und schaltet nicht;
+  dauert es länger als 5 min, steht es im Log.
 
-| Einstellung | Werk | empfohlen |
+## Von Hand eingreifen
+
+Die Dose gehört dem Wächter. Schaltet jemand von Hand **ein**, während er
+hält, nimmt er das nach spätestens einer Minute zurück. Schaltet jemand
+von Hand **aus**, gilt das wie ein eigenes Aus: die 30-min-Sperre läuft
+ab diesem Moment, danach schaltet der Wächter wieder ein, sobald er
+freigibt. Dasselbe gilt nach einem Neustart, wenn die Dose aus vorgefunden
+wird und kein Aus-Zeitpunkt gespeichert ist. Wer den Wechselrichter
+länger vom Netz haben will: `ac_switch_entity` leeren oder das Add-on
+stoppen — dann bleibt die Dose, wie sie ist.
+
+## Grenzen
+
+- **Kein Totmann.** Stirbt das Add-on, während die Dose EIN ist,
+  schaltet niemand ab. `batt_hold` überlebt Neustarts in `state.json`,
+  der HA-Watchdog startet das Add-on neu — mehr Sicherung gibt es nicht.
+  Das ist der Preis der Einfachheit.
+- Der Wächter urteilt nach der Bus-Spannung, nicht nach der schwächsten
+  Zelle. Bei einem driftenden Pack schützt das BMS weiterhin zuerst.
+- Eingefrorene DTU-Werte (Inverter nicht erreichbar, `data_age` > 60 s)
+  gelten als „keine Messung“: der Wächter hält dann seinen Zustand.
+
+## Interna (nur per Env, keine Add-on-Optionen)
+
+| Env | Standard | Bedeutung |
 |---|---|---|
-| Zell-UVP | 2,60 V | **2,80 V** |
-| UVP-Recovery | 2,65 V | **3,00 V** |
-| Auto-Shutdown | 2,50 V | **2,60 V** |
-| SOC-0-%-Spannung | 2,60 V | **2,90 V** |
-| Balance-Start | 3,00 V | **3,40 V** |
-
-## Zustände des Automaten
-
-`normal` → `drossel` (Limit auf Minimum) → `aus_angefordert` → `ac_aus` →
-`freigabe_beobachtung` → `ein_angefordert` → `anlauf` → `normal`.
-
-Quer dazu: `manuell_ein`/`manuell_aus` (ein Mensch hat geschaltet — der
-Automat hält sich heraus), `getrennt` (Dose stromlos, kein Fehler),
-`unbekannt` (HA antwortet nicht), `stoerung` (Schaltkette defekt),
-`ac_aus_unbestaetigt` (**die Dose meldet „aus", der Akku wird trotzdem
-entladen** — klebendes Relais, einpolig N getrennt oder schlicht die
-falsche Dose).
+| `AC_OFF_MIN_S` | 1800 | Mindest-Aus-Zeit |
+| `BATT_TRIP_S` | 15 | Entprellung vor dem Aus |
+| `BATT_RECOVER_V` | 2.0 | Freigabe bei `batt_low_v` + dieser Wert |
+| `BATT_RELEASE_S` | 600 | so lange muss die Freigabespannung stehen |
