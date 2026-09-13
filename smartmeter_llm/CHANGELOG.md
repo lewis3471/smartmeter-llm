@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.9.1
+
+- EVIDENCE-SYNC STAND WIEDER, seit 12.09. 22:47 — diesmal an "cannot
+  pull with rebase: You have unstaged changes". Ursache: zwei
+  Add-on-Neustarts im Abstand von 71 s (23:17 Update auf 1.9.0, 23:18
+  Konfiguration gespeichert) haben einen Lauf zwischen Kopieren und
+  Commit abgewuergt; die heutige Regler-Telemetrie
+  `training-data/control/<Tag>.jsonl` war ueberschrieben, aber nicht
+  eingecheckt. Der Sync setzt solche halbfertigen Aenderungen jetzt vor
+  dem Pull zurueck (Evidence wird im selben Lauf aus samples/ neu
+  kopiert, dort bleibt sie bis zum Push) und zieht durch. Versionierte
+  Dateien AUSSERHALB training-data, die im Klon veraendert wurden, werden
+  ebenfalls auf den Repository-Stand zurueckgesetzt und im Log genannt.
+  Zwei Tests, einer end-to-end gegen ein echtes Remote.
+- ANZEIGE: `Akku-Spannung` in HA mit einer Nachkommastelle
+  (`suggested_display_precision`). Bisher rundete HA 51,5 V auf "52 V" —
+  bei einer Freigabeschwelle von 52,0 V war die Anzeige damit falsch
+  herum informativ (13.09.: "52 V" in HA, 51,8 V real, Dose bleibt aus,
+  alle raetseln).
+- `Wechselrichter-Steckdose` sagt jetzt, worauf gewartet wird:
+  `aus (ein ab 52.0 V, jetzt 51.8 V)` solange der Waechter haelt; die
+  Sperre wird in 5-min-Schritten gezeigt statt minuetlich (30
+  Logbuch-Zeilen pro Sperre braucht niemand).
+
 ## 1.9.0
 
 - AC-SCHUTZ AUF EINE OPTION EINGEDAMPFT: `ac_switch_entity`, sonst

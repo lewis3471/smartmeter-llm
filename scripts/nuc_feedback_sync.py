@@ -58,6 +58,34 @@ def reste_ausserhalb_evidence(repo: Path) -> list:
             if z.strip() and not z.startswith("training-data/")]
 
 
+def halbfertiger_lauf(repo: Path) -> tuple[list, list]:
+    """Unversionierte AENDERUNGEN an versionierten Dateien (geaendert oder
+    geloescht, nicht im Index) -> (innerhalb training-data, ausserhalb).
+
+    DAS IST DER STILLSTAND VOM 13.9.: Zwei Add-on-Neustarts im Abstand
+    von 71 s (Update auf 1.9.0, dann Konfiguration gespeichert) haben
+    einen Lauf zwischen Kopieren und Commit abgewuergt. Die heutige
+    Regler-Telemetrie training-data/control/<Tag>.jsonl war schon
+    ueberschrieben, aber nicht eingecheckt — und `git pull --rebase`
+    verweigert: "cannot pull with rebase: You have unstaged changes."
+    Jeder weitere Lauf scheiterte am selben Punkt, wieder ohne dass es
+    jemand merkte.
+
+    Beides ist gefahrlos zurueckzusetzen: Evidence wird im selben Lauf
+    aus samples/ neu kopiert (dort bleibt sie bis zum erfolgreichen
+    Push), und Code hat in diesem Klon nichts zu suchen — die gueltige
+    Fassung ist die im Repository."""
+    roh = run(["git", "status", "--porcelain", "--untracked-files=no"],
+              repo).stdout
+    innen, aussen = [], []
+    for z in roh.split("\n"):
+        if len(z) < 4 or z[1] == " ":          # Spalte 2 = Arbeitskopie
+            continue
+        pfad = z[3:]
+        (innen if pfad.startswith("training-data/") else aussen).append(pfad)
+    return innen, aussen
+
+
 def fremde_aenderungen(repo: Path) -> list:
     """Alles im Index, was NICHT unter training-data liegt.
 
@@ -181,6 +209,20 @@ def main():
     repo, samples = args.repo.resolve(), args.samples.resolve()
 
     if args.push:
+        innen, aussen = halbfertiger_lauf(repo)
+        if innen or aussen:
+            if innen:
+                log(f"Halbfertiger Lauf: {len(innen)} Evidence-Datei(en) "
+                    f"veraendert, aber nicht eingecheckt — zurueckgesetzt, "
+                    f"wird gleich aus samples/ neu kopiert "
+                    f"({', '.join(innen[:3])}{' ...' if len(innen) > 3 else ''})")
+            if aussen:
+                log(f"{len(aussen)} versionierte Datei(en) ausserhalb "
+                    f"training-data lokal veraendert — zurueckgesetzt auf den "
+                    f"Stand des Repositories "
+                    f"({', '.join(aussen[:3])}{' ...' if len(aussen) > 3 else ''})",
+                    err=True)
+            run(["git", "checkout", "--", *innen, *aussen], repo, check=False)
         r = run(["git", "pull", "--rebase", "origin", "HEAD"], repo, check=False)
         if r.returncode and "would be overwritten" in r.stdout:
             # Selbstheilung statt Handarbeit auf dem NUC: die Reste der

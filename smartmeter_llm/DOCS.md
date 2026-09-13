@@ -38,7 +38,8 @@ zweite Spannungsquelle braucht es nicht.
 Damit Stufe 2 schalten darf, hat das Add-on `homeassistant_api: true`.
 Es ruft ausschließlich `switch.turn_on` / `switch.turn_off` und liest den
 Zustand der Entität. Neuer Sensor in HA: `Wechselrichter-Steckdose`
-(`ein`, `aus`, `aus (frei in N min)`, `unbekannt`).
+(`ein`, `aus (ein ab 52.0 V, jetzt 51.8 V)`, `aus (frei in N min)`,
+`unbekannt`).
 
 Vor dem Aus wird das Limit persistent auf 50 W gesetzt, damit der HMS
 nach dem Einschalten sanft hochkommt. Schaltet jemand von Hand ein,

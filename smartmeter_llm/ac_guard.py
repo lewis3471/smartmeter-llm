@@ -169,7 +169,9 @@ class AcSwitch:
             text = "ein"
         else:
             rest = self.sperre_rest_s()
-            text = (f"aus (frei in {rest / 60:.0f} min)"
+            # In 5-min-Schritten: jede Aenderung ist ein Logbuch-Eintrag
+            # in HA, 30 Zeilen pro Sperre braucht niemand.
+            text = (f"aus (frei in {5 * -(-rest // 300):.0f} min)"
                     if rest > 0 and hold is False else "aus")
         if on is not None and self._unavail_since is not None:
             text += ", Dose nicht lesbar"

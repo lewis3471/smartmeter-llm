@@ -81,7 +81,8 @@ Das Add-on hat `homeassistant_api: true` und ruft ausschließlich
   eine Automation die Dose immer wieder einschaltet, bleibt es bei
   höchstens sechs Schreibzyklen pro Stunde.
 - Sensor `Wechselrichter-Steckdose` in HA: `ein`, `aus`,
-  `aus (frei in N min)` oder `unbekannt`; bei WLAN-Aussetzer der Dose
+  `aus (ein ab 52.0 V, jetzt 51.8 V)` solange der Wächter hält,
+  `aus (frei in N min)` während der Sperre, oder `unbekannt`; bei WLAN-Aussetzer der Dose
   mit Zusatz `, Dose nicht lesbar`.
 - Nie mehr als ein Schaltbefehl pro Minute. Ist die Dose in HA
   `unavailable` (WLAN-Aussetzer der P100, ~5× täglich für 5–20 s),
