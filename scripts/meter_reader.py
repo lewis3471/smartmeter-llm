@@ -2660,7 +2660,16 @@ def publish(reading: dict | None, status: str, limit: int | None,
                 msgs.append((f"{TOPIC}/batt_kwh",
                              f"{soc / 100 * BATT_CAPACITY_KWH:.1f}"))
     if _ac is not None:
-        msgs.append((f"{TOPIC}/ac_state", _ac.snapshot()["text"]))
+        a = _ac.snapshot()
+        text = a["text"]
+        v = state.get("batt_v") if state is not None else None
+        if a["on"] is False and a["hold"] and v is not None and BATT_STRINGS:
+            # Sagen, worauf gewartet wird — sonst steht "aus" neben einer
+            # auf "52 V" gerundeten Anzeige, und niemand versteht, warum
+            # nichts passiert (13.09.: 51,8 V, Freigabe ab 52,0 V).
+            text = (f"aus (ein ab {BATT_LOW_V + BATT_RECOVER_V:.1f} V, "
+                    f"jetzt {v:.1f} V)")
+        msgs.append((f"{TOPIC}/ac_state", text))
     # Herzschlag: die Payload aendert sich per Definition und laeuft damit
     # durch die Gleichheits-Unterdrueckung. So sieht man auch einen
     # HAENGENDEN Prozess, der kein LWT ausloest.
@@ -2729,6 +2738,10 @@ def publish_discovery():
                              "unit_of_measurement": "V",
                              "device_class": "voltage",
                              "state_class": "measurement",
+                             # HA rundete 51,5 V auf "52 V" — bei einer
+                             # Freigabeschwelle von 52,0 V ist die
+                             # Nachkommastelle die ganze Information.
+                             "suggested_display_precision": 1,
                              "icon": "mdi:battery-outline"}
         sensors["batt_hold"] = {"name": "Akku-Schutz aktiv",
                                 "icon": "mdi:battery-lock"}

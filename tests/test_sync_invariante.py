@@ -157,6 +157,63 @@ def test_blockierter_pull_heilt_sich_selbst():
           "kein Push angekommen")
 
 
+def test_halbfertiger_lauf_wird_erkannt():
+    """Geaenderte und geloeschte versionierte Dateien, getrennt nach innen
+    (Evidence) und aussen (Code). Unversionierte Dateien zaehlen nicht."""
+    repo = baue_repo()
+    (repo / "training-data" / "a.json").write_text('{"neu": 1}')   # geaendert
+    (repo / "scripts" / "meter_reader.py").unlink()                 # geloescht
+    (repo / "training-data" / "neu.json").write_text("{}")          # unversioniert
+    innen, aussen = sync.halbfertiger_lauf(repo)
+    check("evidence_aenderung_innen", innen == ["training-data/a.json"], str(innen))
+    check("code_loeschung_aussen", aussen == ["scripts/meter_reader.py"], str(aussen))
+
+
+def test_abgewuergter_lauf_heilt_sich_selbst():
+    """End-to-end mit echtem Remote, die Konstellation vom 13.9.: die
+    Regler-Telemetrie ist ueberschrieben, aber nicht eingecheckt, der
+    Pull verweigert — der Sync setzt zurueck, zieht durch, kopiert die
+    Telemetrie neu und pusht sie."""
+    fern = baue_repo()
+    git(fern, "config", "receive.denyCurrentBranch", "ignore")
+    (fern / "training-data" / "control").mkdir()
+    (fern / "training-data" / "control" / "20260913.jsonl").write_text("z1\n")
+    git(fern, "add", "-A"); git(fern, "commit", "-q", "-m", "telemetrie")
+
+    lokal = Path(tempfile.mkdtemp()) / "klon"
+    subprocess.run(["git", "clone", "-q", str(fern), str(lokal)], check=True)
+    git(lokal, "config", "user.email", "t@t"); git(lokal, "config", "user.name", "t")
+    # Auf dem Remote geht es weiter (Evidence von anderswo) ...
+    (fern / "training-data" / "b.json").write_text("{}")
+    git(fern, "add", "-A"); git(fern, "commit", "-q", "-m", "mehr evidence")
+    # ... und lokal blieb ein Lauf zwischen Kopieren und Commit stecken:
+    (lokal / "training-data" / "control" / "20260913.jsonl").write_text("z1\nz2\n")
+    (lokal / "training-data" / "a.json").unlink()
+
+    vorher = subprocess.run(["git", "pull", "--rebase", "origin", "HEAD"],
+                            cwd=lokal, text=True, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    check("pull_scheitert_ohne_heilung", vorher.returncode != 0
+          and "unstaged changes" in vorher.stdout, vorher.stdout.strip()[-120:])
+
+    proben = Path(tempfile.mkdtemp()); (proben / "control").mkdir()
+    (proben / "control" / "20260913.jsonl").write_text("z1\nz2\nz3\n")
+    sys.argv = ["x", "--repo", str(lokal), "--samples", str(proben), "--push"]
+    try:
+        sync.main()
+    except SystemExit:
+        pass
+    baum = git(fern, "ls-tree", "-r", "--name-only", "HEAD").stdout
+    check("pull_durchgezogen_remote_stand_da",
+          (lokal / "training-data" / "b.json").exists(), "b.json fehlt lokal")
+    check("geloeschte_evidence_wiederhergestellt",
+          (lokal / "training-data" / "a.json").exists(), "a.json fehlt")
+    check("telemetrie_neu_kopiert_und_gepusht",
+          git(fern, "show", "HEAD:training-data/control/20260913.jsonl").stdout
+          == "z1\nz2\nz3\n", "Telemetrie nicht auf dem Remote")
+    check("code_unangetastet", "scripts/meter_reader.py" in baum)
+
+
 for fn in [v for k, v in sorted(globals().items()) if k.startswith("test_")]:
     print(f"\n{fn.__name__}:")
     fn()
