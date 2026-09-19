@@ -2,15 +2,22 @@ name: OCR validate
 
 # Validation-only CI: retrain on the evidence already in the commit and
 # report holdout accuracy. Does NOT commit or push model.npz — the
-# threshold-gated local trainer (scripts/nuc_feedback_sync.py) stays the
+# threshold-gated local trainer (make retrain on the Mac) stays the
 # single writer of the model. This only catches bad labels / training
 # regressions and surfaces the numbers for review.
+#
+# WEEKLY, NOT PER PUSH. Until 2026-09-19 this ran on every hourly
+# "ocr: sync evidence" push from the NUC: 345 runs and 2763 minutes in
+# the first 19 days of September, 8 minutes each (a 700 MB checkout of
+# training-data plus a full retrain), 146 of them cancelled by the next
+# push and billed anyway. That was 82 % of the account's Actions usage
+# and burned the 2000 free minutes in 12 days. Nobody reads a validation
+# number 24 times a day; once a week catches a poisoned label batch just
+# as well, and `workflow_dispatch` is there for "right now".
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'training-data/**'
+  schedule:
+    - cron: '17 3 * * 1'        # Montag 03:17 UTC, einmal pro Woche
   workflow_dispatch:
     inputs:
       min_cell_acc:
@@ -27,7 +34,6 @@ concurrency:
 
 jobs:
   validate:
-    if: "github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'ocr: sync evidence')"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
