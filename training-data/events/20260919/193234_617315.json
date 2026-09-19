@@ -1,0 +1,1 @@
+{"accepted_kwh": 36256, "error": "verworfen: kWh 880440 > 99999 strukturell unmoeglich (Display: 6 Stellen mit fuehrender Null)", "failures": 2, "kind": "rejected_reading", "timestamp": "2026-09-19T19:32:34+0200"}
