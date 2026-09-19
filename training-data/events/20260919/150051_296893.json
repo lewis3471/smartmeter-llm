@@ -1,0 +1,1 @@
+{"accepted_kwh": 36255, "error": "Not connected to esp32-cam-electricity-meter @ 192.168.178.58!", "failures": 2, "kind": "rejected_reading", "timestamp": "2026-09-19T15:00:51+0200"}
