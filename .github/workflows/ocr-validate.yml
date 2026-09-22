@@ -35,7 +35,10 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Das Training waechst mit der Evidence: 8:39 min am 19.09., am
+    # 21.09. nach 9:00 min vom alten 10-min-Limit abgebrochen. Einmal pro
+    # Woche kosten 20 min Luft hoechstens ~40 min im Monat mehr.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
