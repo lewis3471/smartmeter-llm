@@ -1,0 +1,53 @@
+{"t": 1790080626.82, "ev": "tick", "grid": 118, "pv": 39.4, "limit": 50, "bv": 52.2, "hb": 1}
+{"t": 1790080626.88, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1790080628.67, "ev": "tick", "grid": 83, "pv": 39.4, "limit": 300, "bv": 52.2}
+{"t": 1790080630.62, "ev": "tick", "grid": 70, "pv": 29.0, "limit": 300, "bv": 52.2}
+{"t": 1790080630.65, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1790080632.45, "ev": "tick", "grid": 70, "pv": 29.0, "limit": 50, "bv": 52.2}
+{"t": 1790080634.4, "ev": "tick", "grid": 70, "pv": 29.0, "limit": 50, "bv": 52.2}
+{"t": 1790080634.46, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1790080636.24, "ev": "tick", "grid": 70, "pv": 29.0, "limit": 300, "bv": 52.2}
+{"t": 1790080638.16, "ev": "tick", "grid": 68, "pv": 29.0, "limit": 300, "bv": 52.2}
+{"t": 1790080638.19, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1790080640.08, "ev": "tick", "grid": 68, "pv": 29.0, "limit": 50, "bv": 52.2}
+{"t": 1790080641.95, "ev": "tick", "grid": 68, "pv": 36.7, "limit": 50, "bv": 52.2}
+{"t": 1790080641.97, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1790080643.87, "ev": "tick", "grid": 68, "pv": 36.7, "limit": 300, "bv": 52.2}
+{"t": 1790080645.74, "ev": "tick", "grid": 64, "pv": 48.9, "limit": 300, "bv": 52.2}
+{"t": 1790080645.76, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1790080649.52, "ev": "tick", "grid": 63, "pv": 36.5, "limit": 50, "bv": 52.2}
+{"t": 1790080649.55, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1790080651.43, "ev": "tick", "grid": 63, "pv": 36.5, "limit": 300, "bv": 52.2}
+{"t": 1790080653.31, "ev": "tick", "grid": 60, "pv": 36.5, "limit": 300, "bv": 52.2}
+{"t": 1790080653.36, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1790080655.15, "ev": "tick", "grid": 60, "pv": 36.5, "limit": 50, "bv": 52.2}
+{"t": 1790080655.14, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 36.5, "try": 1}
+{"t": 1790080657.0, "ev": "tick", "grid": 60, "pv": 36.4, "limit": 50, "bv": 52.2}
+{"t": 1790080657.0, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 36.4, "try": 1}
+{"t": 1790080657.02, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300-retry"}
+{"t": 1790080658.9, "ev": "tick", "grid": 55, "pv": 36.4, "limit": 300, "bv": 52.2}
+{"t": 1790080660.89, "ev": "tick", "grid": 55, "pv": 84.0, "limit": 300, "bv": 52.2}
+{"t": 1790080660.91, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1790080662.7, "ev": "tick", "grid": 55, "pv": 84.0, "limit": 50, "bv": 52.2}
+{"t": 1790080664.53, "ev": "tick", "grid": 19, "pv": 36.4, "limit": 50, "bv": 52.2}
+{"t": 1790080664.55, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1790080666.35, "ev": "tick", "grid": 19, "pv": 36.4, "limit": 300, "bv": 52.2}
+{"t": 1790080668.27, "ev": "tick", "grid": 50, "pv": 36.4, "limit": 300, "bv": 52.2}
+{"t": 1790080668.29, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1790080670.18, "ev": "tick", "grid": 50, "pv": 36.4, "limit": 50, "bv": 52.2}
+{"t": 1790080672.05, "ev": "tick", "grid": 26, "pv": 81.1, "limit": 50, "bv": 52.2}
+{"t": 1790080672.07, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1790080673.97, "ev": "tick", "grid": 26, "pv": 81.1, "limit": 300, "bv": 52.2}
+{"t": 1790080675.84, "ev": "tick", "grid": 66, "pv": 73.6, "limit": 300, "bv": 52.2}
+{"t": 1790080675.89, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1790080677.68, "ev": "tick", "grid": 66, "pv": 73.6, "limit": 50, "bv": 52.2}
+{"t": 1790080679.53, "ev": "tick", "grid": 3, "pv": 36.4, "limit": 50, "bv": 52.2}
+{"t": 1790080679.58, "ev": "limit", "from": 50, "to": 300, "tag": "arbeitspunkt300"}
+{"t": 1790080681.36, "ev": "tick", "grid": 3, "pv": 36.4, "limit": 300, "bv": 52.2}
+{"t": 1790080683.21, "ev": "tick", "grid": 19, "pv": 36.4, "limit": 300, "bv": 52.2}
+{"t": 1790080683.21, "ev": "lp_miss", "cmd": 300, "exp": 160, "pv": 36.4, "try": 2}
+{"t": 1790080683.27, "ev": "limit", "from": 300, "to": 50, "tag": "floor-schlaf"}
+{"t": 1790080685.06, "ev": "tick", "grid": 19, "pv": 36.4, "limit": 50, "bv": 52.2}
+{"t": 1790080687.0, "ev": "tick", "grid": 19, "pv": 68.1, "limit": 50, "bv": 52.2}
+{"t": 1790080688.79, "ev": "tick", "grid": 19, "pv": 68.1, "limit": 50, "bv": 52.2}
+{"t": 1790080690.9, "ev": "tick", "grid": 30, "pv": 36.4, "limit": 50, "bv": 52.2}
