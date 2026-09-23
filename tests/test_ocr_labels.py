@@ -9,6 +9,10 @@ sechsstellig, also hielt clean() die falschen Labels und warf die
 richtigen. labels_for() verschiebt jede Ziffer um eine Zelle; das
 Modell las danach die 9 an Stelle 5 als 1 (36297 -> 36217), sobald das
 Licht nachts dunkler wurde.
+
+Dazu die Kasten-Wahl im LocalReader (ebenfalls 23.09.): der Rueckfall auf
+andere Kaesten darf eine im eigenen Kasten bekannte Ziffer nicht knapp
+ueberstimmen.
 """
 import sys
 from pathlib import Path
@@ -51,6 +55,49 @@ def test_tagesordner_werden_gegen_ihren_tag_geprueft():
           T.day_of(Path("training-data/20260915/235959.jpg")) == "20260915")
     check("tag_aus_dateiname",
           T.day_of(Path("training-data/auto/20260923_081642.jpg")) == "20260923")
+
+
+def _leser(eintraege):
+    """LocalReader auf einer kuenstlichen Basis: [(slot, label, vektor)].
+    prep_cell wird zur Identitaet, damit die Kosinus-Werte exakt die
+    konstruierten sind."""
+    import tempfile
+    import numpy as np
+    import local_reader as lr
+    X = np.array([v for _, _, v in eintraege], np.float32)
+    f = Path(tempfile.mkdtemp()) / "m.npz"
+    np.savez(f, X=X.astype(np.float16), y=np.array([l for _, l, _ in eintraege]),
+             slots=np.array([sl for sl, _, _ in eintraege]), anchor=np.zeros((2, 2)))
+    lr.prep_cell = lambda c: np.asarray(c, np.float32).ravel()
+    return lr.LocalReader(f)
+
+
+def _vek(cos, achse, n=8):
+    import numpy as np
+    v = np.zeros(n, np.float32)
+    v[0], v[achse] = cos, (1 - cos * cos) ** 0.5
+    return v
+
+
+def test_eigener_kasten_schlaegt_knappen_rueckfall():
+    """23.09.: Kasten 2 (immer eine 3) kippte zur 0 aus Kasten 1 — drei
+    fremde Nullen minimal naeher als die eine eigene Drei. Frage: e0."""
+    import numpy as np
+    basis = [(1, "3", _vek(0.950, 1))] + [(0, "0", _vek(0.952, 2))] * 3
+    r = _leser(basis)
+    frage = [np.zeros(8, np.float32), _vek(1.0, 1)]
+    p, _ = r._predict(frage)
+    check("knapper_rueckfall_ueberstimmt_nicht", p[1] == "3", str(p))
+
+
+def test_neue_ziffer_kommt_ueber_den_rueckfall():
+    """Eine Ziffer, die im eigenen Kasten nie vorkam (363xx: die 3 an
+    Stelle 4), muss weiter ueber die anderen Kaesten erkannt werden."""
+    import numpy as np
+    basis = [(3, "2", _vek(0.90, 1))] + [(1, "3", _vek(0.99, 2))] * 3
+    r = _leser(basis)
+    p, _ = r._predict([np.zeros(8, np.float32)] * 3 + [_vek(1.0, 1)])
+    check("klar_besserer_rueckfall_gewinnt", p[3] == "3", str(p))
 
 
 for fn in [v for k, v in sorted(globals().items()) if k.startswith("test_")]:
