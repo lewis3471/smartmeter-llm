@@ -27,6 +27,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from local_reader import LocalReader  # noqa: E402
 
 ROOT = Path(sys.argv[1] if len(sys.argv) > 1 else "training-data")
+# Der Zaehler zeigt eine fuehrende 0 und fuenf Stellen (036291). Sechs-
+# stellige Gemini-Werte sind die Nachkomma-Signatur (35891,4 -> 358914),
+# nie ein Stand. Am 25./28.07. las Gemini fast nur so — der TAGESMEDIAN
+# war damit selbst sechsstellig, das Aera-Fenster liess 128 dieser
+# Lesungen als auto-Labels durch (Retrain 23.09.), und labels_for()
+# verschob jede Ziffer um eine Zelle: die 9 im Bild wurde zur 1 im Label.
+KWH_MAX = 99_999
 
 
 def day_medians(root: Path) -> dict[str, int]:
@@ -39,14 +46,14 @@ def day_medians(root: Path) -> dict[str, int]:
             k = json.loads(jf.read_text()).get("kwh")
         except (OSError, ValueError):
             continue
-        if isinstance(k, int) and 10_000 <= k < 1_000_000 and k != 888888:
+        if isinstance(k, int) and 10_000 <= k <= KWH_MAX:
             by_day.setdefault(jf.name[:8], []).append(k)
     for jf in root.glob("disagreements/*.json"):
         try:
             k = (json.loads(jf.read_text()).get("gemini") or {}).get("kwh")
         except (OSError, ValueError):
             continue
-        if isinstance(k, int) and 10_000 <= k < 1_000_000 and k != 888888:
+        if isinstance(k, int) and 10_000 <= k <= KWH_MAX:
             by_day.setdefault(jf.name[:8], []).append(k)
     return {d: sorted(v)[len(v) // 2] for d, v in by_day.items() if len(v) >= 3}
 
