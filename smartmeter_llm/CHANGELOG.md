@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.9.3
+
+- OCR LAS SEIT 1.9.2 NACHTS DIE 9 ALS 1 (36297 -> 36217). Ursache: das
+  Retrain vom 23.09. hat 128 auto-Labels mit sechsstelliger kWh
+  aufgenommen — Geminis Nachkomma-Signatur vom 25./28.07. (358914 statt
+  35891). An diesen Tagen war schon der Tagesmedian sechsstellig, also
+  liess der Konsens-Labeler sie durch und train.py hielt sie statt der
+  richtigen. labels_for() formatiert sechsstellig und verschiebt damit
+  jede Ziffer um eine Zelle: die 9 im Bild hiess im Label 1. Sichtbar
+  wurde das ab ~03:00, als das Bild dunkler wurde — die Monotonie-Tore
+  verwarfen jede Lesung, der Segment-Dekoder sprang ein (bis 25x pro
+  Minute), die Regelung lief weiter, der Status flatterte `retry`/`ok`.
+- Konsens-Labeler und train.py lassen nur noch 10.000–99.999 kWh zu
+  (Anzeige: fuehrende 0 + fuenf Stellen). Die 128 Labels liegen in
+  `training-data/quarantine/`. Neuer Test `tests/test_ocr_labels.py`.
+- train.py prueft Tagesordner-Labels jetzt gegen ihren Tag: deren
+  Dateien heissen `HHMMSS.json`, der Tagesschluessel war `name[:8]` —
+  jedes Bild eine eigene Gruppe, nie ein Ausreisser.
+- Neu trainiert. Auf den heutigen Bildern (nie trainiert): vor 03 Uhr
+  30/30, danach 241/242 (1.9.2: 16/242). Zeitlicher Holdout ab 15.09.:
+  99,0 % (alt 84,4 %). Das Modell kommt per Git-Sync ohne Update; das
+  Add-on-Update bringt nur das korrigierte Ersatzmodell im Image mit.
+
 ## 1.9.2
 
 - OCR NEU TRAINIERT, erstmals seit 26.07. Das alte Modell kannte den

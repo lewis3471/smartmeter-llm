@@ -40,18 +40,34 @@ def load_samples(root: Path) -> list[tuple[Path, dict]]:
     return out
 
 
+KWH_MAX = 99_999  # Anzeige: fuehrende 0 + fuenf Stellen (036291)
+
+
+def day_of(img: Path) -> str:
+    """auto/ und seg/ tragen das Datum im Dateinamen (20260923_081642),
+    die Tagesordner nur die Uhrzeit (20260923/081642). Frueher stand hier
+    fuer alle name[:8] — bei Tagesordnern "081642.j", also eine eigene
+    Gruppe pro Bild: deren Labels wurden nie gegen den Tag geprueft."""
+    return img.name[:8] if img.name[:8].isdigit() else img.parent.name[:8]
+
+
 def clean(samples):
     """Offensichtliche Fehl-Labels raus: kWh-Ausreisser gegen den TAGES-
     Median (der Zaehler laeuft ueber die Korpus-Lebensdauer weiter — ein
-    globaler Median wuerde die neuesten Samples verwerfen)."""
+    globaler Median wuerde die neuesten Samples verwerfen). Sechsstellige
+    kWh vorher und unabhaengig davon: an Tagen, an denen Gemini fast nur
+    die Nachkomma-Signatur las (358914 statt 35891), ist der Median selbst
+    sechsstellig und haelt die falschen Labels statt der richtigen."""
+    n = len(samples)
+    samples = [s for s in samples if s[1]["kwh"] <= KWH_MAX]
     by_day = {}
     for s in samples:
-        by_day.setdefault(s[0].name[:8], []).append(s[1]["kwh"])
+        by_day.setdefault(day_of(s[0]), []).append(s[1]["kwh"])
     day_med = {d: sorted(v)[len(v) // 2] for d, v in by_day.items()}
     good = [s for s in samples
-            if abs(s[1]["kwh"] - day_med[s[0].name[:8]]) <= 10
+            if abs(s[1]["kwh"] - day_med[day_of(s[0])]) <= 10
             and abs(s[1].get("w", 0)) <= 20000]
-    return good, len(samples) - len(good)
+    return good, n - len(good)
 
 
 def collect(ex, subset):
