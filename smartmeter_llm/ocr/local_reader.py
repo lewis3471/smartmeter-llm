@@ -33,21 +33,33 @@ class LocalReader:
         self.k = k
         self.ex = Extractor()
         self.ex._anchor_ref = m["anchor"]
+        self._slot_idx: dict[int, np.ndarray] = {}
 
-    def _predict(self, cells) -> tuple[list[str], float]:
-        F = np.array([prep_cell(c) for c in cells], np.float32)
-        F /= np.linalg.norm(F, axis=1, keepdims=True) + 1e-9
-        pred, confs = [], []
-        for slot, feature in enumerate(F):
+    def _kandidaten(self, slot: int) -> np.ndarray:
+        """Zeilen der kNN-Basis fuer diesen Slot — haengt nur vom Modell ab,
+        wird also einmal berechnet statt pro Zelle und Bild. Frueher kostete
+        das Maskieren samt Kopie von X[mask] 85 % der Lesezeit (214 von
+        250 ms beim Modell vom 23.09.2026)."""
+        if slot not in self._slot_idx:
             if self.slots is None:  # backwards-compatible with shipped model
                 mask = np.ones(len(self.y), dtype=bool)
             else:
                 present = set(self.y[self.slots == slot])
                 mask = (self.slots == slot) | ~np.isin(self.y, list(present))
-            scores = feature @ self.X[mask].T
+            self._slot_idx[slot] = np.flatnonzero(mask)
+        return self._slot_idx[slot]
+
+    def _predict(self, cells) -> tuple[list[str], float]:
+        F = np.array([prep_cell(c) for c in cells], np.float32)
+        F /= np.linalg.norm(F, axis=1, keepdims=True) + 1e-9
+        S = self.X @ F.T  # alle Zellen in einem Matrixprodukt
+        pred, confs = [], []
+        for slot in range(len(F)):
+            idx = self._kandidaten(slot)
+            scores = S[idx, slot]
             k = min(self.k, len(scores))
             row = np.argpartition(-scores, k - 1)[:k]
-            labels, values = self.y[mask][row], scores[row]
+            labels, values = self.y[idx[row]], scores[row]
             vals, cnt = np.unique(labels, return_counts=True)
             p = str(vals[cnt.argmax()])
             if slot >= 6 and p in ("-", "_"):

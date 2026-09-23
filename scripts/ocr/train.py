@@ -80,6 +80,39 @@ def collect(ex, subset):
     return X, np.array(y), np.array(slots)
 
 
+DEDUP_COS = 0.99
+
+
+def dedup(X, y, slots, thr=DEDUP_COS):
+    """Beinahe-Duplikate raus: je (Slot, Label) faellt eine Zelle weg, wenn
+    eine bereits behaltene derselben Klasse Kosinus >= thr hat.
+
+    Bei fester Kamera ist fast jede Zelle eine Kopie derselben Ziffer
+    (Slot 0 ist immer eine 3). Ungedeckelt wuchs das Modell bis zum
+    23.09.2026 auf 262k Zellen: 153 MB model.npz (GitHub nimmt max.
+    100 MB) und ~670 MB RAM im Add-on. Gemessen am Holdout 15.-23.09.:
+    0.99 haelt die Accuracy (0.9891 vs 0.9892 ungedeckelt, gleiche
+    Konfidenz-Verteilung) bei 44 % der Basis; 0.985 kippte beim Split
+    01.09. auf 0.929, gleichmaessiges Ausduennen kostete 1-2 Punkte."""
+    keep = []
+    for key in sorted(set(zip(slots.tolist(), y.tolist()))):
+        idx = np.flatnonzero((slots == key[0]) & (y == key[1]))[::-1]  # neueste zuerst
+        kept = np.empty((0, X.shape[1]), X.dtype)
+        for c in range(0, len(idx), 256):
+            chunk = idx[c:c + 256]
+            V = X[chunk]
+            frei = ((V @ kept.T).max(axis=1) < thr if len(kept)
+                    else np.ones(len(chunk), bool))
+            sel = []
+            for j in np.flatnonzero(frei):
+                if not sel or (V[sel] @ V[j]).max() < thr:
+                    sel.append(j)
+            kept = np.vstack([kept, V[sel]])
+            keep.extend(chunk[sel].tolist())
+    keep = np.sort(np.array(keep, dtype=int))
+    return X[keep], y[keep], slots[keep]
+
+
 def augment(X, y, slots):
     """Shift-Varianten (+-1/2px) fuer Ziffern-Zellen in die kNN-Basis:
     dieselbe Ziffer sitzt je Box leicht versetzt — so generalisiert sie
@@ -114,9 +147,12 @@ def main():
 
     # Zeitlicher Split: letzte 25% als Holdout
     cut = int(len(samples) * 0.75)
-    Xtr, ytr, str_ = collect(ex, samples[:cut])
+    Xtr0, ytr0, str0 = collect(ex, samples[:cut])
     Xte, yte, ste = collect(ex, samples[cut:])
-    Xtr, ytr, str_ = augment(Xtr, ytr, str_)
+    entdoppelt = dedup(Xtr0, ytr0, str0)
+    print(f"Dedup (Kosinus {DEDUP_COS}): {len(ytr0)} -> "
+          f"{len(entdoppelt[1])} Zellen im Training")
+    Xtr, ytr, str_ = augment(*entdoppelt)
     print(f"Digit-Zellen: {len(ytr)} Training (mit Shift-Augmentierung), "
           f"{len(yte)} Test")
     print("Klassen:", dict(sorted(Counter(ytr).items())))
@@ -157,11 +193,11 @@ def main():
     else:
         print("End-to-End: übersprungen (kWh-only Labels im Holdout)")
 
-    # Finales Modell: ALLE Daten (Training+Holdout, augmentiert) als kNN-Basis
-    Xte_a, yte_a, ste_a = augment(Xte, yte, ste)
-    Xall = np.concatenate([Xtr, Xte_a])
-    yall = np.concatenate([ytr, yte_a])
-    sall = np.concatenate([str_, ste_a])
+    # Finales Modell: ALLE Daten (Training+Holdout, entdoppelt, augmentiert)
+    # als kNN-Basis
+    Xall, yall, sall = augment(*dedup(np.concatenate([Xtr0, Xte]),
+                                      np.concatenate([ytr0, yte]),
+                                      np.concatenate([str0, ste])))
     np.savez_compressed(MODEL_FILE, X=Xall.astype(np.float16), y=yall,
                         slots=sall, anchor=ex._anchor_ref)
     print(f"Modell ({len(yall)} Zellen) -> {MODEL_FILE}")
