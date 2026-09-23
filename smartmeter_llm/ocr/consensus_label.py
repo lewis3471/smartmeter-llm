@@ -81,7 +81,7 @@ def era_for(day: str) -> tuple[int, int]:
 
 def era_ok(k, day: str):
     lo, hi = era_for(day)
-    return isinstance(k, int) and lo <= k <= hi
+    return isinstance(k, int) and lo <= k <= hi and k <= KWH_MAX  # auch bei Hand-Override
 
 
 def main():
