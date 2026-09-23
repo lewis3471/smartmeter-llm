@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.9.4
+
+- OCR LAS AB 36300 DIE KWH OHNE FUEHRENDE 3 (36302 -> 6302, 55 von 61
+  Bildern am Nachmittag des 23.09.). Der zweite Kasten zeigt immer eine
+  3; das entdoppelte Modell (1.9.2) hat dort nur noch 1.4k statt 33k
+  Beispiele, und der Rueckfall auf andere Kaesten — gedacht fuer Ziffern,
+  die im eigenen Kasten nie vorkamen — liess die Nullen aus dem ersten
+  Kasten mitstimmen. Die Monotonie-Tore verwarfen jede dieser Lesungen,
+  der Segment-Dekoder sprang ein; daher das Rest-`retry`.
+- LocalReader (und gleichlautend der Holdout in train.py) fragt jetzt
+  zuerst den eigenen Kasten; der Rueckfall zaehlt nur, wenn er um mehr
+  als 0,005 Kosinus besser passt. 36300–36303: 60/61 statt 6/61, alle
+  anderen Pruefsaetze unveraendert; Holdout ab 01.09. -0,2 Punkte (neue
+  Ziffern an neuer Stelle, die der Segment-Dekoder abfaengt).
+- Das braucht das ADD-ON-UPDATE — es ist Lese-Code, kein Modell.
+- Test: ein knapper Rueckfall ueberstimmt den eigenen Kasten nicht, eine
+  wirklich neue Ziffer kommt weiter durch.
+
 ## 1.9.3
 
 - OCR LAS SEIT 1.9.2 NACHTS DIE 9 ALS 1 (36297 -> 36217). Ursache: das

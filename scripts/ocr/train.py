@@ -20,6 +20,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent))
 from extractor import Extractor, labels_for, minus_ratio, prep_cell, shifted_variants  # noqa: E402
+from local_reader import FALLBACK_MARGIN  # noqa: E402
 
 MODEL_FILE = Path(__file__).with_name("model.npz")
 FAILS_DIR = Path(__file__).with_name("train_fails")
@@ -173,18 +174,30 @@ def main():
           f"{len(yte)} Test")
     print("Klassen:", dict(sorted(Counter(ytr).items())))
 
+    kandidaten = {}
+
     def predict(X, slots, k=3):
+        # Wie LocalReader._predict: Beispiele aus demselben roten Kasten
+        # zuerst. Ziffern, die dort nie vorkamen, fallen auf die anderen
+        # Kaesten zurueck — aber nur, wenn die um FALLBACK_MARGIN besser
+        # passen (Begruendung dort).
         pred, conf = [], []
         for feature, slot in zip(X, slots):
-            # Prefer examples from the same red LCD box. Classes never seen
-            # there fall back to examples from the other boxes, so a new digit
-            # can still be recognised while its position-specific set grows.
-            present = set(ytr[str_ == slot])
-            mask = (str_ == slot) | ~np.isin(ytr, list(present))
-            scores = feature @ Xtr[mask].T
+            if slot not in kandidaten:
+                present = set(ytr[str_ == slot])
+                kandidaten[slot] = (np.flatnonzero(str_ == slot),
+                                    np.flatnonzero((str_ != slot)
+                                                   & ~np.isin(ytr, list(present))))
+            own, fb = kandidaten[slot]
+            so = Xtr[own] @ feature
+            sf = Xtr[fb] @ feature
+            if len(fb) and (not len(own) or sf.max() > so.max() + FALLBACK_MARGIN):
+                idx, scores = np.concatenate([own, fb]), np.concatenate([so, sf])
+            else:
+                idx, scores = own, so
             kk = min(k, len(scores))
             row = np.argpartition(-scores, kk - 1)[:kk]
-            labels, values = ytr[mask][row], scores[row]
+            labels, values = ytr[idx[row]], scores[row]
             vals, cnt = np.unique(labels, return_counts=True)
             pred.append(vals[cnt.argmax()])
             conf.append(float(values.mean()))
