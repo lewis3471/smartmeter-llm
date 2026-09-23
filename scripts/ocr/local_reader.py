@@ -59,7 +59,7 @@ class LocalReader:
             scores = S[idx, slot]
             k = min(self.k, len(scores))
             row = np.argpartition(-scores, k - 1)[:k]
-            labels, values = self.y[idx][row], scores[row]
+            labels, values = self.y[idx[row]], scores[row]
             vals, cnt = np.unique(labels, return_counts=True)
             p = str(vals[cnt.argmax()])
             if slot >= 6 and p in ("-", "_"):
