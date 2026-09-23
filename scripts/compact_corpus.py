@@ -19,7 +19,7 @@ sich per Auto-Re-Clone (run.sh), GitHub darf wachsen.
 """
 import re
 import sys
-import time
+from datetime import date
 from pathlib import Path
 
 EVENTS_DAYS = 10
@@ -35,8 +35,16 @@ def day_of(name: str) -> str | None:
     return m.group(1) if m else None
 
 
+def age_days(d: str, today: date) -> int:
+    """Echte Tage. Frueher stand hier today - int(d) auf YYYYMMDD-Zahlen:
+    ueber eine Monatsgrenze hinweg ist das Unsinn (20260923 - 20260831
+    = 92), und der 45-Tage-Schnitt haette am 23.09. den ganzen August
+    geloescht, events/ am Monatsersten sogar den Vortag."""
+    return (today - date(int(d[:4]), int(d[4:6]), int(d[6:8]))).days
+
+
 def main():
-    today = int(time.strftime("%Y%m%d"))
+    today = date.today()
     removed = freed = 0
 
     def rm(f: Path):
@@ -51,7 +59,7 @@ def main():
         if not d:
             continue
         files = sorted(daydir.iterdir())
-        if today - int(d) > EVENTS_DAYS:
+        if age_days(d, today) > EVENTS_DAYS:
             for f in files:
                 rm(f)
         else:
@@ -67,18 +75,18 @@ def main():
     # control/: Alter
     for f in sorted(ROOT.glob("control/*.jsonl")):
         d = day_of(f.name)
-        if d and today - int(d) > CONTROL_DAYS:
+        if d and age_days(d, today) > CONTROL_DAYS:
             rm(f)
 
     # Roh-Evidence: Alter (auto/ + quarantine/ bleiben)
     for pattern in ("disagreements/*", "seg/*"):
         for f in sorted(ROOT.glob(pattern)):
             d = day_of(f.name)
-            if d and today - int(d) > RAW_DAYS and f.is_file():
+            if d and age_days(d, today) > RAW_DAYS and f.is_file():
                 rm(f)
     for daydir in sorted(ROOT.glob("2*/")):
         d = day_of(daydir.name)
-        if d and today - int(d) > RAW_DAYS:
+        if d and age_days(d, today) > RAW_DAYS:
             for f in daydir.iterdir():
                 rm(f)
             daydir.rmdir()

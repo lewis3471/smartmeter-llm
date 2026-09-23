@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.9.2
+
+- OCR NEU TRAINIERT, erstmals seit 26.07. Das alte Modell kannte den
+  heutigen Zaehlerstand (36.2xx kWh) nicht und las die kWh-Zeile auf
+  299 von 300 frischen Bildern falsch — mit Konfidenz ueber 0,85.
+  Segmenttest, Gemini-Kreuzcheck und kWh-Tore haben das abgefangen;
+  daher der Dauer-Status `retry` und "OCR Retrain faellig" (seg=787,
+  disagree=173 in 6 h). Zeitlicher Holdout 15.–23.09. (nie trainiert):
+  alt 84,4 %, neu 98,9 % Zellen-Accuracy; Holdout-Gate von train.py
+  0,9993. Das Modell kommt per Git-Sync auch ohne Add-on-Update an.
+- MODELL ENTDOPPELT (train.py, Kosinus 0,99 je Slot und Ziffer).
+  Ungedeckelt waere es auf 262k Zellen gewachsen: 153 MB model.npz,
+  ueber GitHubs 100-MB-Grenze, und ~670 MB RAM im Add-on. Jetzt 107k
+  Zellen / 56 MB bei gleicher Accuracy und gleicher Konfidenz-
+  Verteilung; gleichmaessiges Ausduennen haette 1–2 Punkte gekostet.
+- LOKALES OCR 20x SCHNELLER (256 -> 13 ms pro Bild): die Slot-Masken
+  werden einmal berechnet statt fuer jede Zelle jedes Bildes neu samt
+  Kopie der halben Modellmatrix, alle Zellen gehen in ein
+  Matrixprodukt. Ergebnisse identisch auf 387 Pruefbildern.
+- compact_corpus.py (make retrain) rechnete Tage als Differenz von
+  YYYYMMDD-Zahlen — ueber Monatsgrenzen Unsinn (20260923 - 20260831 =
+  92): der 45-Tage-Schnitt haette heute den ganzen August geloescht,
+  events/ am Monatsersten den Vortag. Jetzt echte Kalendertage.
+
 ## 1.9.1
 
 - EVIDENCE-SYNC STAND WIEDER, seit 12.09. 22:47 — diesmal an "cannot
