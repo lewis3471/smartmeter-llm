@@ -1,0 +1,1 @@
+{"accepted_kwh": 36369, "error": "verworfen: kwh<=0 — LCD vermutlich dunkel/unlesbar", "failures": 1, "kind": "rejected_reading", "timestamp": "2026-09-29T01:19:03+0200"}
