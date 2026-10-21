@@ -1,0 +1,1 @@
+{"accepted_kwh": 36675, "error": "HTTPSConnectionPool(host='generativelanguage.googleapis.com', port=443): Read timed out. (read timeout=30)", "failures": 1, "kind": "rejected_reading", "timestamp": "2026-10-21T07:33:16+0200"}
