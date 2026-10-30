@@ -1,0 +1,1 @@
+{"accepted_kwh": 36865, "error": "verworfen: Vorzeichen-Flip verdächtig (-265 -> +255)", "failures": 1, "kind": "rejected_reading", "timestamp": "2026-10-30T11:07:16+0100"}
