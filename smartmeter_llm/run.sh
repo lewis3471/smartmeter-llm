@@ -85,12 +85,27 @@ if bashio::config.true 'git_sync_enabled'; then
             bashio::log.info "Migriere Feedback-Repo auf Blobless-Clone"
             rm -rf "$FEEDBACK_REPO"
         fi
-        # Selbstbegrenzung: waechst .git ueber 1 GB (gefetchte Blobs +
-        # eigene Evidence-Commits sammeln sich), frisch re-clonen —
-        # shallow+blobless startet bei Groesse der aktuellen Arbeitskopie
+        # Selbstbegrenzung des NUC-Klons — zwei Trigger:
+        # 1) Arbeitskopie (training-data): das Gegenmittel ist die
+        #    Kompaktierung, kein Re-Clone — ein Re-Clone holt denselben
+        #    HEAD-Baum wieder herunter und schrumpft die Arbeitskopie nicht.
+        # 2) .git als Sicherheitsnetz: ein blobless+shallow-Klon packt den
+        #    kompletten HEAD-Baum aus und startet dadurch schon bei ~1,4 GB —
+        #    der alte 1-GB-Trigger feuerte daher bei JEDEM Start und
+        #    re-clonte grundlos (~1,4 GB Download pro Neustart). Erst wenn
+        #    die Retention im Trainingslauf HEAD unter 1 GB drueckt, liegt
+        #    ein Frisch-Klon wieder unter der Schwelle. Schwelle daher
+        #    deutlich ueber der Frisch-Klon-Groesse: 2,5 GB.
+        if [ -d "$FEEDBACK_REPO/training-data" ] && \
+           [ "$(du -sm "$FEEDBACK_REPO/training-data" | cut -f1)" -gt 2048 ]; then
+            bashio::log.info "Feedback-Korpus > 2 GB — Kompaktierung sofort"
+            python3 "$FEEDBACK_REPO/scripts/compact_corpus.py" \
+                "$FEEDBACK_REPO/training-data" --scope events || \
+                bashio::log.error "compact_corpus fehlgeschlagen"
+        fi
         if [ -d "$FEEDBACK_REPO/.git" ] && \
-           [ "$(du -sm "$FEEDBACK_REPO/.git" | cut -f1)" -gt 1024 ]; then
-            bashio::log.info "Feedback-Repo .git > 1GB — Re-Clone"
+           [ "$(du -sm "$FEEDBACK_REPO/.git" | cut -f1)" -gt 2560 ]; then
+            bashio::log.info "Feedback-Repo .git > 2,5 GB — Re-Clone"
             rm -rf "$FEEDBACK_REPO"
         fi
         if [ ! -d "$FEEDBACK_REPO/.git" ]; then
@@ -110,6 +125,22 @@ if bashio::config.true 'git_sync_enabled'; then
                 done
             ) &
             bashio::log.info "Feedback Git-Sync aktiv (alle ${GIT_SYNC_INTERVAL}s)"
+            # Stündliche NUC-Kompaktierung — bewusst NUR events/: reine
+            # Diagnose-Frames, nie Trainingsmaterial. seg/ und disagreements/
+            # sind das Label-Gold und schneidet ausschliesslich die Retention
+            # im make retrain der Trainings-Maschine, NACHdem der Konsens-
+            # Labeler sie verarbeitet hat — loescht sie der NUC vorher, sind
+            # sie unwiederbringlich weg (die Klon-Kopie ist die einzige).
+            (
+                while true; do
+                    sleep 3600
+                    if [ -f "$FEEDBACK_REPO/scripts/compact_corpus.py" ]; then
+                        python3 "$FEEDBACK_REPO/scripts/compact_corpus.py" \
+                            "$FEEDBACK_REPO/training-data" --scope events || \
+                            bashio::log.error "compact_corpus fehlgeschlagen"
+                    fi
+                done
+            ) &
             if [ -f "$FEEDBACK_REPO/scripts/ocr/model.npz" ]; then
                 export MODEL_FILE="$FEEDBACK_REPO/scripts/ocr/model.npz"
                 bashio::log.info "OCR-Modell aus Feedback-Repo (Hot-Reload bei Retraining/Pull)"
