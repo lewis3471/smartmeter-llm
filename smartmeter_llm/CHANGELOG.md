@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.6
+
+- Das Add-on enthält das neue OCR-Modell aus 23.634 Trainings- und
+  Prüfaufnahmen. Bei 5.909 zurückgehaltenen Bildern erkannte es 99,63 %
+  der 35.454 kWh-Ziffern korrekt. Für diese Bilder lagen nur kWh-Labels vor.
+
 ## 1.9.5
 
 - NUC-KORPUS-SELBSTBEGRENZUNG (Issue #13): Der Feedback-Klon auf dem
