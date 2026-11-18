@@ -119,10 +119,13 @@ CROSS_CHECK_S = float(os.environ.get("CROSS_CHECK_S", "300"))
 _last_cross_check = 0.0
 
 _local_reader = None
+_model_mtime: int | None = None
 if READER_MODE in ("local", "hybrid"):
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent / "ocr"))
-        from local_reader import LocalReader
+        from local_reader import MODEL_FILE, LocalReader
+        # Der erste Sync kann das gebuendelte Modell vor dem ersten Poll ersetzen.
+        _model_mtime = MODEL_FILE.stat().st_mtime_ns
         _local_reader = LocalReader()
     except Exception as e:
         print(f"Lokales OCR nicht verfuegbar ({e})"
@@ -3350,7 +3353,6 @@ def control(grid_w: int, state: dict) -> tuple[int | None, float | None]:
 # der Sync liefert nur Evidence; trainiert wird nach Label-Audit.
 AUTO_TRAIN_HOUR = int(os.environ.get(
     "AUTO_TRAIN_HOUR", os.environ.get("RETRAIN_HOUR", "-1")))
-_model_mtime: float | None = None
 
 
 def maybe_reload_model():
@@ -3361,11 +3363,8 @@ def maybe_reload_model():
         return
     try:
         from local_reader import MODEL_FILE, LocalReader
-        mt = MODEL_FILE.stat().st_mtime
+        mt = MODEL_FILE.stat().st_mtime_ns
     except OSError:
-        return
-    if _model_mtime is None:
-        _model_mtime = mt
         return
     if mt != _model_mtime:
         try:

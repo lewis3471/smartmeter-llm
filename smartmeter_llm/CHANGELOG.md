@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.9.7
+
+- Der NUC lädt für den Feedback-Sync nur den aktuellen Commit, die
+  Verzeichnisbäume und das OCR-Modell. Historische Bilder bleiben auf dem
+  Git-Server. Nach dem Update ersetzt der Sync den bisherigen Klon, sobald
+  alle lokalen Änderungen übertragen sind. Im Test mit dem Korpus und
+  Modell aus 1.9.6 sank `/data/feedback-repo` von 1,66 GiB auf 199 MiB.
+- Der Sync bestätigt hochgeladene Dateien anhand ihres Git-Inhalts und
+  räumt sie auch nach einem unterbrochenen Push auf. Wächst der lokale
+  Git-Cache durch neue Uploads, erneuert der Sync den Klon im Betrieb.
+- Die stündliche Begrenzung der Diagnosebilder in `/data/samples/events`
+  läuft auch bei ausgeschaltetem Git-Sync und bei Verbindungsfehlern.
+
 ## 1.9.6
 
 - Das Add-on enthält das neue OCR-Modell aus 23.634 Trainings- und

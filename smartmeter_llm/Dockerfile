@@ -5,6 +5,7 @@ RUN apk add --no-cache python3 py3-pip py3-numpy py3-opencv git openssh-client r
 COPY meter_reader.py /app/scripts/meter_reader.py
 COPY ac_guard.py /app/scripts/ac_guard.py
 COPY feedback.py /app/scripts/feedback.py
+COPY feedback_checkout.py /app/scripts/feedback_checkout.py
 COPY nuc_feedback_sync.py /app/scripts/nuc_feedback_sync.py
 COPY compact_corpus.py /app/scripts/compact_corpus.py
 COPY ocr/ /app/scripts/ocr/
