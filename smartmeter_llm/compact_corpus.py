@@ -15,21 +15,10 @@ Regeln (--scope all, Trainings-Maschine, NACH dem Labeln im Retrain-Lauf):
                   ihre Essenz lebt laenger in den Konsens-Labels
 - auto/ und quarantine/: unangetastet (das ist der kuratierte Korpus)
 
---scope events (NUC, run.sh): schneidet NUR events/ — und wird auf dem
-samples-Verzeichnis ausgefuehrt, NIE auf der Git-Arbeitskopie des
-Klons: Loeschungen dort sind unversioniert, der Sync holt sie vor dem
-Pull zurueck (bei 64k Pfaden scheitert das an der Argumentlaenge) oder
-pusht sie im Zeitfenster zwischen Pull und Commit ungewollt mit. Die
-versionierten events-Altlasten im Repo raeumt stattdessen der Sync
-selbst per git rm ab (nuc_feedback_sync.retention). Disagreements/seg
-sind das Label-Gold — solange kein Retrain gelaufen ist, hat der
-Konsens-Labeler sie nie gesehen; die Klon-Kopie ist die einzige
-(samples/ wird nach dem Push geprunt). Die schneidet daher
-ausschliesslich die Retention im make retrain der Trainings-Maschine,
-nach dem Labeln.
-
-Nur Arbeitskopie: die Git-Historie waechst weiter — der NUC begrenzt
-sich per Auto-Re-Clone (run.sh), GitHub darf wachsen.
+--scope events (NUC, run.sh): begrenzt die Diagnosebilder in samples/.
+Versionierte events-Altlasten entfernt nuc_feedback_sync.retention() per
+git rm. seg/ und disagreements/ bleiben bis zum bestaetigten Upload in
+samples/. Danach haelt der Git-Server sie fuer das naechste Retrain vor.
 """
 import argparse
 import re

@@ -119,9 +119,18 @@ git_deploy_key_base64: paste-one-line-base64-key-here
 git_sync_interval_s: 30
 ```
 
-On first start the add-on clones the repository into its persistent `/data`,
-then uploads evidence and retrained models itself. No HA host shell access is
-needed.
+With feedback enabled, the add-on keeps a shallow, sparse checkout in
+`/data/feedback-repo`. It uploads new OCR evidence and downloads the trained
+model from `git_branch`. Version 1.9.6 automatically replaces the old checkout
+after pending changes have synced. It first frees the space occupied by the
+archived working files, then builds the replacement checkout (about 110 MiB
+with the November 18 corpus).
+
+To measure the result inside the add-on container, run
+`du -sh /data/feedback-repo /data/samples`. The first figure includes the Git
+object cache. Home Assistant Supervisor keeps its own Store checkout under
+`/data/apps/git/` on the host. That copy still follows the add-on repository
+and includes the corpus on `main`.
 
 Create the one-line Base64 value on a trusted Mac with
 `base64 < ~/.ssh/smartmeter_ha_deploy | tr -d '\n' | pbcopy`, then paste it

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synchronize NUC OCR evidence, retrain, and publish the model.
+"""Sync NUC OCR evidence and pull the trained model.
 
 Läuft aus einem beschreibbaren Git-Checkout (auf dem NUC: /data/feedback-repo,
 Auth über GIT_SSH_COMMAND mit Deploy-Key). Ablauf pro Lauf:
@@ -27,6 +27,7 @@ bewusst: manuell oder via AUTO_TRAIN_HOUR im meter_reader.
 """
 
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -47,8 +48,8 @@ def log(msg: str, err: bool = False):
           file=sys.stderr if err else sys.stdout, flush=True)
 
 
-def run(args, cwd: Path, check=True):
-    return subprocess.run(args, cwd=cwd, text=True, check=check,
+def run(args, cwd: Path, check=True, *, input=None):
+    return subprocess.run(args, cwd=cwd, text=True, check=check, input=input,
                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
@@ -89,13 +90,9 @@ def halbfertiger_lauf(repo: Path) -> tuple[list, list]:
     aus samples/ neu kopiert (dort bleibt sie bis zum erfolgreichen
     Push), und Code hat in diesem Klon nichts zu suchen — die gueltige
     Fassung ist die im Repository."""
-    roh = run(["git", "status", "--porcelain", "--untracked-files=no"],
-              repo).stdout
+    roh = run(["git", "diff", "--no-renames", "--name-only", "-z"], repo).stdout
     innen, aussen = [], []
-    for z in roh.split("\n"):
-        if len(z) < 4 or z[1] == " ":          # Spalte 2 = Arbeitskopie
-            continue
-        pfad = z[3:]
+    for pfad in filter(None, roh.split("\0")):
         (innen if pfad.startswith("training-data/") else aussen).append(pfad)
     return innen, aussen
 
@@ -143,7 +140,8 @@ def gestagte_weiterfuehrung(repo: Path) -> bool:
             f"aus einem abgewuergten Lauf — unstaged, nichts committet "
             f"({', '.join(aussen[:3])}{' ...' if len(aussen) > 3 else ''})",
             err=True)
-        r = run(["git", "reset", "--"] + aussen, repo, check=False)
+        r = run(["git", "--literal-pathspecs", "reset", "--pathspec-from-file=-",
+                 "--pathspec-file-nul"], repo, check=False, input="\0".join(aussen) + "\0")
         if r.returncode:
             log(f"Reset der gestagten Code-Aenderungen fehlgeschlagen — "
                 f"Lauf uebersprungen, nichts committet: "
@@ -201,39 +199,28 @@ def keep_routine(name: str) -> bool:
     return zlib.crc32(name.encode()) % ROUTINE_KEEP_EVERY == 0
 
 
-def retention(repo: Path):
-    """Versionierte events-Altlasten aus dem Repo raeumen — NUR direkt nach
-    erfolgreichem Pull und ausschliesslich per git rm: ein Aufruf je
-    Tagesordner haelt Index und Arbeitskopie konsistent. Die Loeschungen
-    landen bewusst als eigener (Mit-)Commit auf GitHub — sie sind die
-    Anwort auf Issue #13, nicht ein Nebeneffekt der Kompaktierung.
-
-    Warum keine Datei-Loeschung in der Arbeitskopie (compact_corpus auf
-    dem Klon): Der Sync stellt halbfertige Aenderungen vor dem Pull per
-    `git checkout -- <pfade>` wieder her — bei 64k Pfaden scheitert das
-    an der Argumentlaenge, und zwischen Pull und `git add` laeuft ein
-    Zeitfenster, in dem der Sync Loeschungen mitpusht. Beides geht nur,
-    wenn Retention niemals die Arbeitskopie des Klons anfasst: Die
-    Add-on-Runtime limitiert events/ lokal in samples/ (gebuendeltes
-    compact_corpus.py --scope events), seg/ und disagreements/ schneidet
-    die Retention im make retrain der Trainings-Maschine."""
+def retention(repo: Path, sparse_options: list[str]):
+    """Versionierte Diagnosebilder nach dem Pull tageweise aus Git entfernen.
+    Die Tagesordner kommen aus dem Commit-Baum, auch im Sparse-Checkout.
+    Rohdaten fuer das Training bereinigt make retrain nach dem Labeln."""
     today = date.today()
-    ev = repo / "training-data" / "events"
-    if not ev.is_dir():
-        return
+    # Enumerate trees, including days outside the model-only checkout.
+    paths = run(["git", "ls-tree", "-d", "-z", "--name-only", "HEAD", "--",
+                 "training-data/events/"], repo).stdout
     removed = 0
-    for daydir in sorted(ev.iterdir()):
-        m = re.match(r"(20\d{6})", daydir.name)
-        if not m or not daydir.is_dir():
+    for path in paths.split("\0"):
+        day = Path(path).name
+        if not re.fullmatch(r"20\d{6}", day):
             continue
-        d = date(int(m.group(1)[:4]), int(m.group(1)[4:6]),
-                 int(m.group(1)[6:8]))
-        if (today - d).days <= EVENTS_DAYS:
+        try:
+            age = (today - date(int(day[:4]), int(day[4:6]), int(day[6:]))).days
+        except ValueError:
             continue
-        r = run(["git", "rm", "-r", "-q", "--",
-                 f"training-data/events/{daydir.name}"], repo, check=False)
+        if age <= EVENTS_DAYS:
+            continue
+        r = run(["git", "rm", *sparse_options, "-r", "-q", "--", path], repo, check=False)
         if r.returncode:
-            log(f"git rm training-data/events/{daydir.name} fehlgeschlagen: "
+            log(f"git rm {path} fehlgeschlagen: "
                 f"{r.stdout.strip()[-200:]}", err=True)
             return
         removed += 1
@@ -251,78 +238,91 @@ def valid_label(d: dict) -> bool:
             and d["kwh"] != 888888 and abs(d["w"]) not in (88888, 888888))
 
 
-def collect_evidence(samples: Path, evidence: Path) -> tuple[list[Path], int]:
-    """Kopiert Neues aus samples/ nach training-data/. -> (kopierte Quellen,
-    Anzahl neuer Labels)."""
-    copied, new_labels = [], 0
-    # 1) Disagreements + Seg-Evidence: vollstaendig (das ist das Gold).
-    #    events/ NICHT: Diagnose-Frames ohne Trainingswert, bleiben lokal
-    #    in samples/ (Retention im Add-on-Run) und kommen nicht ins Git.
+def evidence_paths(samples: Path) -> list[Path]:
+    paths = []
     for sub in ("disagreements", "seg"):
-        src = samples / sub
-        if not src.exists():
-            continue
-        for f in sorted(src.rglob("*")):
-            if not f.is_file():
-                continue
-            rel = f.relative_to(samples)
-            dst = evidence / rel
-            if dst.exists():
-                continue
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(f, dst)
-            copied.append(f)
-    # 2) KEINE Roh-Gemini-Promotion mehr nach auto/ — Labels entstehen nur
-    #    noch durch den Konsens-Labeler (scripts/ocr/consensus_label.py) auf
-    #    der Trainings-Maschine. Rohe Gemini-Labels (W-Dreher, trunkierte
-    #    kWh, verschluckte Vorzeichen) waren die Haupt-Vergiftungsquelle.
-    # 3) Routine-Samples (YYYYMMDD/): nur jedes N-te fuer die Klassen-Balance
+        paths.extend(f.relative_to(samples) for f in sorted((samples / sub).rglob("*"))
+                     if f.is_file())
+
     for jf in sorted(samples.glob("2*/*.json")):
-        if not keep_routine(jf.stem) or not jf.with_suffix(".jpg").exists():
-            continue
-        rel = jf.relative_to(samples)
-        dst = evidence / rel
-        if dst.exists():
+        jpg = jf.with_suffix(".jpg")
+        if not keep_routine(jf.stem) or not jpg.is_file():
             continue
         try:
-            if not valid_label(json.loads(jf.read_text())):
-                continue
+            if valid_label(json.loads(jf.read_text())):
+                paths.extend([jf.relative_to(samples), jpg.relative_to(samples)])
         except (OSError, ValueError):
             continue
+
+    paths.extend(f.relative_to(samples) for f in sorted(samples.glob("control/*.jsonl")))
+    return paths
+
+
+def evidence_blobs(repo: Path, paths: list[Path]) -> dict[Path, str]:
+    """Look up only pending names, without fetching any archived images."""
+    wanted = {f"training-data/{p.as_posix()}": p for p in paths}
+    if not wanted:
+        return {}
+    # On a large backlog, scan the tree once instead of passing the entire
+    # outbox on the command line. Both variants only need tree objects.
+    pathspec = list(wanted)
+    if sum(len(p.encode()) + 1 for p in pathspec) >= 32768:
+        pathspec = ["training-data"]
+    entries = run(["git", "--literal-pathspecs", "ls-tree", "-r", "-z", "HEAD", "--", *pathspec],
+                  repo).stdout
+    blobs = {}
+    for entry in entries.split("\0"):
+        if entry:
+            meta, path = entry.split("\t", 1)
+            if path in wanted:
+                mode, kind, oid = meta.split()
+                if kind != "blob" or mode not in ("100644", "100755"):
+                    raise ValueError(f"Expected a regular evidence file at {path}")
+                blobs[wanted[path]] = oid
+    return blobs
+
+
+def matches_blob(path: Path, oid: str) -> bool:
+    digest = hashlib.new("sha1" if len(oid) == 40 else "sha256")
+    digest.update(f"blob {path.stat().st_size}\0".encode())
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest() == oid
+
+
+def collect_evidence(samples: Path, evidence: Path, paths: list[Path], blobs: dict) -> int:
+    copied = 0
+    for rel in paths:
+        src = samples / rel
+        # Images/labels are immutable. Only the daily telemetry file grows.
+        if rel in blobs and (rel.parent != Path("control") or matches_blob(src, blobs[rel])):
+            continue
+        dst = evidence / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(jf, dst)
-        shutil.copy2(jf.with_suffix(".jpg"), dst.with_suffix(".jpg"))
-        copied.extend([jf, jf.with_suffix(".jpg")])
-        new_labels += 1
-    # 4) Regler-Telemetrie (control/*.jsonl): heutige Datei waechst noch und
-    #    wird nur kopiert (Overwrite); abgeschlossene Tage werden geprunt
-    ctl = samples / "control"
-    if ctl.exists():
-        (evidence / "control").mkdir(parents=True, exist_ok=True)
-        today = time.strftime("%Y%m%d")
-        for f in sorted(ctl.glob("*.jsonl")):
-            dst = evidence / "control" / f.name
-            if dst.exists() and dst.stat().st_size == f.stat().st_size:
-                continue
-            shutil.copy2(f, dst)
-            if f.stem != today:
-                copied.append(f)
-    return copied, new_labels
+        shutil.copy2(src, dst)
+        copied += 1
+    return copied
 
 
-def prune(samples: Path, synced: list[Path]):
-    """Nach erfolgreichem Push: synced Dateien loeschen (+ zugehoerige JPGs)
-    und alte, nicht ausgewaehlte Routine-Samples aufraeumen."""
+def prune(samples: Path, pending: list[Path], blobs: dict):
+    """Acknowledge exact files, also after retrying an interrupted push."""
+    active_control = Path("control") / time.strftime("%Y%m%d.jsonl")
     removed = 0
-    for f in synced:
-        for victim in {f, f.with_suffix(".jpg"), f.with_suffix(".json")}:
-            if victim.exists() and samples in victim.parents:
-                victim.unlink()
-                removed += 1
+    keep = set()
+    for rel in pending:
+        if rel == active_control:
+            continue
+        f = samples / rel
+        if rel in blobs and f.is_file() and matches_blob(f, blobs[rel]):
+            f.unlink()
+            removed += 1
+        else:
+            keep.add(f)
     cutoff = time.time() - PRUNE_AGE_DAYS * 86400
     for day_dir in samples.glob("2*/"):
         for f in list(day_dir.iterdir()):
-            if f.is_file() and f.stat().st_mtime < cutoff:
+            if f not in keep and f.is_file() and f.stat().st_mtime < cutoff:
                 f.unlink()
                 removed += 1
         if not any(day_dir.iterdir()):
@@ -339,6 +339,8 @@ def main():
     parser.add_argument("--push", action="store_true")
     args = parser.parse_args()
     repo, samples = args.repo.resolve(), args.samples.resolve()
+    sparse = run(["git", "config", "--bool", "core.sparseCheckout"], repo, check=False)
+    sparse_options = ["--sparse"] if sparse.stdout.strip() == "true" else []
 
     if args.push:
         gestagte_weiterfuehrung(repo)
@@ -355,8 +357,11 @@ def main():
                     f"Stand des Repositories "
                     f"({', '.join(aussen[:3])}{' ...' if len(aussen) > 3 else ''})",
                     err=True)
-            run(["git", "checkout", "--", *innen, *aussen], repo, check=False)
-        r = run(["git", "pull", "--rebase", "origin", "HEAD"], repo, check=False)
+            run(["git", "--literal-pathspecs", "restore", "--ignore-skip-worktree-bits",
+                 "--pathspec-from-file=-", "--pathspec-file-nul"], repo,
+                input="\0".join(innen + aussen) + "\0")
+        branch = run(["git", "symbolic-ref", "--short", "HEAD"], repo).stdout.strip()
+        r = run(["git", "pull", "--rebase", "origin", branch], repo, check=False)
         if r.returncode and "would be overwritten" in r.stdout:
             # Selbstheilung statt Handarbeit auf dem NUC: die Reste der
             # Sync-Panne blockieren den Pull. Sie sind reine Altlast — die
@@ -373,20 +378,22 @@ def main():
                         (repo / rel).unlink()
                     except OSError as e:
                         log(f"  {rel}: {e}", err=True)
-                r = run(["git", "pull", "--rebase", "origin", "HEAD"],
+                r = run(["git", "pull", "--rebase", "origin", branch],
                         repo, check=False)
         if r.returncode:
             log(f"git pull fehlgeschlagen, Lauf uebersprungen: "
                 f"{r.stdout.strip()[-200:]}", err=True)
             return
-        retention(repo)
+        retention(repo, sparse_options)
     evidence = repo / "training-data"
     evidence.mkdir(exist_ok=True)
-    copied, new_labels = collect_evidence(samples, evidence)
-    log(f"Evidence: {len(copied)} Dateien kopiert, {new_labels} neue Labels")
+    pending = evidence_paths(samples)
+    blobs = evidence_blobs(repo, pending)
+    copied = collect_evidence(samples, evidence, pending, blobs)
+    log(f"Evidence: {copied} Dateien kopiert")
 
-    if changed(repo, "training-data"):
-        run(["git", "add", "-f", "training-data"], repo)
+    if copied or changed(repo, "training-data"):
+        run(["git", "add", *sparse_options, "-f", "--", "training-data"], repo)
         fremd = fremde_aenderungen(repo)
         if fremd:
             log(f"ABBRUCH: Sync wuerde {len(fremd)} Datei(en) ausserhalb "
@@ -410,7 +417,9 @@ def main():
             log("training-data nicht vollstaendig committet — "
                 "Prune uebersprungen", err=True)
             return
-        prune(samples, copied)
+        prune(samples, pending, evidence_blobs(repo, pending))
+        if sparse_options:
+            run(["git", "sparse-checkout", "reapply"], repo)
 
 
 if __name__ == "__main__":

@@ -59,6 +59,17 @@ else
     export SAVE_SAMPLES_DIR=""
 fi
 
+# Diagnosebilder entstehen auch ohne Git oder bei ausgefallenem Remote.
+if [ -n "$SAVE_SAMPLES_DIR" ]; then
+    (
+        while true; do
+            python3 /app/scripts/compact_corpus.py "$SAVE_SAMPLES_DIR" --scope events || \
+                bashio::log.error "compact_corpus fehlgeschlagen"
+            sleep 3600
+        done
+    ) &
+fi
+
 # Optional HAOS-native feedback worker.  It owns a clone under /data, never
 # modifies the read-only add-on source, and keeps the deploy key in /data/git.
 if bashio::config.true 'git_sync_enabled'; then
@@ -78,78 +89,38 @@ if bashio::config.true 'git_sync_enabled'; then
             rm -f /data/git/deploy_key
         else
             export GIT_SSH_COMMAND='ssh -i /data/git/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new'
-        FEEDBACK_REPO=/data/feedback-repo
-        # Einmalige Migration: alte Voll-Clones auf Blobless umstellen
-        if [ -d "$FEEDBACK_REPO/.git" ] && \
-           [ -z "$(git -C "$FEEDBACK_REPO" config --get remote.origin.partialclonefilter)" ]; then
-            bashio::log.info "Migriere Feedback-Repo auf Blobless-Clone"
-            rm -rf "$FEEDBACK_REPO"
-        fi
-        # Selbstbegrenzung des NUC:
-        # Retention fasst die Git-Arbeitskopie NIE an. Loeschungen dort
-        # sind unversioniert: Der Sync holt sie vor dem Pull zurueck (bei
-        # 64k Pfaden scheitert das an der Argumentlaenge) oder pusht sie
-        # im Zeitfenster zwischen Pull und Commit ungewollt mit. Daher:
-        # events/ wird lokal im samples-Verzeichnis begrenzt (gebuendelte
-        # Fassung, siehe unten), und versionierte events-Altlasten raeumt
-        # der Sync selbst per git rm ab. Sicherheitsnetz bleibt .git:
-        # ein blobless+shallow-Klon packt den kompletten HEAD-Baum aus
-        # und startet dadurch schon bei ~1,4 GB — der alte 1-GB-Trigger
-        # feuerte bei JEDEM Start (~1,4 GB Download pro Neustart). Die
-        # Schwelle liegt deutlich ueber der Frisch-Klon-Groesse: 2,5 GB.
-        if [ -d "$FEEDBACK_REPO/.git" ] && \
-           [ "$(du -sm "$FEEDBACK_REPO/.git" | cut -f1)" -gt 2560 ]; then
-            bashio::log.info "Feedback-Repo .git > 2,5 GB — Re-Clone"
-            rm -rf "$FEEDBACK_REPO"
-        fi
-        if [ ! -d "$FEEDBACK_REPO/.git" ]; then
-            git clone --filter=blob:none --depth 50 --branch "$GIT_BRANCH" "$GIT_REPO" "$FEEDBACK_REPO" || \
-                bashio::log.error "Git-Clone fuer Feedback fehlgeschlagen"
-        fi
-        if [ -d "$FEEDBACK_REPO/.git" ]; then
-            git -C "$FEEDBACK_REPO" config user.name smartmeter-ha
-            git -C "$FEEDBACK_REPO" config user.email smartmeter-ha@local
+            FEEDBACK_REPO=/data/feedback-repo
             GIT_SYNC_INTERVAL=$(bashio::config 'git_sync_interval_s')
-            # Events-Retention auf dem samples-Verzeichnis — ausserhalb des
-            # Git-Checkouts, mit der GEBUENDELTEN Fassung aus dem Add-on-
-            # Image: Der Startaufruf laeuft vor dem ersten Pull, im Klon
-            # kann noch die alte Fassung liegen — die liest den Pfad aus
-            # argv[1] und ignoriert --scope events stillschweigend.
-            compact_events() {
-                if [ -d "$SAVE_SAMPLES_DIR/events" ]; then
-                    python3 /app/scripts/compact_corpus.py \
-                        "$SAVE_SAMPLES_DIR" --scope events || \
-                        bashio::log.error "compact_corpus fehlgeschlagen"
+            export MODEL_FILE=/data/git/model.npz
+            if [ ! -f "$MODEL_FILE" ]; then
+                ln -sf /app/scripts/ocr/model.npz "$MODEL_FILE"
+            fi
+            # Pin the last model across clone failures and rotation. Both
+            # paths live under /data, so a hard link costs no second copy.
+            publish_model() {
+                local model="$FEEDBACK_REPO/scripts/ocr/model.npz"
+                if [ -f "$model" ] && [ ! "$model" -ef "$MODEL_FILE" ]; then
+                    if [ ! "$model" -ef "$MODEL_FILE.next" ]; then
+                        ln -f "$model" "$MODEL_FILE.next" || return 1
+                    fi
+                    mv -f "$MODEL_FILE.next" "$MODEL_FILE"
                 fi
             }
-            compact_events
+            publish_model
             (
                 while true; do
-                    python3 /app/scripts/nuc_feedback_sync.py --repo "$FEEDBACK_REPO" \
-                        --samples "$SAVE_SAMPLES_DIR" --push || \
-                        bashio::log.error "Feedback Git-Sync fehlgeschlagen; erneuter Versuch folgt"
+                    if python3 /app/scripts/feedback_checkout.py "$FEEDBACK_REPO" "$GIT_REPO" "$GIT_BRANCH"; then
+                        python3 /app/scripts/nuc_feedback_sync.py --repo "$FEEDBACK_REPO" \
+                            --samples "$SAVE_SAMPLES_DIR" --push || \
+                            bashio::log.error "Feedback Git-Sync fehlgeschlagen; erneuter Versuch folgt"
+                        publish_model || bashio::log.error "Feedback-Modell konnte nicht verlinkt werden"
+                    else
+                        bashio::log.error "Feedback-Checkout fehlgeschlagen; erneuter Versuch folgt"
+                    fi
                     sleep "$GIT_SYNC_INTERVAL"
                 done
             ) &
             bashio::log.info "Feedback Git-Sync aktiv (alle ${GIT_SYNC_INTERVAL}s)"
-            # Stuendliche events-Retention: reine Diagnose-Frames, nie
-            # Trainingsmaterial. seg/ und disagreements/ sind das Label-
-            # Gold — solange kein Retrain gelaufen ist, hat der Konsens-
-            # Labeler sie nie gesehen; die Klon-Kopie ist die einzige
-            # (samples/ wird nach dem Push geprunt). Die schneidet daher
-            # ausschliesslich die Retention im make retrain der
-            # Trainings-Maschine, nach dem Labeln.
-            (
-                while true; do
-                    sleep 3600
-                    compact_events
-                done
-            ) &
-            if [ -f "$FEEDBACK_REPO/scripts/ocr/model.npz" ]; then
-                export MODEL_FILE="$FEEDBACK_REPO/scripts/ocr/model.npz"
-                bashio::log.info "OCR-Modell aus Feedback-Repo (Hot-Reload bei Retraining/Pull)"
-            fi
-        fi
         fi
     fi
 fi
