@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""Korpus-Retention: haelt training-data/ dauerhaft klein (läuft in
+make retrain vor dem Push; auf dem NUC stündlich via run.sh gegen das
+samples-Verzeichnis — dort aber nur mit --scope events).
+
+Befund 23.07.: events/ war mit 71.797 Dateien / 1,1 GB fuer 93% des
+Korpus verantwortlich — reine Diagnose-Frames, nie Trainingsmaterial;
+Failsafe-Stuerme schreiben tausende quasi identische Bilder pro Stunde.
+
+Regeln (--scope all, Trainings-Maschine, NACH dem Labeln im Retrain-Lauf):
+- events/:        max EVENTS_DAYS Tage UND max EVENTS_PER_DAY neueste
+                  Dateien pro Tag (Sturm-Ausduennung)
+- control/:       max CONTROL_DAYS Tage
+- disagreements/, seg/, Routine-Tagesordner (2*/): max RAW_DAYS Tage —
+                  ihre Essenz lebt laenger in den Konsens-Labels
+- auto/ und quarantine/: unangetastet (das ist der kuratierte Korpus)
+
+--scope events (NUC, run.sh): schneidet NUR events/ — und wird auf dem
+samples-Verzeichnis ausgefuehrt, NIE auf der Git-Arbeitskopie des
+Klons: Loeschungen dort sind unversioniert, der Sync holt sie vor dem
+Pull zurueck (bei 64k Pfaden scheitert das an der Argumentlaenge) oder
+pusht sie im Zeitfenster zwischen Pull und Commit ungewollt mit. Die
+versionierten events-Altlasten im Repo raeumt stattdessen der Sync
+selbst per git rm ab (nuc_feedback_sync.retention). Disagreements/seg
+sind das Label-Gold — solange kein Retrain gelaufen ist, hat der
+Konsens-Labeler sie nie gesehen; die Klon-Kopie ist die einzige
+(samples/ wird nach dem Push geprunt). Die schneidet daher
+ausschliesslich die Retention im make retrain der Trainings-Maschine,
+nach dem Labeln.
+
+Nur Arbeitskopie: die Git-Historie waechst weiter — der NUC begrenzt
+sich per Auto-Re-Clone (run.sh), GitHub darf wachsen.
+"""
+import argparse
+import re
+from datetime import date
+from pathlib import Path
+
+EVENTS_DAYS = 10
+EVENTS_PER_DAY = 300
+CONTROL_DAYS = 14
+RAW_DAYS = 45
+
+
+def day_of(name: str) -> str | None:
+    m = re.match(r"(20\d{6})", name)
+    return m.group(1) if m else None
+
+
+def age_days(d: str, today: date) -> int:
+    """Echte Tage. Frueher stand hier today - int(d) auf YYYYMMDD-Zahlen:
+    ueber eine Monatsgrenze hinweg ist das Unsinn (20260923 - 20260831
+    = 92), und der 45-Tage-Schnitt haette am 23.09. den ganzen August
+    geloescht, events/ am Monatsersten sogar den Vortag."""
+    return (today - date(int(d[:4]), int(d[4:6]), int(d[6:8]))).days
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("root", nargs="?", default="training-data")
+    ap.add_argument("--scope", choices=("all", "events"), default="all",
+                    help="all: volle Retention (Trainings-Maschine, nach dem "
+                         "Labeln). events: nur events/ schneiden (NUC).")
+    args = ap.parse_args()
+
+    today = date.today()
+    removed = freed = 0
+    full = args.scope == "all"
+
+    def rm(f: Path):
+        nonlocal removed, freed
+        freed += f.stat().st_size
+        f.unlink()
+        removed += 1
+
+    ROOT = Path(args.root)
+
+    # events/: Alter + Sturm-Ausduennung
+    for daydir in sorted(ROOT.glob("events/*/")):
+        d = day_of(daydir.name)
+        if not d:
+            continue
+        files = sorted(daydir.iterdir())
+        if age_days(d, today) > EVENTS_DAYS:
+            for f in files:
+                rm(f)
+        else:
+            # .json+.jpg-Paare: neueste EVENTS_PER_DAY Paare behalten
+            stems = sorted({f.stem for f in files}, reverse=True)
+            for stem in stems[EVENTS_PER_DAY:]:
+                for f in (daydir / f"{stem}.json", daydir / f"{stem}.jpg"):
+                    if f.exists():
+                        rm(f)
+        if not any(daydir.iterdir()):
+            daydir.rmdir()
+
+    if not full:
+        print(f"Kompaktiert (events): {removed} Dateien, {freed / 1e6:.0f} MB frei")
+        return
+
+    # control/: Alter
+    for f in sorted(ROOT.glob("control/*.jsonl")):
+        d = day_of(f.name)
+        if d and age_days(d, today) > CONTROL_DAYS:
+            rm(f)
+
+    # Roh-Evidence: Alter (auto/ + quarantine/ bleiben)
+    for pattern in ("disagreements/*", "seg/*"):
+        for f in sorted(ROOT.glob(pattern)):
+            d = day_of(f.name)
+            if d and age_days(d, today) > RAW_DAYS and f.is_file():
+                rm(f)
+    for daydir in sorted(ROOT.glob("2*/")):
+        d = day_of(daydir.name)
+        if d and age_days(d, today) > RAW_DAYS:
+            for f in daydir.iterdir():
+                rm(f)
+            daydir.rmdir()
+
+    print(f"Kompaktiert: {removed} Dateien, {freed / 1e6:.0f} MB frei")
+
+
+if __name__ == "__main__":
+    main()

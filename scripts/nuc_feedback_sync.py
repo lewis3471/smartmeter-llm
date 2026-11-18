@@ -4,10 +4,19 @@
 Läuft aus einem beschreibbaren Git-Checkout (auf dem NUC: /data/feedback-repo,
 Auth über GIT_SSH_COMMAND mit Deploy-Key). Ablauf pro Lauf:
 
-1. pull --rebase (Modell/Daten anderer Maschinen integrieren)
-2. Evidence einsammeln: disagreements/ + events/ + seg/ komplett, Routine-Samples
-   (YYYYMMDD/) nur jedes N-te (Klassen-Balance ohne Repo-Flut)
-3. commit/push; NUR nach erfolgreichem Push wird lokal geprunt
+1. Fortsetzung eines abgewürgten Laufs: gestagte Anderungen beenden
+   (gestagte_weiterfuehrung() — ein Add-on-Neustart zwischen git rm/add
+   und Commit blockt sonst für immer den Pull)
+2. pull --rebase (Modell/Daten anderer Maschinen integrieren)
+3. Retention: versionierte events-Altlasten per git rm entfernen (siehe
+   retention() — eigener Schritt nach dem Pull, damit Index und
+   Arbeitskopie konsistent bleiben)
+4. Evidence einsammeln: disagreements/ + seg/ komplett, Routine-Samples
+   (YYYYMMDD/) nur jedes N-te (Klassen-Balance ohne Repo-Flut).
+   events/ wird NICHT mehr hochgeladen — reine Diagnose-Frames ohne
+   Trainingswert; es lebt lokal in samples/ (Retention im Add-on-Run
+   auf dem samples-Verzeichnis, ausserhalb des Git-Checkouts)
+5. commit/push; NUR nach erfolgreichem Push wird lokal geprunt
 
 Labels entstehen NICHT hier: nur der Konsens-Labeler auf der Trainings-
 Maschine schreibt training-data/auto/ (scripts/ocr/consensus_label.py).
@@ -19,15 +28,18 @@ bewusst: manuell oder via AUTO_TRAIN_HOUR im meter_reader.
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
 import time
 import zlib
+from datetime import date
 from pathlib import Path
 
 ROUTINE_KEEP_EVERY = 20   # jedes N-te Routine-Sample committen
 PRUNE_AGE_DAYS = 3        # nicht-synced Routine-Reste lokal aufraeumen
+EVENTS_DAYS = 10          # versionierte events-Altlasten: Aelteres fliegt raus
 
 
 def log(msg: str, err: bool = False):
@@ -51,11 +63,13 @@ def reste_ausserhalb_evidence(repo: Path) -> list:
     "untracked working tree files would be overwritten by merge".
 
     Damit steht der Evidence-Sync — stundlich, ohne dass jemand es
-    merkt. training-data wird hier NIEMALS angefasst."""
-    roh = run(["git", "ls-files", "--others", "--exclude-standard"],
+    merkt. training-data wird hier NIEMALS angefasst. NUL-getrennt
+    gelesen: gequotete Sonderzeichen in Pfaden wuerden sonst beim
+    Entfernen als falscher Dateiname landen."""
+    roh = run(["git", "ls-files", "--others", "--exclude-standard", "-z"],
               repo).stdout
-    return [z for z in roh.split("\n")
-            if z.strip() and not z.startswith("training-data/")]
+    return [z for z in roh.split("\0")
+            if z and not z.startswith("training-data/")]
 
 
 def halbfertiger_lauf(repo: Path) -> tuple[list, list]:
@@ -86,6 +100,78 @@ def halbfertiger_lauf(repo: Path) -> tuple[list, list]:
     return innen, aussen
 
 
+def gestagte_pfade(repo: Path) -> list:
+    """Gestagte Pfade — mit --no-renames und NUL-getrennt (-z).
+
+    Ohne --no-renames liefert --name-only bei einer erkannten
+    Umbenennung NUR den Zielpfad: die Loeschung des Ursprungs bleibt
+    unsichtbar und ein Fortsetzungs-Commit wuerde Code-Loeschungen
+    mitpushen. Ohne -z werden Sonderzeichen in Pfaden gequoted
+    (core.quotePath) — `git reset` bekommt dann einen Namen, den es
+    nicht gibt, und die Aenderung bleibt gestagt (Review PR #14)."""
+    roh = run(["git", "diff", "--cached", "--no-renames", "-z",
+               "--name-only"], repo).stdout
+    return [p for p in roh.split("\0") if p]
+
+
+def gestagte_weiterfuehrung(repo: Path) -> bool:
+    """Ein zwischen `git rm`/`git add` und Commit abgewuergter Lauf
+    (Add-on-Neustart) hinterlaesst gestagte Aenderungen. halbfertiger_lauf()
+    sieht reine Index-Aenderungen nicht — die Arbeitskopie ist sauber — und
+    `git pull --rebase` verweigert dann fuer immer: "Your index contains
+    uncommitted changes". Auch jeder Retry bleibt haengen.
+
+    Behandlung VOR dem Pull:
+    - Gestagte Aenderungen unter training-data/ sind die Fortsetzung des
+      eigenen Syncs (Retention-Loeschungen, halb kopierte Evidence) — sie
+      werden als eigener Commit sofort beendet; der Pull --rebase spielt
+      ihn nach, retention()/collect_evidence() komplettieren den Lauf.
+    - Alles andere (Code ausserhalb training-data) wird unstaged — nie
+      committet, Arbeitskopie unangetastet; halbfertiger_lauf() stellt
+      versionierte Dateien danach wieder her. Scheitert das Unstagen,
+      wird der Lauf abgebrochen statt ein fremder Pfad zu committen.
+    - Unmittelbar vor dem Commit wird der Index erneut geprueft: er darf
+      NUR Pfade unter training-data/ enthalten.
+    """
+    staged = gestagte_pfade(repo)
+    if not staged:
+        return False
+    innen = [p for p in staged if p.startswith("training-data/")]
+    aussen = [p for p in staged if not p.startswith("training-data/")]
+    if aussen:
+        log(f"{len(aussen)} gestagte Aenderung(en) ausserhalb training-data "
+            f"aus einem abgewuergten Lauf — unstaged, nichts committet "
+            f"({', '.join(aussen[:3])}{' ...' if len(aussen) > 3 else ''})",
+            err=True)
+        r = run(["git", "reset", "--"] + aussen, repo, check=False)
+        if r.returncode:
+            log(f"Reset der gestagten Code-Aenderungen fehlgeschlagen — "
+                f"Lauf uebersprungen, nichts committet: "
+                f"{r.stdout.strip()[-200:]}", err=True)
+            return False
+    if innen:
+        log(f"{len(innen)} gestagte Aenderung(en) unter training-data aus "
+            f"einem abgewuergten Lauf — Commit wird fortgesetzt "
+            f"({', '.join(innen[:3])}{' ...' if len(innen) > 3 else ''})")
+        verbleibend = [p for p in gestagte_pfade(repo)
+                       if not p.startswith("training-data/")]
+        if verbleibend:
+            log(f"ABBRUCH: Im Index stehen weiter {len(verbleibend)} "
+                f"Pfad(e) ausserhalb training-data "
+                f"({', '.join(verbleibend[:3])}"
+                f"{' ...' if len(verbleibend) > 3 else ''}) — nichts "
+                f"committet, nichts gepusht. Repo-Zustand pruefen.",
+                err=True)
+            return False
+        r = run(["git", "commit", "-m", "ocr: sync evidence (Fortsetzung)"],
+                repo, check=False)
+        if r.returncode:
+            log(f"Fortsetzungs-Commit fehlgeschlagen, Lauf uebersprungen: "
+                f"{r.stdout.strip()[-200:]}", err=True)
+            return False
+    return innen or aussen
+
+
 def fremde_aenderungen(repo: Path) -> list:
     """Alles im Index, was NICHT unter training-data liegt.
 
@@ -98,10 +184,13 @@ def fremde_aenderungen(repo: Path) -> list:
 
     Statt weiter zu suchen: eine Invariante, die es unmoeglich macht.
     Dieser Sync fasst ausschliesslich training-data an — alles andere ist
-    ein Abbruchgrund, nie ein Commit."""
-    stufe = run(["git", "diff", "--cached", "--name-only"], repo).stdout
-    return [z for z in stufe.split("\n")
-            if z.strip() and not z.startswith("training-data/")]
+    ein Abbruchgrund, nie ein Commit. Geparst wird mit --no-renames und
+    NUL-getrennt (siehe gestagte_pfade): ein Rename ueber die Verzeichnis-
+    grenze darf die Loeschung des Code-Originals nicht verstecken."""
+    stufe = run(["git", "diff", "--cached", "--no-renames", "-z",
+                 "--name-only"], repo).stdout
+    return [z for z in stufe.split("\0")
+            if z and not z.startswith("training-data/")]
 
 
 def changed(repo: Path, path: str) -> bool:
@@ -110,6 +199,47 @@ def changed(repo: Path, path: str) -> bool:
 
 def keep_routine(name: str) -> bool:
     return zlib.crc32(name.encode()) % ROUTINE_KEEP_EVERY == 0
+
+
+def retention(repo: Path):
+    """Versionierte events-Altlasten aus dem Repo raeumen — NUR direkt nach
+    erfolgreichem Pull und ausschliesslich per git rm: ein Aufruf je
+    Tagesordner haelt Index und Arbeitskopie konsistent. Die Loeschungen
+    landen bewusst als eigener (Mit-)Commit auf GitHub — sie sind die
+    Anwort auf Issue #13, nicht ein Nebeneffekt der Kompaktierung.
+
+    Warum keine Datei-Loeschung in der Arbeitskopie (compact_corpus auf
+    dem Klon): Der Sync stellt halbfertige Aenderungen vor dem Pull per
+    `git checkout -- <pfade>` wieder her — bei 64k Pfaden scheitert das
+    an der Argumentlaenge, und zwischen Pull und `git add` laeuft ein
+    Zeitfenster, in dem der Sync Loeschungen mitpusht. Beides geht nur,
+    wenn Retention niemals die Arbeitskopie des Klons anfasst: Die
+    Add-on-Runtime limitiert events/ lokal in samples/ (gebuendeltes
+    compact_corpus.py --scope events), seg/ und disagreements/ schneidet
+    die Retention im make retrain der Trainings-Maschine."""
+    today = date.today()
+    ev = repo / "training-data" / "events"
+    if not ev.is_dir():
+        return
+    removed = 0
+    for daydir in sorted(ev.iterdir()):
+        m = re.match(r"(20\d{6})", daydir.name)
+        if not m or not daydir.is_dir():
+            continue
+        d = date(int(m.group(1)[:4]), int(m.group(1)[4:6]),
+                 int(m.group(1)[6:8]))
+        if (today - d).days <= EVENTS_DAYS:
+            continue
+        r = run(["git", "rm", "-r", "-q", "--",
+                 f"training-data/events/{daydir.name}"], repo, check=False)
+        if r.returncode:
+            log(f"git rm training-data/events/{daydir.name} fehlgeschlagen: "
+                f"{r.stdout.strip()[-200:]}", err=True)
+            return
+        removed += 1
+    if removed:
+        log(f"Retention: {removed} events-Tagesordner (>{EVENTS_DAYS} Tage) "
+            f"aus dem Repo entfernt")
 
 
 def valid_label(d: dict) -> bool:
@@ -125,8 +255,10 @@ def collect_evidence(samples: Path, evidence: Path) -> tuple[list[Path], int]:
     """Kopiert Neues aus samples/ nach training-data/. -> (kopierte Quellen,
     Anzahl neuer Labels)."""
     copied, new_labels = [], 0
-    # 1) Disagreements + Events: vollstaendig (das ist das Gold)
-    for sub in ("disagreements", "events", "seg"):
+    # 1) Disagreements + Seg-Evidence: vollstaendig (das ist das Gold).
+    #    events/ NICHT: Diagnose-Frames ohne Trainingswert, bleiben lokal
+    #    in samples/ (Retention im Add-on-Run) und kommen nicht ins Git.
+    for sub in ("disagreements", "seg"):
         src = samples / sub
         if not src.exists():
             continue
@@ -209,6 +341,7 @@ def main():
     repo, samples = args.repo.resolve(), args.samples.resolve()
 
     if args.push:
+        gestagte_weiterfuehrung(repo)
         innen, aussen = halbfertiger_lauf(repo)
         if innen or aussen:
             if innen:
@@ -246,6 +379,7 @@ def main():
             log(f"git pull fehlgeschlagen, Lauf uebersprungen: "
                 f"{r.stdout.strip()[-200:]}", err=True)
             return
+        retention(repo)
     evidence = repo / "training-data"
     evidence.mkdir(exist_ok=True)
     copied, new_labels = collect_evidence(samples, evidence)

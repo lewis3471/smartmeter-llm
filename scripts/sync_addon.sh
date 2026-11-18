@@ -8,6 +8,7 @@ cp scripts/meter_reader.py smartmeter_llm/meter_reader.py
 cp scripts/ac_guard.py smartmeter_llm/ac_guard.py
 cp scripts/feedback.py smartmeter_llm/feedback.py
 cp scripts/nuc_feedback_sync.py smartmeter_llm/nuc_feedback_sync.py
+cp scripts/compact_corpus.py smartmeter_llm/compact_corpus.py
 mkdir -p smartmeter_llm/ocr
 cp scripts/ocr/*.py scripts/ocr/model.npz smartmeter_llm/ocr/
 echo "Add-on synchronisiert. Nicht vergessen: version in smartmeter_llm/config.yaml erhoehen!"

@@ -85,12 +85,21 @@ if bashio::config.true 'git_sync_enabled'; then
             bashio::log.info "Migriere Feedback-Repo auf Blobless-Clone"
             rm -rf "$FEEDBACK_REPO"
         fi
-        # Selbstbegrenzung: waechst .git ueber 1 GB (gefetchte Blobs +
-        # eigene Evidence-Commits sammeln sich), frisch re-clonen —
-        # shallow+blobless startet bei Groesse der aktuellen Arbeitskopie
+        # Selbstbegrenzung des NUC:
+        # Retention fasst die Git-Arbeitskopie NIE an. Loeschungen dort
+        # sind unversioniert: Der Sync holt sie vor dem Pull zurueck (bei
+        # 64k Pfaden scheitert das an der Argumentlaenge) oder pusht sie
+        # im Zeitfenster zwischen Pull und Commit ungewollt mit. Daher:
+        # events/ wird lokal im samples-Verzeichnis begrenzt (gebuendelte
+        # Fassung, siehe unten), und versionierte events-Altlasten raeumt
+        # der Sync selbst per git rm ab. Sicherheitsnetz bleibt .git:
+        # ein blobless+shallow-Klon packt den kompletten HEAD-Baum aus
+        # und startet dadurch schon bei ~1,4 GB — der alte 1-GB-Trigger
+        # feuerte bei JEDEM Start (~1,4 GB Download pro Neustart). Die
+        # Schwelle liegt deutlich ueber der Frisch-Klon-Groesse: 2,5 GB.
         if [ -d "$FEEDBACK_REPO/.git" ] && \
-           [ "$(du -sm "$FEEDBACK_REPO/.git" | cut -f1)" -gt 1024 ]; then
-            bashio::log.info "Feedback-Repo .git > 1GB — Re-Clone"
+           [ "$(du -sm "$FEEDBACK_REPO/.git" | cut -f1)" -gt 2560 ]; then
+            bashio::log.info "Feedback-Repo .git > 2,5 GB — Re-Clone"
             rm -rf "$FEEDBACK_REPO"
         fi
         if [ ! -d "$FEEDBACK_REPO/.git" ]; then
@@ -101,6 +110,19 @@ if bashio::config.true 'git_sync_enabled'; then
             git -C "$FEEDBACK_REPO" config user.name smartmeter-ha
             git -C "$FEEDBACK_REPO" config user.email smartmeter-ha@local
             GIT_SYNC_INTERVAL=$(bashio::config 'git_sync_interval_s')
+            # Events-Retention auf dem samples-Verzeichnis — ausserhalb des
+            # Git-Checkouts, mit der GEBUENDELTEN Fassung aus dem Add-on-
+            # Image: Der Startaufruf laeuft vor dem ersten Pull, im Klon
+            # kann noch die alte Fassung liegen — die liest den Pfad aus
+            # argv[1] und ignoriert --scope events stillschweigend.
+            compact_events() {
+                if [ -d "$SAVE_SAMPLES_DIR/events" ]; then
+                    python3 /app/scripts/compact_corpus.py \
+                        "$SAVE_SAMPLES_DIR" --scope events || \
+                        bashio::log.error "compact_corpus fehlgeschlagen"
+                fi
+            }
+            compact_events
             (
                 while true; do
                     python3 /app/scripts/nuc_feedback_sync.py --repo "$FEEDBACK_REPO" \
@@ -110,6 +132,19 @@ if bashio::config.true 'git_sync_enabled'; then
                 done
             ) &
             bashio::log.info "Feedback Git-Sync aktiv (alle ${GIT_SYNC_INTERVAL}s)"
+            # Stuendliche events-Retention: reine Diagnose-Frames, nie
+            # Trainingsmaterial. seg/ und disagreements/ sind das Label-
+            # Gold — solange kein Retrain gelaufen ist, hat der Konsens-
+            # Labeler sie nie gesehen; die Klon-Kopie ist die einzige
+            # (samples/ wird nach dem Push geprunt). Die schneidet daher
+            # ausschliesslich die Retention im make retrain der
+            # Trainings-Maschine, nach dem Labeln.
+            (
+                while true; do
+                    sleep 3600
+                    compact_events
+                done
+            ) &
             if [ -f "$FEEDBACK_REPO/scripts/ocr/model.npz" ]; then
                 export MODEL_FILE="$FEEDBACK_REPO/scripts/ocr/model.npz"
                 bashio::log.info "OCR-Modell aus Feedback-Repo (Hot-Reload bei Retraining/Pull)"
