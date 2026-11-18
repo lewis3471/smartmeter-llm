@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.9.5
+
+- NUC-KORPUS-SELBSTBEGRENZUNG (Issue #13): Der Feedback-Klon auf dem
+  NUC war auf 3,6 GB gewachsen — events/ 1,1 GB, seg/ + disagreements/
+  zusammen > 1 GB, .git 1,46 GiB. Die 45-Tage-Retention greift nur im
+  `make retrain` der Trainings-Maschine; der letzte war am 23.09.
+- EVENTS/ WIRD NICHT MEHR HOCHGELADEN: reine Diagnose-Frames ohne
+  Trainingswert. Die Runtime limitiert events/ lokal im samples-
+  Verzeichnis (10 Tage, Sturm-Ausduennung auf 300 Paare/Tag, gebun-
+  deltes compact_corpus.py --scope events, stuendlich). Der Sync
+  raeumt die versionierten Altlasten im Repo per git rm ab — ein
+  Aufruf je Tagesordner, damit Index und Arbeitskopie konsistent
+  bleiben; die Loeschungen landen als eigener Commit auf GitHub.
+- KOMPAKTIERUNG FASST DIE GIT-ARBEITSKOPIE NIE AN: Loeschungen im
+  Klon sind unversioniert — der Sync stellt sie vor dem Pull wieder
+  her (bei 64k Pfaden scheitert das an der Argumentlaenge) oder pusht
+  sie im Zeitfenster zwischen Pull und Commit ungewollt mit. Erster
+  Entwurf dieses PRs kompaktierte im Klon — in der Review verworfen.
+- RE-CLONE-TRIGGER GEFIXT: .git > 1 GB feuerte bei JEDEM Start — ein
+  blobless+shallow-Klon packt den kompletten HEAD-Baum aus und
+  startet schon bei ~1,4 GB. Schwelle jetzt 2,5 GB (Sicherheitsnetz).
+- seg/ und disagreements/ bleiben Label-Gold und werden NUR von der
+  Retention im make retrain geschnitten — NACHdem der Konsens-Labeler
+  sie verarbeitet hat; die Klon-Kopie ist die einzige (samples/ wird
+  nach dem Push geprunt).
+
 ## 1.9.4
 
 - OCR LAS AB 36300 DIE KWH OHNE FUEHRENDE 3 (36302 -> 6302, 55 von 61

@@ -6,6 +6,7 @@ COPY meter_reader.py /app/scripts/meter_reader.py
 COPY ac_guard.py /app/scripts/ac_guard.py
 COPY feedback.py /app/scripts/feedback.py
 COPY nuc_feedback_sync.py /app/scripts/nuc_feedback_sync.py
+COPY compact_corpus.py /app/scripts/compact_corpus.py
 COPY ocr/ /app/scripts/ocr/
 COPY run.sh /run.sh
 RUN chmod +x /run.sh

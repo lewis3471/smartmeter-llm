@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Korpus-Retention: haelt training-data/ dauerhaft klein (läuft in
-make retrain vor dem Push; auf dem NUC stündlich via run.sh — dort
-aber nur mit --scope events).
+make retrain vor dem Push; auf dem NUC stündlich via run.sh gegen das
+samples-Verzeichnis — dort aber nur mit --scope events).
 
 Befund 23.07.: events/ war mit 71.797 Dateien / 1,1 GB fuer 93% des
 Korpus verantwortlich — reine Diagnose-Frames, nie Trainingsmaterial;
@@ -15,12 +15,18 @@ Regeln (--scope all, Trainings-Maschine, NACH dem Labeln im Retrain-Lauf):
                   ihre Essenz lebt laenger in den Konsens-Labels
 - auto/ und quarantine/: unangetastet (das ist der kuratierte Korpus)
 
---scope events (NUC-Scheduled-Run in run.sh): schneidet NUR events/.
-Disagreements/seg sind das Label-Gold — solange kein Retrain gelaufen
-ist, hat der Konsens-Labeler sie nie gesehen; loescht sie der NUC,
-sind sie unwiederbringlich weg (die NUC-Kopie ist die einzige, samples/
-wird nach dem Push geprunt). Die schneidet daher ausschliesslich die
-Retention im make retrain der Trainings-Maschine, nach dem Labeln.
+--scope events (NUC, run.sh): schneidet NUR events/ — und wird auf dem
+samples-Verzeichnis ausgefuehrt, NIE auf der Git-Arbeitskopie des
+Klons: Loeschungen dort sind unversioniert, der Sync holt sie vor dem
+Pull zurueck (bei 64k Pfaden scheitert das an der Argumentlaenge) oder
+pusht sie im Zeitfenster zwischen Pull und Commit ungewollt mit. Die
+versionierten events-Altlasten im Repo raeumt stattdessen der Sync
+selbst per git rm ab (nuc_feedback_sync.retention). Disagreements/seg
+sind das Label-Gold — solange kein Retrain gelaufen ist, hat der
+Konsens-Labeler sie nie gesehen; die Klon-Kopie ist die einzige
+(samples/ wird nach dem Push geprunt). Die schneidet daher
+ausschliesslich die Retention im make retrain der Trainings-Maschine,
+nach dem Labeln.
 
 Nur Arbeitskopie: die Git-Historie waechst weiter — der NUC begrenzt
 sich per Auto-Re-Clone (run.sh), GitHub darf wachsen.

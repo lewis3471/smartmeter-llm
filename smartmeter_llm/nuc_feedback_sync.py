@@ -5,9 +5,15 @@ Läuft aus einem beschreibbaren Git-Checkout (auf dem NUC: /data/feedback-repo,
 Auth über GIT_SSH_COMMAND mit Deploy-Key). Ablauf pro Lauf:
 
 1. pull --rebase (Modell/Daten anderer Maschinen integrieren)
-2. Evidence einsammeln: disagreements/ + events/ + seg/ komplett, Routine-Samples
-   (YYYYMMDD/) nur jedes N-te (Klassen-Balance ohne Repo-Flut)
-3. commit/push; NUR nach erfolgreichem Push wird lokal geprunt
+2. Retention: versionierte events-Altlasten per git rm entfernen (siehe
+   retention() — eigener Schritt nach dem Pull, damit Index und
+   Arbeitskopie konsistent bleiben)
+3. Evidence einsammeln: disagreements/ + seg/ komplett, Routine-Samples
+   (YYYYMMDD/) nur jedes N-te (Klassen-Balance ohne Repo-Flut).
+   events/ wird NICHT mehr hochgeladen — reine Diagnose-Frames ohne
+   Trainingswert; es lebt lokal in samples/ (Retention im Add-on-Run
+   auf dem samples-Verzeichnis, ausserhalb des Git-Checkouts)
+4. commit/push; NUR nach erfolgreichem Push wird lokal geprunt
 
 Labels entstehen NICHT hier: nur der Konsens-Labeler auf der Trainings-
 Maschine schreibt training-data/auto/ (scripts/ocr/consensus_label.py).
@@ -19,15 +25,18 @@ bewusst: manuell oder via AUTO_TRAIN_HOUR im meter_reader.
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
 import time
 import zlib
+from datetime import date
 from pathlib import Path
 
 ROUTINE_KEEP_EVERY = 20   # jedes N-te Routine-Sample committen
 PRUNE_AGE_DAYS = 3        # nicht-synced Routine-Reste lokal aufraeumen
+EVENTS_DAYS = 10          # versionierte events-Altlasten: Aelteres fliegt raus
 
 
 def log(msg: str, err: bool = False):
@@ -112,6 +121,47 @@ def keep_routine(name: str) -> bool:
     return zlib.crc32(name.encode()) % ROUTINE_KEEP_EVERY == 0
 
 
+def retention(repo: Path):
+    """Versionierte events-Altlasten aus dem Repo raeumen — NUR direkt nach
+    erfolgreichem Pull und ausschliesslich per git rm: ein Aufruf je
+    Tagesordner haelt Index und Arbeitskopie konsistent. Die Loeschungen
+    landen bewusst als eigener (Mit-)Commit auf GitHub — sie sind die
+    Anwort auf Issue #13, nicht ein Nebeneffekt der Kompaktierung.
+
+    Warum keine Datei-Loeschung in der Arbeitskopie (compact_corpus auf
+    dem Klon): Der Sync stellt halbfertige Aenderungen vor dem Pull per
+    `git checkout -- <pfade>` wieder her — bei 64k Pfaden scheitert das
+    an der Argumentlaenge, und zwischen Pull und `git add` laeuft ein
+    Zeitfenster, in dem der Sync Loeschungen mitpusht. Beides geht nur,
+    wenn Retention niemals die Arbeitskopie des Klons anfasst: Die
+    Add-on-Runtime limitiert events/ lokal in samples/ (gebuendeltes
+    compact_corpus.py --scope events), seg/ und disagreements/ schneidet
+    die Retention im make retrain der Trainings-Maschine."""
+    today = date.today()
+    ev = repo / "training-data" / "events"
+    if not ev.is_dir():
+        return
+    removed = 0
+    for daydir in sorted(ev.iterdir()):
+        m = re.match(r"(20\d{6})", daydir.name)
+        if not m or not daydir.is_dir():
+            continue
+        d = date(int(m.group(1)[:4]), int(m.group(1)[4:6]),
+                 int(m.group(1)[6:8]))
+        if (today - d).days <= EVENTS_DAYS:
+            continue
+        r = run(["git", "rm", "-r", "-q", "--",
+                 f"training-data/events/{daydir.name}"], repo, check=False)
+        if r.returncode:
+            log(f"git rm training-data/events/{daydir.name} fehlgeschlagen: "
+                f"{r.stdout.strip()[-200:]}", err=True)
+            return
+        removed += 1
+    if removed:
+        log(f"Retention: {removed} events-Tagesordner (>{EVENTS_DAYS} Tage) "
+            f"aus dem Repo entfernt")
+
+
 def valid_label(d: dict) -> bool:
     # kWh hat auf dem ESY11 immer 6 Ziffern (fuehrende 0 -> int 5-6-stellig).
     # Gemini trunkiert gelegentlich auf 4 Stellen — solche Labels vergiften
@@ -125,8 +175,10 @@ def collect_evidence(samples: Path, evidence: Path) -> tuple[list[Path], int]:
     """Kopiert Neues aus samples/ nach training-data/. -> (kopierte Quellen,
     Anzahl neuer Labels)."""
     copied, new_labels = [], 0
-    # 1) Disagreements + Events: vollstaendig (das ist das Gold)
-    for sub in ("disagreements", "events", "seg"):
+    # 1) Disagreements + Seg-Evidence: vollstaendig (das ist das Gold).
+    #    events/ NICHT: Diagnose-Frames ohne Trainingswert, bleiben lokal
+    #    in samples/ (Retention im Add-on-Run) und kommen nicht ins Git.
+    for sub in ("disagreements", "seg"):
         src = samples / sub
         if not src.exists():
             continue
@@ -246,6 +298,7 @@ def main():
             log(f"git pull fehlgeschlagen, Lauf uebersprungen: "
                 f"{r.stdout.strip()[-200:]}", err=True)
             return
+        retention(repo)
     evidence = repo / "training-data"
     evidence.mkdir(exist_ok=True)
     copied, new_labels = collect_evidence(samples, evidence)
