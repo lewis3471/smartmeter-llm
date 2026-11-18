@@ -4,16 +4,19 @@
 Läuft aus einem beschreibbaren Git-Checkout (auf dem NUC: /data/feedback-repo,
 Auth über GIT_SSH_COMMAND mit Deploy-Key). Ablauf pro Lauf:
 
-1. pull --rebase (Modell/Daten anderer Maschinen integrieren)
-2. Retention: versionierte events-Altlasten per git rm entfernen (siehe
+1. Fortsetzung eines abgewürgten Laufs: gestagte Anderungen beenden
+   (gestagte_weiterfuehrung() — ein Add-on-Neustart zwischen git rm/add
+   und Commit blockt sonst für immer den Pull)
+2. pull --rebase (Modell/Daten anderer Maschinen integrieren)
+3. Retention: versionierte events-Altlasten per git rm entfernen (siehe
    retention() — eigener Schritt nach dem Pull, damit Index und
    Arbeitskopie konsistent bleiben)
-3. Evidence einsammeln: disagreements/ + seg/ komplett, Routine-Samples
+4. Evidence einsammeln: disagreements/ + seg/ komplett, Routine-Samples
    (YYYYMMDD/) nur jedes N-te (Klassen-Balance ohne Repo-Flut).
    events/ wird NICHT mehr hochgeladen — reine Diagnose-Frames ohne
    Trainingswert; es lebt lokal in samples/ (Retention im Add-on-Run
    auf dem samples-Verzeichnis, ausserhalb des Git-Checkouts)
-4. commit/push; NUR nach erfolgreichem Push wird lokal geprunt
+5. commit/push; NUR nach erfolgreichem Push wird lokal geprunt
 
 Labels entstehen NICHT hier: nur der Konsens-Labeler auf der Trainings-
 Maschine schreibt training-data/auto/ (scripts/ocr/consensus_label.py).
@@ -93,6 +96,47 @@ def halbfertiger_lauf(repo: Path) -> tuple[list, list]:
         pfad = z[3:]
         (innen if pfad.startswith("training-data/") else aussen).append(pfad)
     return innen, aussen
+
+
+def gestagte_weiterfuehrung(repo: Path) -> bool:
+    """Ein zwischen `git rm`/`git add` und Commit abgewuergter Lauf
+    (Add-on-Neustart) hinterlaesst gestagte Aenderungen. halbfertiger_lauf()
+    sieht reine Index-Aenderungen nicht — die Arbeitskopie ist sauber — und
+    `git pull --rebase` verweigert dann fuer immer: "Your index contains
+    uncommitted changes". Auch jeder Retry bleibt haengen.
+
+    Behandlung VOR dem Pull:
+    - Gestagte Aenderungen unter training-data/ sind die Fortsetzung des
+      eigenen Syncs (Retention-Loeschungen, halb kopierte Evidence) — sie
+      werden als eigener Commit sofort beendet; der Pull --rebase spielt
+      ihn nach, retention()/collect_evidence() komplettieren den Lauf.
+    - Alles andere (Code ausserhalb training-data) wird unstaged — nie
+      committet, Arbeitskopie unangetastet; halbfertiger_lauf() stellt
+      versionierte Dateien danach wieder her.
+    """
+    staged = [z for z in run(["git", "diff", "--cached", "--name-only"],
+                             repo).stdout.split("\n") if z.strip()]
+    if not staged:
+        return False
+    innen = [p for p in staged if p.startswith("training-data/")]
+    aussen = [p for p in staged if not p.startswith("training-data/")]
+    if aussen:
+        log(f"{len(aussen)} gestagte Aenderung(en) ausserhalb training-data "
+            f"aus einem abgewuergten Lauf — unstaged, nichts committet "
+            f"({', '.join(aussen[:3])}{' ...' if len(aussen) > 3 else ''})",
+            err=True)
+        run(["git", "reset", "--"] + aussen, repo, check=False)
+    if innen:
+        log(f"{len(innen)} gestagte Aenderung(en) unter training-data aus "
+            f"einem abgewuergten Lauf — Commit wird fortgesetzt "
+            f"({', '.join(innen[:3])}{' ...' if len(innen) > 3 else ''})")
+        r = run(["git", "commit", "-m", "ocr: sync evidence (Fortsetzung)"],
+                repo, check=False)
+        if r.returncode:
+            log(f"Fortsetzungs-Commit fehlgeschlagen, Lauf uebersprungen: "
+                f"{r.stdout.strip()[-200:]}", err=True)
+            return False
+    return innen or aussen
 
 
 def fremde_aenderungen(repo: Path) -> list:
@@ -261,6 +305,7 @@ def main():
     repo, samples = args.repo.resolve(), args.samples.resolve()
 
     if args.push:
+        gestagte_weiterfuehrung(repo)
         innen, aussen = halbfertiger_lauf(repo)
         if innen or aussen:
             if innen:

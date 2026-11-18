@@ -21,6 +21,13 @@
 - RE-CLONE-TRIGGER GEFIXT: .git > 1 GB feuerte bei JEDEM Start — ein
   blobless+shallow-Klon packt den kompletten HEAD-Baum aus und
   startet schon bei ~1,4 GB. Schwelle jetzt 2,5 GB (Sicherheitsnetz).
+- NEUSTARTFALL GESCHLOSSEN: Ein zwischen git rm und Commit abgewuergter
+  Lauf hinterliess gestagte Loeschungen — halbfertiger_lauf() sieht
+  reine Index-Aenderungen nicht, `git pull --rebase` verweigerte fuer
+  immer ("Your index contains uncommitted changes"). Der Sync beendet
+  solche Laeufe jetzt vor dem Pull als Fortsetzungs-Commit (nur
+  training-data; alles andere wird unstaged, nie committet).
+  Regressionstest tests/test_sync_invariante.py.
 - seg/ und disagreements/ bleiben Label-Gold und werden NUR von der
   Retention im make retrain geschnitten — NACHdem der Konsens-Labeler
   sie verarbeitet hat; die Klon-Kopie ist die einzige (samples/ wird

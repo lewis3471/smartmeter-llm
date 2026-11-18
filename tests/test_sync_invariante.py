@@ -84,8 +84,8 @@ def test_sync_committet_nicht_bei_fremdaenderung():
     """End-to-end: main() darf in diesem Zustand keinen Commit erzeugen."""
     repo = baue_repo()
     proben = Path(tempfile.mkdtemp())
-    (proben / "events").mkdir(parents=True)
-    (proben / "events" / "20260906_120000.json").write_text('{"ev":"test"}')
+    (proben / "seg").mkdir(parents=True)
+    (proben / "seg" / "20260906_120000.json").write_text('{"kwh": 36566, "w": 10}')
     (repo / "scripts" / "meter_reader.py").unlink()
     git(repo, "add", "-A")
     vorher = git(repo, "rev-parse", "HEAD").stdout.strip()
@@ -140,8 +140,8 @@ def test_blockierter_pull_heilt_sich_selbst():
           and "would be overwritten" in vorher.stdout,
           vorher.stdout.strip()[-120:])
 
-    proben = Path(tempfile.mkdtemp()); (proben / "events").mkdir()
-    (proben / "events" / "20260909_120000.json").write_text('{"ev":"t"}')
+    proben = Path(tempfile.mkdtemp()); (proben / "seg").mkdir()
+    (proben / "seg" / "20260909_120000.json").write_text('{"kwh": 36566, "w": 10}')
     sys.argv = ["x", "--repo", str(lokal), "--samples", str(proben), "--push"]
     try:
         sync.main()
@@ -155,6 +155,52 @@ def test_blockierter_pull_heilt_sich_selbst():
     check("evidence_wurde_gepusht",
           "20260909" in git(fern, "ls-tree", "-r", "--name-only", "HEAD").stdout,
           "kein Push angekommen")
+
+
+def test_gestagte_loeschungen_heilen_sich():
+    """Der Neustartfall (Review PR #14): ein Lauf wurde zwischen git rm
+    (Retention) und Commit abgewuergt — die gestagten Loeschungen sind
+    fuer halbfertiger_lauf() unsichtbar und blocken sonst fuer immer den
+    Pull. Der Sync beendet sie als Fortsetzungs-Commit, zieht durch und
+    pusht Deletionen plus neue Evidence."""
+    fern = baue_repo()
+    git(fern, "config", "receive.denyCurrentBranch", "ignore")
+    (fern / "training-data" / "events").mkdir()
+    (fern / "training-data" / "events" / "20260912").mkdir()
+    (fern / "training-data" / "events" / "20260912" / "120000.json").write_text(
+        '{"ev":"t"}')
+    git(fern, "add", "-A"); git(fern, "commit", "-q", "-m", "events-altlast")
+
+    lokal = Path(tempfile.mkdtemp()) / "klon"
+    subprocess.run(["git", "clone", "-q", str(fern), str(lokal)], check=True)
+    git(lokal, "config", "user.email", "t@t"); git(lokal, "config", "user.name", "t")
+    # Auf dem Remote geht es weiter ...
+    (fern / "training-data" / "b.json").write_text("{}")
+    git(fern, "add", "-A"); git(fern, "commit", "-q", "-m", "mehr evidence")
+    # ... und lokal blieb ein Lauf zwischen git rm und Commit stecken:
+    git(lokal, "rm", "-r", "-q", "--", "training-data/events/20260912")
+
+    vorher = subprocess.run(["git", "pull", "--rebase", "origin", "HEAD"],
+                            cwd=lokal, text=True, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    check("pull_scheitert_an_gestagten_loeschungen", vorher.returncode != 0
+          and "index contains uncommitted changes" in vorher.stdout,
+          vorher.stdout.strip()[-120:])
+
+    proben = Path(tempfile.mkdtemp())
+    (proben / "seg").mkdir()
+    (proben / "seg" / "20260918_120000.json").write_text('{"kwh": 36566, "w": 10}')
+    sys.argv = ["x", "--repo", str(lokal), "--samples", str(proben), "--push"]
+    try:
+        sync.main()
+    except SystemExit:
+        pass
+    baum = git(fern, "ls-tree", "-r", "--name-only", "HEAD").stdout
+    check("gestagte_loeschungen_abgeschlossen_und_gepusht",
+          "20260912" not in baum, "Altlast noch im HEAD-Baum")
+    check("pull_durchgezogen_remote_stand_da",
+          (lokal / "training-data" / "b.json").exists(), "b.json fehlt lokal")
+    check("seg_evidence_gepusht", "20260918" in baum, "kein Push angekommen")
 
 
 def test_halbfertiger_lauf_wird_erkannt():
