@@ -121,10 +121,10 @@ git_sync_interval_s: 30
 
 With feedback enabled, the add-on keeps a shallow, sparse checkout in
 `/data/feedback-repo`. It uploads new OCR evidence and downloads the trained
-model from `git_branch`. Version 1.9.6 automatically replaces the old checkout
+model from `git_branch`. Version 1.9.7 automatically replaces the old checkout
 after pending changes have synced. It first frees the space occupied by the
-archived working files, then builds the replacement checkout (about 110 MiB
-with the November 18 corpus).
+archived working files, then builds the replacement checkout (about 200 MiB
+with the model and corpus from 1.9.6).
 
 To measure the result inside the add-on container, run
 `du -sh /data/feedback-repo /data/samples`. The first figure includes the Git
