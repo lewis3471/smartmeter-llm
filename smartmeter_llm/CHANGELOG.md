@@ -27,7 +27,15 @@
   immer ("Your index contains uncommitted changes"). Der Sync beendet
   solche Laeufe jetzt vor dem Pull als Fortsetzungs-Commit (nur
   training-data; alles andere wird unstaged, nie committet).
-  Regressionstest tests/test_sync_invariante.py.
+  Der Index wird mit --no-renames und NUL-getrennt gelesen: bei einer
+  erkannten Umbenennung ueber die Verzeichnisgrenze zeigt --name-only
+  sonst nur den Zielpfad (die Code-Loeschung im Ursprung bliebe
+  unsichtbar und wuerde mitgepusht), und gequotete Sonderzeichen in
+  Pfaden liessen das Unstagen stillschweigend scheitern. Reset-
+  Fehlversuch bricht den Lauf ab; unmittelbar vor jedem Commit wird
+  der Index erneut auf Pfade ausserhalb training-data geprueft.
+  Regressionstests tests/test_sync_invariante.py (gestagte Loeschun-
+  gen, Umbenennung ueber die Grenze).
 - seg/ und disagreements/ bleiben Label-Gold und werden NUR von der
   Retention im make retrain geschnitten — NACHdem der Konsens-Labeler
   sie verarbeitet hat; die Klon-Kopie ist die einzige (samples/ wird

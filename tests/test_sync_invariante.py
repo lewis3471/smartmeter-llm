@@ -203,6 +203,37 @@ def test_gestagte_loeschungen_heilen_sich():
     check("seg_evidence_gepusht", "20260918" in baum, "kein Push angekommen")
 
 
+def test_gestagte_umbenennung_wird_nicht_gepusht():
+    """Review-Fall (PR #14, Runde 3): scripts/meter_reader.py wurde nach
+    training-data/ verschoben und gestagt. `git diff --cached --name-only`
+    zeigt bei erkannter Umbenennung nur den Zielpfad — der Fortsetzungs-
+    Commit durfte die Loeschung des Code-Originals nie mitpushen."""
+    fern = baue_repo()
+    git(fern, "config", "receive.denyCurrentBranch", "ignore")
+    lokal = Path(tempfile.mkdtemp()) / "klon"
+    subprocess.run(["git", "clone", "-q", str(fern), str(lokal)], check=True)
+    git(lokal, "config", "user.email", "t@t"); git(lokal, "config", "user.name", "t")
+    # Umbenennung ueber die Verzeichnisgrenze, gestagt:
+    git(lokal, "mv", "scripts/meter_reader.py", "training-data/meter_reader.py")
+
+    proben = Path(tempfile.mkdtemp())
+    (proben / "seg").mkdir()
+    (proben / "seg" / "20260918_120000.json").write_text('{"kwh": 36566, "w": 10}')
+    sys.argv = ["x", "--repo", str(lokal), "--samples", str(proben), "--push"]
+    try:
+        sync.main()
+    except SystemExit:
+        pass
+    baum = git(fern, "ls-tree", "-r", "--name-only", "HEAD").stdout
+    check("code_original_ueberlebt_den_fortsetzungs_commit",
+          "scripts/meter_reader.py" in baum, "Code-Original fehlt im HEAD")
+    check("code_loeschung_nicht_gepusht",
+          git(fern, "cat-file", "-p", "HEAD:scripts/meter_reader.py").stdout
+          == "# Code\n", "Inhalt des Code-Originals veraendert")
+    check("sync_laeuft_weiter_und_pusht_evidence",
+          "20260918" in baum, "kein Push angekommen")
+
+
 def test_halbfertiger_lauf_wird_erkannt():
     """Geaenderte und geloeschte versionierte Dateien, getrennt nach innen
     (Evidence) und aussen (Code). Unversionierte Dateien zaehlen nicht."""

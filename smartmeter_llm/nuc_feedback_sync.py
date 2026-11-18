@@ -63,11 +63,13 @@ def reste_ausserhalb_evidence(repo: Path) -> list:
     "untracked working tree files would be overwritten by merge".
 
     Damit steht der Evidence-Sync — stundlich, ohne dass jemand es
-    merkt. training-data wird hier NIEMALS angefasst."""
-    roh = run(["git", "ls-files", "--others", "--exclude-standard"],
+    merkt. training-data wird hier NIEMALS angefasst. NUL-getrennt
+    gelesen: gequotete Sonderzeichen in Pfaden wuerden sonst beim
+    Entfernen als falscher Dateiname landen."""
+    roh = run(["git", "ls-files", "--others", "--exclude-standard", "-z"],
               repo).stdout
-    return [z for z in roh.split("\n")
-            if z.strip() and not z.startswith("training-data/")]
+    return [z for z in roh.split("\0")
+            if z and not z.startswith("training-data/")]
 
 
 def halbfertiger_lauf(repo: Path) -> tuple[list, list]:
@@ -98,6 +100,20 @@ def halbfertiger_lauf(repo: Path) -> tuple[list, list]:
     return innen, aussen
 
 
+def gestagte_pfade(repo: Path) -> list:
+    """Gestagte Pfade — mit --no-renames und NUL-getrennt (-z).
+
+    Ohne --no-renames liefert --name-only bei einer erkannten
+    Umbenennung NUR den Zielpfad: die Loeschung des Ursprungs bleibt
+    unsichtbar und ein Fortsetzungs-Commit wuerde Code-Loeschungen
+    mitpushen. Ohne -z werden Sonderzeichen in Pfaden gequoted
+    (core.quotePath) — `git reset` bekommt dann einen Namen, den es
+    nicht gibt, und die Aenderung bleibt gestagt (Review PR #14)."""
+    roh = run(["git", "diff", "--cached", "--no-renames", "-z",
+               "--name-only"], repo).stdout
+    return [p for p in roh.split("\0") if p]
+
+
 def gestagte_weiterfuehrung(repo: Path) -> bool:
     """Ein zwischen `git rm`/`git add` und Commit abgewuergter Lauf
     (Add-on-Neustart) hinterlaesst gestagte Aenderungen. halbfertiger_lauf()
@@ -112,10 +128,12 @@ def gestagte_weiterfuehrung(repo: Path) -> bool:
       ihn nach, retention()/collect_evidence() komplettieren den Lauf.
     - Alles andere (Code ausserhalb training-data) wird unstaged — nie
       committet, Arbeitskopie unangetastet; halbfertiger_lauf() stellt
-      versionierte Dateien danach wieder her.
+      versionierte Dateien danach wieder her. Scheitert das Unstagen,
+      wird der Lauf abgebrochen statt ein fremder Pfad zu committen.
+    - Unmittelbar vor dem Commit wird der Index erneut geprueft: er darf
+      NUR Pfade unter training-data/ enthalten.
     """
-    staged = [z for z in run(["git", "diff", "--cached", "--name-only"],
-                             repo).stdout.split("\n") if z.strip()]
+    staged = gestagte_pfade(repo)
     if not staged:
         return False
     innen = [p for p in staged if p.startswith("training-data/")]
@@ -125,11 +143,26 @@ def gestagte_weiterfuehrung(repo: Path) -> bool:
             f"aus einem abgewuergten Lauf — unstaged, nichts committet "
             f"({', '.join(aussen[:3])}{' ...' if len(aussen) > 3 else ''})",
             err=True)
-        run(["git", "reset", "--"] + aussen, repo, check=False)
+        r = run(["git", "reset", "--"] + aussen, repo, check=False)
+        if r.returncode:
+            log(f"Reset der gestagten Code-Aenderungen fehlgeschlagen — "
+                f"Lauf uebersprungen, nichts committet: "
+                f"{r.stdout.strip()[-200:]}", err=True)
+            return False
     if innen:
         log(f"{len(innen)} gestagte Aenderung(en) unter training-data aus "
             f"einem abgewuergten Lauf — Commit wird fortgesetzt "
             f"({', '.join(innen[:3])}{' ...' if len(innen) > 3 else ''})")
+        verbleibend = [p for p in gestagte_pfade(repo)
+                       if not p.startswith("training-data/")]
+        if verbleibend:
+            log(f"ABBRUCH: Im Index stehen weiter {len(verbleibend)} "
+                f"Pfad(e) ausserhalb training-data "
+                f"({', '.join(verbleibend[:3])}"
+                f"{' ...' if len(verbleibend) > 3 else ''}) — nichts "
+                f"committet, nichts gepusht. Repo-Zustand pruefen.",
+                err=True)
+            return False
         r = run(["git", "commit", "-m", "ocr: sync evidence (Fortsetzung)"],
                 repo, check=False)
         if r.returncode:
@@ -151,10 +184,13 @@ def fremde_aenderungen(repo: Path) -> list:
 
     Statt weiter zu suchen: eine Invariante, die es unmoeglich macht.
     Dieser Sync fasst ausschliesslich training-data an — alles andere ist
-    ein Abbruchgrund, nie ein Commit."""
-    stufe = run(["git", "diff", "--cached", "--name-only"], repo).stdout
-    return [z for z in stufe.split("\n")
-            if z.strip() and not z.startswith("training-data/")]
+    ein Abbruchgrund, nie ein Commit. Geparst wird mit --no-renames und
+    NUL-getrennt (siehe gestagte_pfade): ein Rename ueber die Verzeichnis-
+    grenze darf die Loeschung des Code-Originals nicht verstecken."""
+    stufe = run(["git", "diff", "--cached", "--no-renames", "-z",
+                 "--name-only"], repo).stdout
+    return [z for z in stufe.split("\0")
+            if z and not z.startswith("training-data/")]
 
 
 def changed(repo: Path, path: str) -> bool:
